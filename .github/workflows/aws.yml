@@ -18,7 +18,7 @@ jobs:
           docker login -u ${{ secrets.USERNAME }} -p ${{ secrets.PASSWORD }}
           docker build -t fastapi-cicd .
           docker tag fastapi-cicd ssohye/fastapi-cicd:${GITHUB_SHA::7}
-          docker push [계정명]/fastapi-cicd:${GITHUB_SHA::7}
+          docker push ssohye/fastapi-cicd:${GITHUB_SHA::7}
       - name: Deploy
         uses: appleboy/ssh-action@master
         with:
