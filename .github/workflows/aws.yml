@@ -23,7 +23,7 @@ jobs:
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.DMZ_GCP}}
-          username: ${{ secrets.DMZ_GCP_USERNAME }}
+          username: ${{ secrets.DMZ_GCP_USER }}
           key: ${{ secrets.DMZ_GCP_KEY }}
           envs: GITHUB_SHA
           script: |
