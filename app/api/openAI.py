@@ -3,7 +3,7 @@ import requests
 from PIL import Image
 from io import BytesIO
 
-openai.api_key = "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"
+openai.api_key = "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"
 
 messages = [
     {"role": "system", "content": "당신은 내 조각난 꿈을 완성시켜줄거야. 나 대신에 꿈일기를 약간의 스토리텔링을 통해 한국어로 만들어줄거고, dalle2프롬프트도 만들어줄거야, 근데 그 프롬프트 명령어는 영어로 만들어줘"},
