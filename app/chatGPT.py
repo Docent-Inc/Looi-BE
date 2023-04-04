@@ -46,7 +46,7 @@ def generate_text(text: str):
         img.save(buffer, format="PNG")
         picture = buffer.getvalue()
 
-        save_to_db(dream, dream_resolution, picture)
+        save_to_db(text, dream, dream_resolution, picture)
 
     except KeyboardInterrupt:
         print("Goodbye!")
