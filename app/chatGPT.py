@@ -28,6 +28,7 @@ def generate_text(text: str):
         dream = reply[reply.find("꿈 일기 이름: ") + 8:reply.find("꿈 해몽: ")].rstrip()
         dream_resolution = reply[reply.find("꿈 해몽: ") + 6:reply.find("DALLE-2 프롬프트 (영어)")].rstrip()
         prompt = reply[reply.find('DALLE-2 프롬프트 (영어):') + 19:]
+
         response = openai.Image.create(
             prompt=prompt,
             n=1,  # 생성할 이미지 수
