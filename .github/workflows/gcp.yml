@@ -36,4 +36,4 @@ jobs:
             docker pull ssohye/fastapi-cicd:${GITHUB_SHA::7}
             docker tag ssohye/fastapi-cicd:${GITHUB_SHA::7} fastapi-cicd
             docker stop server
-            docker run -d --rm --name server -p 80:80 fastapi-cicd
+            docker run -d --rm --name server -p 8080:8080 fastapi-cicd
