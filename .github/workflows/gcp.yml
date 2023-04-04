@@ -13,8 +13,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: gptkey.txt
-      - run : |
+      - name: Make gptkey.txt
+        run : |
           cd ./app
           touch gptkey.txt
           echo ${{ secrets.GPT_KEY }} > gptkey.txt
