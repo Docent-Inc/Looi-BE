@@ -1,7 +1,7 @@
 from sqlalchemy import *
 from sqlalchemy.orm import sessionmaker
 
-DB_URL = 'mysql+pymysql://{root}:{twcho0205}@{localhost}:{3306}/{fastapi}'
+DB_URL = 'mysql+pymysql://dmz:1234@swiftsjh.tplinkdns.com:3306/BMSM'
 class engineconn:
     def __init__(self):
         self.engine = create_engine(DB_URL, pool_recycle = 500)
@@ -14,3 +14,4 @@ class engineconn:
     def connection(self):
         conn = self.engine.connect()
         return conn
+
