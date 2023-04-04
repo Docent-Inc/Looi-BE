@@ -15,6 +15,7 @@ from io import BytesIO
 import time
 
 from app.chatGPT import generate_text
+from app.db.dream import create_table
 
 app = FastAPI()
 class GPTResponse(BaseModel):
@@ -24,6 +25,7 @@ class GPTResponse(BaseModel):
 
 @app.get("/")
 async def root():
+    create_table()
     return {"message": "Hello World"}
 @app.get("/gpt/{text}", response_model=GPTResponse)
 async def get_gpt_result(text: str) -> GPTResponse:
