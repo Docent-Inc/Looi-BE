@@ -29,7 +29,7 @@ def save_to_db(text, dream, dream_resolution, image_url):
     new_dream = Dream(text=text, dream_name=dream, dream_resolution=dream_resolution, image_url=image_url)
     session.add(new_dream)
     session.commit()
-    session.close()
+    session.close()  # Convert binary data to proper format and write it on Hard Disk
 
 def convertToBinaryData(filename):
     # Convert digital data to binary format
