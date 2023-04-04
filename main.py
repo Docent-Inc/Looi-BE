@@ -25,10 +25,10 @@ class GPTResponse(BaseModel):
 
 @app.get("/")
 async def root():
-    create_table()
     return {"message": "Hello World"}
 @app.get("/gpt/{text}", response_model=GPTResponse)
 async def get_gpt_result(text: str) -> GPTResponse:
+    create_table()
     dream, dream_resolution, image_url = generate_text(text)
     return GPTResponse(dream=dream, dream_resolution=dream_resolution, image_url=image_url)
 
