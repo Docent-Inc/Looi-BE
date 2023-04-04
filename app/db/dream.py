@@ -23,6 +23,7 @@ def create_table():
     Base.metadata.create_all(connection)
     connection.close()
 
+
 def save_to_db(text, dream, dream_resolution, image_url):
     Session = sessionmaker(bind=engine)
     session = Session()
