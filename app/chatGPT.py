@@ -41,8 +41,9 @@ def generate_text(text: str):
         # 이미지 다운로드 및 저장
         response = requests.get(image_url)
         img = Image.open(BytesIO(response.content))
-        img.save(f"DALLE2/{datetime.now().strftime('%Y%m%d%H%M%S')}.png")
-        picture = convertToBinaryData(f"DALLE2/{datetime.now().strftime('%Y%m%d%H%M%S')}.png")
+        buffer = BytesIO()
+        img.save(buffer, format="PNG")
+        picture = buffer.getvalue()
 
         save_to_db(dream, dream_resolution, picture)
 
