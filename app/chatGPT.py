@@ -25,9 +25,16 @@ def generate_text(text: str):
         if messages:
             chat = openai.ChatCompletion.create(model="gpt-4", messages=messages)  # gpt-3.5-turbo
         reply = chat.choices[0].message.content
-        dream = reply[reply.find("꿈 일기 이름: ") + 8:reply.find("꿈 해몽: ")].rstrip()
-        dream_resolution = reply[reply.find("꿈 해몽: ") + 6:reply.find("DALLE-2 프롬프트 (영어)")].rstrip()
-        prompt = reply[reply.find('DALLE-2 프롬프트 (영어):') + 19:]
+        dream_start = reply.find("꿈 일기 이름: ") + len("꿈 일기 이름: ")
+        dream_end = reply.find("꿈 해몽: ")
+        dream = reply[dream_start:dream_end].rstrip()
+
+        dream_resolution_start = reply.find("꿈 해몽: ") + len("꿈 해몽: ")
+        dream_resolution_end = reply.find("DALLE-2 프롬프트 (영어)")
+        dream_resolution = reply[dream_resolution_start:dream_resolution_end].rstrip()
+
+        prompt_start = reply.find('DALLE-2 프롬프트 (영어):') + len('DALLE-2 프롬프트 (영어):')
+        prompt = reply[prompt_start:]
 
         response = openai.Image.create(
             prompt=prompt,
