@@ -39,7 +39,7 @@ def generate_text(text: str):
         # 이미지 다운로드 및 저장
         response = requests.get(image_url)
         img = Image.open(BytesIO(response.content))
-        img.save(f"DALLE2/{datetime.now().strftime('%Y%m%d%H%M%S')}.png")
+        # img.save(f"DALLE2/{datetime.now().strftime('%Y%m%d%H%M%S')}.png")
 
     except KeyboardInterrupt:
         print("Goodbye!")
