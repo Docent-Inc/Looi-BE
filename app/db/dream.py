@@ -30,3 +30,9 @@ def save_to_db(text, dream, dream_resolution, image_url):
     session.add(new_dream)
     session.commit()
     session.close()
+
+def convertToBinaryData(filename):
+    # Convert digital data to binary format
+    with open(filename, 'rb') as file:
+        binaryData = file.read()
+    return binaryData
