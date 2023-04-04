@@ -30,3 +30,4 @@ async def get_gpt_result(text: str) -> GPTResponse:
     dream, dream_resolution, image_url = generate_text(text)
     return GPTResponse(dream=dream, dream_resolution=dream_resolution, image_url=image_url)
 
+
