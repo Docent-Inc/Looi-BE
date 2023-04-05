@@ -12,32 +12,34 @@ with open("app/gptkey.txt", "r") as f:
 
 def generate_text(text: str):
     messages = [
-        {"role": "system", "content": "당신은 내 조각난 꿈을 완성시켜줄거야. 나 대신에 꿈일기를 약간의 스토리텔링을 통해 한국어로 만들어줄거고, dalle2프롬프트도 만들어줄거야, 근데 그 프롬프트 명령어는 영어로 만들어줘"},
-        {"role": "system", "content": "dalle2그림을 illustration로 만들어줄거야"},
-        {"role": "system", "content": "꿈 일기 이름은 너가 정해줘"},
-        {"role": "system", "content": "DALLE-2 프롬프트 (영어): 이후에 프롬프트 작성해줘"},
-        {"role": "system", "content": "내용이 짧으면 약간의 추가적인 내용도 만들어줘"},
-        {"role": "system", "content": "맨 마지막 부분에 간단한 꿈 해몽 내용도 넣어줘"},
-        {"role": "system", "content": "꿈 일기 이름, 꿈 해몽, DALLE-2 프롬프트 (영어). 이 세게의 문단으로 구성되어야 해"},
+        {"role": "system", "content": "당신은 내 조각난 꿈을 완성시켜줄거야. 나 대신에 꿈을 약간의 스토리텔링을 통해 한국어로 만들어줄거고, dalle2프롬프트도 만들어줄거야, 근데 그 프롬프트 명령어는 영어로 만들어줘"},
+        {"role": "system", "content": "dalle2프롬프트에 illustration라는 말을 추가해서 만들어줄거야"},  # illustration, digital image
+        {"role": "system", "content": "꿈 제목은 창의적인 제목으로 너가 정해줘"},
+        {"role": "system", "content": "꿈 제목(한글):, 꿈(한글):, 꿈 해몽(한글):, DALLE-2 프롬프트(영어): 이 네게의 문단으로 구성되어야 해, 각 문단의 이름이야"},
+        {"role": "system", "content": "내용이 짧으면 약 250자 정도까지 되도록 추가적인 내용도 만들어줘"},
+        {"role": "system", "content": "꿈 이후에 간단한 해몽 내용도 넣어줘, 해몽은 존댓말을 사용하고, 약 200자 정도로 만들어줘"},
+        {"role": "system", "content": "꿈 내용은 1인칭 시점으로 작성해줘"},
     ]
     try:
         messages.append({"role": "user", "content": text})
         if messages:
             chat = openai.ChatCompletion.create(model="gpt-4", messages=messages)  # gpt-3.5-turbo
         reply = chat.choices[0].message.content
-        dream_start = reply.find("꿈 일기 이름: ") + len("꿈 일기 이름: ")
-        dream_end = reply.find("꿈 해몽: ")
-        dream = reply[dream_start:dream_end].rstrip()
 
-        dream_resolution_start = reply.find("꿈 해몽: ") + len("꿈 해몽: ")
-        dream_resolution_end = reply.find("DALLE-2 프롬프트 (영어)")
-        dream_resolution = reply[dream_resolution_start:dream_resolution_end].rstrip()
+        sections = ['꿈 제목(한글)', '꿈(한글)', '꿈 해몽(한글)', 'DALLE-2 프롬프트(영어)']
+        sliced_data = {}
 
-        prompt_start = reply.find('DALLE-2 프롬프트 (영어):') + len('DALLE-2 프롬프트 (영어):')
-        prompt = reply[prompt_start:]
+        text = reply
+        for i, section in enumerate(sections):
+            start = text.find(section) + len(section) + 2
+            if i < len(sections) - 1:
+                end = text.find(sections[i + 1])
+                sliced_data[section] = text[start:end].strip()
+            else:
+                sliced_data[section] = text[start:].strip()
 
         response = openai.Image.create(
-            prompt=prompt,
+            prompt=sliced_data['DALLE-2 프롬프트(영어)'],
             n=1,  # 생성할 이미지 수
             size="512x512",  # 이미지 크기
             response_format="url"  # 응답 형식
@@ -52,6 +54,10 @@ def generate_text(text: str):
         buffer = BytesIO()
         img.save(buffer, format="PNG")
         picture = buffer.getvalue()
+
+        # DB에 저장
+        dream = sliced_data['꿈 제목(한글)'] + " " + sliced_data['꿈(한글)']
+        dream_resolution =  sliced_data['꿈 해몽(한글)']
 
         save_to_db(text, dream, dream_resolution, picture)
 
