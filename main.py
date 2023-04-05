@@ -19,6 +19,7 @@ from app.db.dream import create_table
 
 app = FastAPI()
 class GPTResponse(BaseModel):
+    dream_name: str
     dream: str
     dream_resolution: str
     image_url: str
@@ -29,7 +30,7 @@ async def root():
 @app.get("/gpt/{text}", response_model=GPTResponse)
 async def get_gpt_result(text: str) -> GPTResponse:
     create_table()
-    dream, dream_resolution, image_url = generate_text(text)
-    return GPTResponse(dream=dream, dream_resolution=dream_resolution, image_url=image_url)
+    dream_name, dream, dream_resolution, image_url = generate_text(text)
+    return GPTResponse(dream_name=dream_name, dream=dream, dream_resolution=dream_resolution, image_url=image_url)
 
 
