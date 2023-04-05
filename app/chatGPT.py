@@ -60,6 +60,8 @@ def generate_text(text: str):
 
         save_to_db(text, dream, dream_resolution, picture)
 
+
+
     except KeyboardInterrupt:
         print("Goodbye!")
     return dream, dream_resolution, image_url
