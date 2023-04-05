@@ -55,7 +55,7 @@ def generate_text(text: str):
         picture = buffer.getvalue()
 
         # DB에 저장
-        dream = sliced_data['꿈 제목(한글)'] + " " + sliced_data['꿈(한글)']
+        dream = "제목: " + sliced_data['꿈 제목(한글)'] + "\n" + sliced_data['꿈(한글)']
         dream_resolution = sliced_data['꿈 해몽(한글)']
 
         save_to_db(text, dream, dream_resolution, picture)
