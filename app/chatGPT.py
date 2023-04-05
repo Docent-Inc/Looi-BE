@@ -16,8 +16,8 @@ def generate_text(text: str):
         {"role": "system", "content": "dalle2프롬프트에 illustration라는 말을 추가해서 만들어줄거야"},  # illustration, digital image
         {"role": "system", "content": "꿈 제목은 창의적인 제목으로 너가 정해줘"},
         {"role": "system", "content": "꿈 제목(한글):, 꿈(한글):, 꿈 해몽(한글):, DALLE-2 프롬프트(영어): 이 네게의 문단으로 구성되어야 해, 각 문단의 이름이야"},
-        {"role": "system", "content": "내용이 짧으면 약 250자 정도까지 되도록 추가적인 내용도 만들어줘"},
-        {"role": "system", "content": "꿈 이후에 간단한 해몽 내용도 넣어줘, 해몽은 존댓말을 사용하고, 약 200자 정도로 만들어줘"},
+        {"role": "system", "content": "만약 내용이 짧으면 약 250자 정도까지 되도록 추가적인 스토리도 만들어줘"},
+        {"role": "system", "content": "꿈 이후에 간단한 해몽 내용도 넣어줘, 해몽은 약 200자 정도로 만들어줘"},
         {"role": "system", "content": "꿈 내용은 1인칭 시점으로 작성해줘"},
     ]
     try:
