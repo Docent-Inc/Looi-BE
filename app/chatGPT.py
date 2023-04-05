@@ -29,14 +29,13 @@ def generate_text(text: str):
         sections = ['꿈 제목(한글)', '꿈(한글)', '꿈 해몽(한글)', 'DALLE-2 프롬프트(영어)']
         sliced_data = {}
 
-        text = reply
         for i, section in enumerate(sections):
-            start = text.find(section) + len(section) + 2
+            start = reply.find(section) + len(section) + 2
             if i < len(sections) - 1:
-                end = text.find(sections[i + 1])
-                sliced_data[section] = text[start:end].strip()
+                end = reply.find(sections[i + 1])
+                sliced_data[section] = reply[start:end].strip()
             else:
-                sliced_data[section] = text[start:].strip()
+                sliced_data[section] = reply[start:].strip()
 
         response = openai.Image.create(
             prompt=sliced_data['DALLE-2 프롬프트(영어)'],
@@ -57,7 +56,7 @@ def generate_text(text: str):
 
         # DB에 저장
         dream = sliced_data['꿈 제목(한글)'] + " " + sliced_data['꿈(한글)']
-        dream_resolution =  sliced_data['꿈 해몽(한글)']
+        dream_resolution = sliced_data['꿈 해몽(한글)']
 
         save_to_db(text, dream, dream_resolution, picture)
 
