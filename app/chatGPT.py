@@ -18,8 +18,8 @@ def generate_text(text: str):
         {"role": "system", "content": "꿈 제목은 창의적인 제목으로 너가 정해줘"},
         {"role": "system", "content": "[꿈 제목]:, [꿈]:, [꿈 해몽]:, [오늘의 운세]: [DALLE-2 프롬프트(영어)]: 이 5개의 문단으로 구성되어야 해, 각 문단의 이름이야"},
         {"role": "system", "content": "만약 내용이 짧으면 약 250자 정도까지 되도록 추가적인 스토리도 만들어줘"},
-        {"role": "system", "content": "해몽은 약 200자 정도로 만들어줘"},
-        {"role": "system", "content": "꿈 내용은 1인칭 시점으로 작성해줘, 오늘의 운세는 꿈 해몽을 바탕으로 약 100자 만들어줘"},
+        {"role": "system", "content": "해몽은 약 150자 정도로 만들어줘"},
+        {"role": "system", "content": "꿈 내용은 1인칭 시점으로 작성해줘, 오늘의 운세는 꿈 해몽을 바탕으로 약 50자 만들어줘"},
     ]
     try:
         messages.append({"role": "user", "content": text})
