@@ -63,6 +63,7 @@ def generate_text(text: str):
 
         save_to_db(text, dream_name + dream, dream_resolution + today_luck, picture)
 
+
         print(reply)
 
         end_time = time.time()  # 실행 종료 시간 기록
