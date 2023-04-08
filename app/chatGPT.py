@@ -2,6 +2,7 @@ import openai
 import requests
 from PIL import Image
 from io import BytesIO
+import asyncio
 import time
 
 from app.db.dream import save_to_db
@@ -10,67 +11,96 @@ from app.db.dream import save_to_db
 with open("app/gptkey.txt", "r") as f:
     openai.api_key = f.read().rstrip()
 
-def generate_text(text: str):
+async def generate_text(text: str):
     start_time = time.time()  # 실행 시작 시간 기록
-    messages = [
-        {"role": "system", "content": "당신은 내 조각난 꿈을 완성시켜줄거야. 나 대신에 꿈을 약간의 스토리텔링을 통해 한국어로 만들어줄거고, dalle2프롬프트도 만들어줄거야, 근데 그 프롬프트 명령어는 영어로 만들어줘"},
-        {"role": "system", "content": "dalle2프롬프트에 illustration라는 말을 추가해서 만들어줄거야"},  # illustration, digital image
-        {"role": "system", "content": "꿈 제목은 창의적인 제목으로 너가 정해줘"},
-        {"role": "system", "content": "[꿈 제목]:, [꿈]:, [꿈 해몽]:, [오늘의 운세]: [DALLE-2 프롬프트(영어)]: 이 5개의 문단으로 구성되어야 해, 각 문단의 이름이야"},
-        {"role": "system", "content": "만약 내용이 짧으면 약 170자 정도까지 되도록 추가적인 스토리도 만들어줘"},
-        {"role": "system", "content": "해몽은 약 130자 정도로 만들어줘"},
-        {"role": "system", "content": "꿈 내용은 1인칭 시점으로 작성해줘, 오늘의 운세는 꿈 해몽을 바탕으로 '오늘은'의 단어로 시작해서 약 50자 만들어줘"},
-    ]
-    try:
-        messages.append({"role": "user", "content": text})
-        if messages:
-            chat = openai.ChatCompletion.create(model="gpt-4", messages=messages)  # gpt-3.5-turbo
-        reply = chat.choices[0].message.content
+    L = []
+    async def get_time(name):
+         print(f"{name} took {time.time() - start_time} seconds")
+    async def get_gpt_response(message: str) -> str:
+        try:
+            messages_prompt = [
+                {"role": "system", "content": "당신은 내 조각난 꿈을 완성시켜줄거야. 나 대신에 꿈을 약간의 스토리텔링을 통해 한국어로 만들어줄거야"},
+                {"role": "system",
+                 "content": "꿈 제목은 창의적인 제목으로 너가 정해주고, 꿈 내용은 1인칭 시점으로 작성해줘, 만약 내용이 짧으면 약 120자 까지로 만들어줘"},
+                {"role": "system", "content": "꿈 제목은 []로 감싸주고 이어서 내용을 만들어줘 "}, {"role": "user", "content": message}]
+            chat = openai.ChatCompletion.create(model="gpt-4", messages=messages_prompt)
+        except Exception as e:
+            print(e)
+            return "error"
+        await get_time("get_gpt_response")
+        return chat.choices[0].message.content
 
-        sections = ['[꿈 제목]', '[꿈]', '[꿈 해몽]', '[오늘의 운세]', '[DALLE-2 프롬프트(영어)]']
-        sliced_data = {}
-
-        for i, section in enumerate(sections):
-            start = reply.find(section) + len(section) + 2
-            if i < len(sections) - 1:
-                end = reply.find(sections[i + 1])
-                sliced_data[section] = reply[start:end].strip()
-            else:
-                sliced_data[section] = reply[start:].strip()
-
-        response = openai.Image.create(
-            prompt=sliced_data['[DALLE-2 프롬프트(영어)]'],
-            n=1,  # 생성할 이미지 수
-            size="512x512",  # 이미지 크기
-            response_format="url"  # 응답 형식
+    async def get_image_url(prompt):
+        response = await asyncio.to_thread(
+            openai.Image.create,
+            prompt=prompt,
+            n=1,
+            size="512x512",
+            response_format="url"
         )
+        return response['data'][0]['url']
 
-        # 이미지 URL 추출
-        image_url = response['data'][0]['url']
-
-        # 이미지 다운로드 및 저장
-        response = requests.get(image_url)
+    async def download_image(url):
+        response = requests.get(url)
         img = Image.open(BytesIO(response.content))
         buffer = BytesIO()
         img.save(buffer, format="PNG")
-        picture = buffer.getvalue()
+        return buffer.getvalue()
 
-        # DB에 저장
-        dream_name = sliced_data['[꿈 제목]']
-        dream = sliced_data['[꿈]']
-        dream_resolution = sliced_data['[꿈 해몽]']
-        today_luck = sliced_data['[오늘의 운세]']
+    async def get_dream_resolution(message: str) -> str:
+        try:
+            messages_prompt = [
+                {"role": "system", "content": message},
+                {"role": "system", "content": "꿈 내용을 바탕으로 약 100자까지 정도로 꿈 해몽을 만들어줘"},
+            ]
+            chat = openai.ChatCompletion.create(model="gpt-4", messages=messages_prompt)
+        except Exception as e:
+            print(e)
+            return get_dream_resolution(message)
+        await get_time("get_dream_resolution")
+        return chat.choices[0].message.content
 
-        save_to_db(text, dream_name + dream, dream_resolution + today_luck, picture)
+    async def get_today_luck(message: str) -> str:
+        try:
+            messages_prompt = [
+                {"role": "system", "content": message},
+                {"role": "system", "content": "꿈을 바탕으로 오늘의 운세를 약 40자까지 만들어줘"},
+                {"role": "system", "content": "제목없이 내용만 만들어줘, 현실을 반영해서 조심해야될 것 또는 좋은 일이 일어날 것 또는 꿈을 바탕으로 해야될 일을 적어줘"},
+            ]
+            chat = openai.ChatCompletion.create(model="gpt-4", messages=messages_prompt)
+        except Exception as e:
+            print(e)
+            return get_today_luck(message)
+        await get_time("get_today_luck")
+        return chat.choices[0].message.content
 
+    async def DALLE2(message: str) -> str:
+        try:
+            messages_prompt = [
+                {"role": "system", "content": message},
+                {"role": "system", "content": "꿈을 바탕으로 DALLE2에 넣을 프롬프트를 영어로 만들어줘, illustration라는 단어를 포함시켜줘"}
+            ]
+            chat = openai.ChatCompletion.create(model="gpt-4", messages=messages_prompt)
+        except Exception as e:
+            print(e)
+            return "error"
+        dream_image_url = await get_image_url(chat.choices[0].message.content)
+        dream_image = await download_image(dream_image_url)
+        await get_time("DALLE2")
+        return [dream_image, dream_image_url]
 
-        print(reply)
+    dream = await get_gpt_response(text)
+    dream_name = dream[dream.find("[")+1:dream.find("]")]
+    dream = dream[dream.find("]")+1:]
 
-        end_time = time.time()  # 실행 종료 시간 기록
+    dream_resolution, today_luck, L = await asyncio.gather(
+        get_dream_resolution(dream),
+        get_today_luck(dream),
+        DALLE2(dream)
+    )
 
-        elapsed_time = end_time - start_time  # 실행 시간 계산
-        print(f"Elapsed time: {elapsed_time:.4f} seconds")
+    save_to_db(text, dream_name + dream, dream_resolution + today_luck, L[0])
 
-    except KeyboardInterrupt:
-        print("Goodbye!")
-    return dream_name, dream, dream_resolution, today_luck, image_url
+    await get_time("total")
+
+    return dream_name, dream, dream_resolution, today_luck, L[1]
