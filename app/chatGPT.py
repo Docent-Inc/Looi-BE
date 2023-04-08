@@ -21,7 +21,8 @@ async def generate_text(text: str):
             messages_prompt = [
                 {"role": "system", "content": "당신은 내 조각난 꿈을 완성시켜줄거야. 나 대신에 꿈을 약간의 스토리텔링을 통해 한국어로 만들어줄거야"},
                 {"role": "system",
-                 "content": "꿈 제목은 창의적인 제목으로 너가 정해주고, 꿈 내용은 1인칭 시점으로 작성해줘, 만약 내용이 짧으면 약 120자 까지로 만들어줘"},
+                 "content": "꿈 제목은 창의적인 제목으로 너가 정해주고, 꿈 내용은 1인칭 시점으로 작성해줘, 만약 내용이 짧으면 추가적인 내용을 만들어줘"},
+                {"role": "system", "content": "꿈 내용은 120자가 넘지 않도록 만들어줘"},
                 {"role": "system", "content": "꿈 제목은 []로 감싸주고 이어서 내용을 만들어줘 "}, {"role": "user", "content": message}]
             chat = openai.ChatCompletion.create(model="gpt-4", messages=messages_prompt)
         except Exception as e:
@@ -51,7 +52,8 @@ async def generate_text(text: str):
         try:
             messages_prompt = [
                 {"role": "system", "content": message},
-                {"role": "system", "content": "꿈 내용을 바탕으로 약 100자까지 정도로 꿈 해몽을 만들어줘"},
+                {"role": "system", "content": "꿈 내용을 바탕으로 꿈 해몽을 만들어줘"},
+                {"role": "system", "content": "꿈 해몽은 80자가 넘지 않도록 해줘"},
             ]
             chat = openai.ChatCompletion.create(model="gpt-4", messages=messages_prompt)
         except Exception as e:
@@ -64,7 +66,8 @@ async def generate_text(text: str):
         try:
             messages_prompt = [
                 {"role": "system", "content": message},
-                {"role": "system", "content": "꿈을 바탕으로 오늘의 운세를 약 40자까지 만들어줘"},
+                {"role": "system", "content": "꿈을 바탕으로 오늘의 운세를 만들어줘"},
+                {"role": "system", "content": "오늘의 운세는 40자가 넘지 않도록 해줘"},
                 {"role": "system", "content": "제목없이 내용만 만들어줘, 현실을 반영해서 조심해야될 것 또는 좋은 일이 일어날 것 또는 꿈을 바탕으로 해야될 일을 적어줘"},
             ]
             chat = openai.ChatCompletion.create(model="gpt-4", messages=messages_prompt)
