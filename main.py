@@ -11,7 +11,7 @@ class GPTResponse(BaseModel):
     dream: str
     dream_resolution: str
     today_luck: str
-    dream_image_url: str
+    image_url: str
 
 app = FastAPI()
 
@@ -28,5 +28,5 @@ async def get_gpt_result(text: str) -> GPTResponse:
         dream=dream,
         dream_resolution=dream_resolution,
         today_luck=today_luck,
-        dream_image_url=dream_image_url
+        image_url=dream_image_url
     )
