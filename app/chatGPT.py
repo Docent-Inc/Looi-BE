@@ -39,7 +39,7 @@ async def generate_text(text: str):
             chat = openai.ChatCompletion.create(model="gpt-4", messages=messages_prompt)
         except Exception as e:
             print(e)
-            return "error"
+            return get_gpt_response(message)
         await get_time("get_gpt_response")
         return chat.choices[0].message.content
 
@@ -54,7 +54,7 @@ async def generate_text(text: str):
         return response['data'][0]['url']
 
     async def download_image(url):
-        response = requests.get(url)
+        response = await asyncio.to_thread(requests.get, url)
         img = Image.open(BytesIO(response.content))
         buffer = BytesIO()
         img.save(buffer, format="PNG")
