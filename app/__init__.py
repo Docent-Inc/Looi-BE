@@ -1,1 +1,1 @@
-from .chatGPT import generate_text
+from app.gptapi.chatGPT import generate_text
