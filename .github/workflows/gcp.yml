@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Make gptkey.txt
         run : |
-          cd ./app
+          cd ./app/gptapi
           touch gptkey.txt
           echo ${{ secrets.GPT_KEY }} > gptkey.txt
 

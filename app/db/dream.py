@@ -1,38 +1,15 @@
-from sqlalchemy import Column, Integer, String, Text, BLOB
-from sqlalchemy.dialects.mysql import LONGBLOB
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine
-
-
-DB_URL = 'mysql+pymysql://dmz:1234@swiftsjh.tplinkdns.com:3306/BMSM'
-Base = declarative_base()
-engine = create_engine(DB_URL, pool_recycle=500)
-
-class Dream(Base):
-    __tablename__ = "dreams"
-
-    id = Column(Integer, primary_key=True)
-    text = Column(Text)
-    dream_name = Column(Text)
-    dream_resolution = Column(Text)
-    image_url = Column(LONGBLOB)
-
-def create_table():
-    connection = engine.connect()
-    Base.metadata.create_all(connection)
-    connection.close()
+from app.db.database import SessionLocal
+from app.models.dream import Dream
 
 def save_to_db(text, dream, dream_resolution, image_url):
-    Session = sessionmaker(bind=engine)
-    session = Session()
+    session = SessionLocal()
     new_dream = Dream(text=text, dream_name=dream, dream_resolution=dream_resolution, image_url=image_url)
     session.add(new_dream)
     session.commit()
-    session.close()  # Convert binary data to proper format and write it on Hard Disk
+    session.close()
 
-def convertToBinaryData(filename):
+def convert_to_binary_data(filename):
     # Convert digital data to binary format
     with open(filename, 'rb') as file:
-        binaryData = file.read()
-    return binaryData
+        binary_data = file.read()
+    return binary_data
