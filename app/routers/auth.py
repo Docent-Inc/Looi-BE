@@ -12,7 +12,7 @@ from app.crud import user
 from app.schemas.user import UserCreate
 from app.schemas.common import ApiResponse
 
-router = APIRouter()
+router = APIRouter(prefix="/auth")
 @router.post("/login", response_model=ApiResponse, tags=["auth"])
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
