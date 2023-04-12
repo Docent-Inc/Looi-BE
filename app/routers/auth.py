@@ -54,4 +54,5 @@ async def signup(
         data={"sub": new_user.email}, expires_delta=access_token_expires
     )
 
+
     return ApiResponse(success=True, data=TokenData(access_token=access_token, token_type="bearer"))
