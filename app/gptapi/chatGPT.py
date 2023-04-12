@@ -11,7 +11,7 @@ from app.db.dream import save_to_db
 with open("app/gptapi/gptkey.txt", "r") as f:
     openai.api_key = f.read().rstrip()
 
-async def generate_text(text: str) -> str:
+async def generate_text(text: str, survay_data) -> str:
     if text.find("성한빈") != -1 or text.find("한빈") != -1 or text.find("장하오") != -1:
         return "그만해", "너 IP다 털렸다.", "수고해", "경찰서에서 보자", "https://www.police.go.kr/index.do"
 
@@ -68,12 +68,12 @@ async def generate_text(text: str) -> str:
         )
         return response['data'][0]['url']
 
-    async def download_image(url):
-        response = await asyncio.to_thread(requests.get, url)
-        img = Image.open(BytesIO(response.content))
-        buffer = BytesIO()
-        img.save(buffer, format="PNG")
-        return buffer.getvalue()
+    # async def download_image(url):
+    #     response = await asyncio.to_thread(requests.get, url)
+    #     img = Image.open(BytesIO(response.content))
+    #     buffer = BytesIO()
+    #     img.save(buffer, format="PNG")
+    #     return buffer.getvalue()
 
     async def get_dream_resolution(message: str) -> str:
         messages_prompt = [
@@ -118,7 +118,7 @@ async def generate_text(text: str) -> str:
     )
     dream_name, dream, dream_resolution, today_luck = results
 
-    save_to_db(text, dream_name + dream, dream_resolution + today_luck) # , L[0])
+    save_to_db(text, dream_name + dream, dream_resolution + today_luck, survay_data)
 
     await get_time("total", start_time)
 
