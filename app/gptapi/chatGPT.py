@@ -103,7 +103,8 @@ async def generate_text(text: str, host: str) -> str:
             print(e)
             return "OpenAI API Error"
         dream_image_url = await get_image_url(chat.choices[0].message.content)
-        dream_image = await download_image(dream_image_url)
+        # dream_image = await download_image(dream_image_url)
+        dream_image = " "
         await get_time("DALLE2", start_time)
         return [dream_image, dream_image_url]
 
