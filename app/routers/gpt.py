@@ -16,8 +16,8 @@ Base = declarative_base()
 router = APIRouter(prefix="/gpt")
 
 @router.post("/", response_model=ApiResponse, tags=["gpt"])
-async def get_gpt_result(text: str = Query(), survey_data: SurveyData = Body()) -> GPTResponse:
-    dream_name, dream, dream_resolution, today_luck, dream_image_url = await generate_text(text, survey_data)
+async def get_gpt_result(survey_data: SurveyData = Body()) -> GPTResponse:
+    dream_name, dream, dream_resolution, today_luck, dream_image_url = await generate_text(survey_data.text, survey_data)
 
     return ApiResponse(
         success=True,
