@@ -19,6 +19,7 @@ router = APIRouter(prefix="/gpt")
 async def get_gpt_result(survey_data: SurveyData = Body()) -> GPTResponse:
     dream_name, dream, dream_resolution, today_luck, dream_image_url = await generate_text(survey_data.dream, survey_data)
 
+
     return ApiResponse(
         success=True,
         data=GPTResponse(
