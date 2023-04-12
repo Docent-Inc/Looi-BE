@@ -18,6 +18,7 @@ async def generate_text(text: str) -> str:
     start_time = time.time()  # 실행 시작 시간 기록
     L = []
 
+
     async def get_time(name, start_time):
         print(f"{name} took {time.time() - start_time} seconds")
 
