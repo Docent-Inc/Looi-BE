@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from app.gptapi.chatGPT import generate_text
 from app.schemas.gpt import GPTResponse
 from app.schemas.common import ApiResponse
@@ -8,6 +8,7 @@ from fastapi import Cookie, Response
 from typing import Optional
 import uuid
 from fastapi.responses import JSONResponse
+from fastapi.security import APIKeyCookie
 
 
 from sqlalchemy import create_engine
@@ -19,8 +20,11 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 router = APIRouter(prefix="/gpt")
+
+cookie_sec = APIKeyCookie(name="user_cookie", auto_error=False)
+
 @router.get("/{text}", response_model=ApiResponse, tags=["gpt"])
-async def get_gpt_result(text: str, user_cookie: Optional[str] = Cookie(None)) -> GPTResponse:
+async def get_gpt_result(text: str, user_cookie: Optional[str] = Depends(cookie_sec)) -> GPTResponse:
     dream_name, dream, dream_resolution, today_luck, dream_image_url = await generate_text(text, user_cookie)
 
     if user_cookie is None:
