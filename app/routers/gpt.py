@@ -7,6 +7,7 @@ from fastapi import Request
 from fastapi import Cookie, Response
 from typing import Optional
 import uuid
+from fastapi.responses import JSONResponse
 
 
 from sqlalchemy import create_engine
@@ -25,7 +26,7 @@ async def get_gpt_result(text: str, user_cookie: Optional[str] = Cookie(None)) -
     if user_cookie is None:
         user_cookie = str(uuid.uuid4())  # 새로운 고유한 ID 생성
 
-    response = ApiResponse(
+    response_data = ApiResponse(
         success=True,
         data=GPTResponse(
             dream_name=dream_name,
@@ -36,8 +37,12 @@ async def get_gpt_result(text: str, user_cookie: Optional[str] = Cookie(None)) -
         )
     )
 
+    response = JSONResponse(content=response_data.dict())
+
     if not user_cookie:
         response.set_cookie(key="user_cookie", value=user_cookie, max_age=60 * 60 * 24 * 30)  # 쿠키를 30일 동안 유지
+
+    print(user_cookie)
 
     return response
 
