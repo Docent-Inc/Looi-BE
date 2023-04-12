@@ -3,6 +3,9 @@ from app.gptapi.chatGPT import generate_text
 from app.schemas.gpt import GPTResponse
 from app.schemas.common import ApiResponse
 from pydantic import BaseModel
+from fastapi import Request
+
+
 
 from sqlalchemy import create_engine
 from app.models.test import Dream
@@ -14,8 +17,8 @@ Base = declarative_base()
 
 router = APIRouter(prefix="/gpt")
 @router.get("/{text}", response_model=ApiResponse, tags=["gpt"])
-async def get_gpt_result(text: str) -> GPTResponse:
-    dream_name, dream, dream_resolution, today_luck, dream_image_url = await generate_text(text)
+async def get_gpt_result(request: Request, text: str) -> GPTResponse:
+    dream_name, dream, dream_resolution, today_luck, dream_image_url = await generate_text(text, request.client.host)
 
     return ApiResponse(
         success=True,
