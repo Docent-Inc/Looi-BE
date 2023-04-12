@@ -3,13 +3,6 @@ from app.gptapi.chatGPT import generate_text
 from app.schemas.gpt import GPTResponse
 from app.schemas.common import ApiResponse
 from pydantic import BaseModel
-from fastapi import Request
-from fastapi import Cookie, Response
-from typing import Optional
-import uuid
-from fastapi.responses import JSONResponse
-from fastapi.security import APIKeyCookie
-
 
 from sqlalchemy import create_engine
 from app.models.test import Dream
@@ -21,16 +14,11 @@ Base = declarative_base()
 
 router = APIRouter(prefix="/gpt")
 
-cookie_sec = APIKeyCookie(name="user_cookie", auto_error=False)
-
 @router.get("/{text}", response_model=ApiResponse, tags=["gpt"])
-async def get_gpt_result(text: str, user_cookie: Optional[str] = Depends(cookie_sec)) -> GPTResponse:
-    dream_name, dream, dream_resolution, today_luck, dream_image_url = await generate_text(text, user_cookie)
+async def get_gpt_result(text: str) -> GPTResponse:
+    dream_name, dream, dream_resolution, today_luck, dream_image_url = await generate_text(text)
 
-    if user_cookie is None:
-        user_cookie = str(uuid.uuid4())  # 새로운 고유한 ID 생성
-
-    response_data = ApiResponse(
+    return ApiResponse(
         success=True,
         data=GPTResponse(
             dream_name=dream_name,
@@ -40,15 +28,6 @@ async def get_gpt_result(text: str, user_cookie: Optional[str] = Depends(cookie_
             image_url=dream_image_url
         )
     )
-
-    response = JSONResponse(content=response_data.dict())
-
-    if user_cookie is None:
-        response.set_cookie(key="user_cookie", value=user_cookie, max_age=60 * 60 * 24 * 30)  # 쿠키를 30일 동안 유지
-
-    print(user_cookie)
-
-    return response
 
 class PhoneNumberData(BaseModel):
     phoneNumber: str

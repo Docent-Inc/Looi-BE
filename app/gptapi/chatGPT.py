@@ -11,11 +11,9 @@ from app.db.dream import save_to_db
 with open("app/gptapi/gptkey.txt", "r") as f:
     openai.api_key = f.read().rstrip()
 
-async def generate_text(text: str, cookie: str) -> str:
+async def generate_text(text: str) -> str:
     start_time = time.time()  # 실행 시작 시간 기록
     L = []
-
-    print("cookie: ", cookie)
 
     async def get_time(name, start_time):
         print(f"{name} took {time.time() - start_time} seconds")
@@ -116,7 +114,7 @@ async def generate_text(text: str, cookie: str) -> str:
     )
     dream_name, dream, dream_resolution, today_luck = results
 
-    save_to_db(cookie, text, dream_name + dream, dream_resolution + today_luck) # , L[0])
+    save_to_db(text, dream_name + dream, dream_resolution + today_luck) # , L[0])
 
     await get_time("total", start_time)
 
