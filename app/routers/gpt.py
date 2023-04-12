@@ -39,7 +39,7 @@ async def get_gpt_result(text: str, user_cookie: Optional[str] = Cookie(None)) -
 
     response = JSONResponse(content=response_data.dict())
 
-    if not user_cookie:
+    if user_cookie is None:
         response.set_cookie(key="user_cookie", value=user_cookie, max_age=60 * 60 * 24 * 30)  # 쿠키를 30일 동안 유지
 
     print(user_cookie)
