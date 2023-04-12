@@ -13,7 +13,6 @@ class Dream(Base):
     __tablename__ = "dreams_pretotype"
 
     id = Column(Integer, primary_key=True)
-    cookie = Column(Text)
     text = Column(Text)
     dream_name = Column(Text)
     dream_resolution = Column(Text)
