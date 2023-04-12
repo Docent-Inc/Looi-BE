@@ -13,9 +13,12 @@ class Dream(Base):
     __tablename__ = "dreams_pretotype"
 
     id = Column(Integer, primary_key=True)
+    gender = Column(Text)
+    age = Column(Text)
+    mbti = Column(Text)
+    department = Column(Text)
     text = Column(Text)
     dream_name = Column(Text)
     dream_resolution = Column(Text)
-    # image_url = Column(LONGBLOB)
 
 Base.metadata.create_all(bind=engine)
