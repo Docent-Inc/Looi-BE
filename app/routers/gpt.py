@@ -13,7 +13,7 @@ engine = create_engine(DB_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
-router = APIRouter(prefix="/gpt")
+router = APIRouter(prefix="/api/gpt")
 @router.post("/survey", response_model=ApiResponse, tags=["gpt"])
 async def get_gpt_result(survey_data: SurveyData) -> GPTResponse:
     dream_name, dream, dream_resolution, today_luck, dream_image_url = await generate_text(survey_data.dream, survey_data)
