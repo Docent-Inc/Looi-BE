@@ -4,6 +4,10 @@ from app.routers import gpt, auth
 from app.schemas.common import ApiResponse
 from app.core.timing_middleware import TimingMiddleware
 from fastapi.middleware.cors import CORSMiddleware
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
