@@ -11,3 +11,4 @@ docker run -d --name docent-container -p 8000:8000 docent
 
 # 불필요한 Docker 이미지 정리
 docker image prune -f
+
