@@ -39,3 +39,4 @@ jobs:
             docker pull ssohye/docent:${GITHUB_SHA::7}
             docker tag ssohye/docent:${GITHUB_SHA::7} docent
             ./build.sh
+
