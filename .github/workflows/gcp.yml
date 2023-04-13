@@ -34,6 +34,8 @@ jobs:
           key: ${{ secrets.DMZ_GCP_KEY }}
           envs: GITHUB_SHA
           script: |
+            scp -i ~/.ssh/id_rsa build.sh ${{ secrets.DMZ_GCP_USER }}@${{ secrets.DMZ_GCP }}:~/
+            ssh -i ~/.ssh/id_rsa ${{ secrets.DMZ_GCP_USER }}@${{ secrets.DMZ_GCP }} './build.sh'
             docker pull ssohye/docent:${GITHUB_SHA::7}
             docker tag ssohye/docent:${GITHUB_SHA::7} docent
             ./build.sh
