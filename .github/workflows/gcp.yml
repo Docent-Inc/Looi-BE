@@ -25,6 +25,7 @@ jobs:
           docker build -t fastapi-cicd .
           docker tag fastapi-cicd ssohye/fastapi-cicd:${GITHUB_SHA::7}
           docker push ssohye/fastapi-cicd:${GITHUB_SHA::7}
+
       - name: Deploy
         uses: appleboy/ssh-action@master
         with:
@@ -33,6 +34,7 @@ jobs:
           key: ${{ secrets.DMZ_GCP_KEY }}
           envs: GITHUB_SHA
           script: |
+            ./build.sh
             docker pull ssohye/fastapi-cicd:${GITHUB_SHA::7}
             docker tag ssohye/fastapi-cicd:${GITHUB_SHA::7} fastapi-cicd
             docker stop server
