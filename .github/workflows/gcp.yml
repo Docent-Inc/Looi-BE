@@ -19,12 +19,12 @@ jobs:
           touch gptkey.txt
           echo ${{ secrets.GPT_KEY }} > gptkey.txt
 
-      - name: Docker build
+      - name: Docker build and push
         run: |
           docker login -u ${{ secrets.USERNAME }} -p ${{ secrets.PASSWORD }}
-          docker build -t fastapi-cicd .
-          docker tag fastapi-cicd ssohye/fastapi-cicd:${GITHUB_SHA::7}
-          docker push ssohye/fastapi-cicd:${GITHUB_SHA::7}
+          ./build.sh
+          docker tag docent ssohye/docent:${GITHUB_SHA::7}
+          docker push ssohye/docent:${GITHUB_SHA::7}
 
       - name: Deploy
         uses: appleboy/ssh-action@master
@@ -34,8 +34,6 @@ jobs:
           key: ${{ secrets.DMZ_GCP_KEY }}
           envs: GITHUB_SHA
           script: |
+            docker pull ssohye/docent:${GITHUB_SHA::7}
+            docker tag ssohye/docent:${GITHUB_SHA::7} docent
             ./build.sh
-            docker pull ssohye/fastapi-cicd:${GITHUB_SHA::7}
-            docker tag ssohye/fastapi-cicd:${GITHUB_SHA::7} fastapi-cicd
-            docker stop server
-            docker run -d --rm --name server -p 8000:8000 fastapi-cicd
