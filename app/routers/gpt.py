@@ -32,6 +32,7 @@ router = APIRouter(prefix="/gpt")
 
 @router.post("/survey", response_model=ApiResponse, tags=["gpt"])
 async def get_gpt_result(survey_data: SurveyData) -> GPTResponse:
+    print(survey_data)
     return ApiResponse(
         success=True,
         data=GPTResponse(
