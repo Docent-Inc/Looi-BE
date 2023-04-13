@@ -1,6 +1,6 @@
 from app.db.database import SessionLocal
 from app.models.dream import Dream
-from app.models.survey import SurveyData
+from app.schemas.survey import SurveyData
 def save_to_db(text, dream, dream_resolution, survey_data: SurveyData):
     session = SessionLocal()
     new_dream = Dream(

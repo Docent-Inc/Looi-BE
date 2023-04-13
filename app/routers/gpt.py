@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Body, Query
+from fastapi import APIRouter
 from app.gptapi.chatGPT import generate_text
 from app.schemas.gpt import GPTResponse
 from app.schemas.common import ApiResponse
@@ -6,7 +6,7 @@ from pydantic import BaseModel
 
 from sqlalchemy import create_engine
 from app.models.test import Dream
-from app.models.survey import SurveyData
+from app.schemas.survey import SurveyData
 from sqlalchemy.orm import declarative_base, sessionmaker
 DB_URL = 'mysql+pymysql://dmz:1234@swiftsjh.tplinkdns.com:3306/BMSM'
 engine = create_engine(DB_URL)
@@ -16,7 +16,7 @@ Base = declarative_base()
 router = APIRouter(prefix="/gpt")
 
 @router.post("/survey", response_model=ApiResponse, tags=["gpt"])
-async def get_gpt_result(survey_data: SurveyData = Body()) -> GPTResponse:
+async def get_gpt_result(survey_data: SurveyData) -> GPTResponse:
     dream_name, dream, dream_resolution, today_luck, dream_image_url = await generate_text(survey_data.dream, survey_data)
 
 
