@@ -16,6 +16,7 @@ async def generate_text(text: str, survay_data: SurveyData) -> str:
     if text.find("성한빈") != -1 or text.find("한빈") != -1 or text.find("장하오") != -1:
         return "그만해", "너 IP다 털렸다.", "수고해", "경찰서에서 보자", "https://www.police.go.kr/index.do"
 
+
     start_time = time.time()  # 실행 시작 시간 기록
     L = []
 
