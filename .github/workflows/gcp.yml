@@ -37,3 +37,13 @@ jobs:
             docker tag ssohye/fastapi-cicd:${GITHUB_SHA::7} fastapi-cicd
             docker stop server
             docker run -d --rm --name server -p 8000:8000 fastapi-cicd
+      - name: Execute build.sh
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.DMZ_GCP}}
+          username: ${{ secrets.DMZ_GCP_USER }}
+          key: ${{ secrets.DMZ_GCP_KEY }}
+          script: |
+            scp -i ~/.ssh/id_rsa build.sh ${{ secrets.DMZ_GCP_USER }}@${{ secrets.DMZ_GCP }}:~/build.sh
+            ssh -i ~/.ssh/id_rsa ${{ secrets.DMZ_GCP_USER }}@${{ secrets.DMZ_GCP }} './build.sh'
+
