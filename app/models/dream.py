@@ -13,8 +13,8 @@ class Dream(Base):
     __tablename__ = "dreams_pretotype"
 
     id = Column(Integer, primary_key=True)
-    gender = Column(Text)
-    age = Column(Text)
+    isRecord = Column(Text)
+    sex = Column(Text)
     mbti = Column(Text)
     department = Column(Text)
     text = Column(Text)
