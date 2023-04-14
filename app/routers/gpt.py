@@ -14,36 +14,21 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 router = APIRouter(prefix="/gpt")
-# @router.post("/survey", response_model=ApiResponse, tags=["gpt"])
-# async def get_gpt_result(survey_data: SurveyData) -> GPTResponse:
-#     dream_name, dream, dream_resolution, today_luck, dream_image_url = await generate_text(survey_data.dream, survey_data)
-#
-#
-#     return ApiResponse(
-#         success=True,
-#         data=GPTResponse(
-#             dream_name=dream_name,
-#             dream=dream,
-#             dream_resolution=dream_resolution,
-#             today_luck=today_luck,
-#             image_url=dream_image_url
-#         )
-#     )
-
 @router.post("/survey", response_model=ApiResponse, tags=["gpt"])
 async def get_gpt_result(survey_data: SurveyData) -> GPTResponse:
-    print(survey_data)
+    dream_name, dream, dream_resolution, today_luck, dream_image_url = await generate_text(survey_data.dream, survey_data)
+
+
     return ApiResponse(
         success=True,
         data=GPTResponse(
-            dream_name="Test dream_name",
-            dream="Test dream",
-            dream_resolution="Test dream_resolution",
-            today_luck="Test today_luck",
-            image_url="Test image_url"
+            dream_name=dream_name,
+            dream=dream,
+            dream_resolution=dream_resolution,
+            today_luck=today_luck,
+            image_url=dream_image_url
         )
     )
-
 
 class PhoneNumberData(BaseModel):
     phoneNumber: str

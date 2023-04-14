@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 class SurveyData(BaseModel):
     dream: str
-    gender: str
-    age: str
+    isRecord: str
+    sex: str
     mbti: str
     department: str
