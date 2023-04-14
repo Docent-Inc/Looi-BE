@@ -33,8 +33,6 @@ async def generate_text(text: str, survay_data: SurveyData) -> str:
         "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
         "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/test-555%40bold-landing-380312.iam.gserviceaccount.com"
     }
-
-
     async def upload_image_to_gcs(client, bucket_name, image_data, destination_blob_name):
         bucket = client.get_bucket(bucket_name)
         blob = bucket.blob(destination_blob_name)
