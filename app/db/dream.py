@@ -4,7 +4,10 @@ from app.schemas.survey import SurveyData
 def save_to_db(text, dream, dream_resolution, survey_data: SurveyData):
     session = SessionLocal()
     new_dream = Dream(
-        isRecord=survey_data.isRecord,
+        dreamTime=survey_data.dreamTime,
+        isRecordDream=survey_data.isRecordDream,
+        isShare=survey_data.isShare,
+        isRecordPlatform=survey_data.isRecordPlatform,
         sex=survey_data.sex,
         mbti=survey_data.mbti,
         department=survey_data.department,
