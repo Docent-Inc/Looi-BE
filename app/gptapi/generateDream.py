@@ -2,9 +2,11 @@ import openai
 import asyncio
 from app.core.openaikey import get_openai_key
 from app.gptapi.generateImg import create_img
+from app.db.models.dream import DreamText, DreamImage
+from app.db.database import get_db
 openai.api_key = get_openai_key()
 
-async def generate_text(text: str) -> str:
+async def generate_text(text: str, userId: int, db: get_db()) -> str:
     async def send_gpt_request(messages_prompt, retries=3):
         for i in range(retries):
             try:
@@ -51,14 +53,14 @@ async def generate_text(text: str) -> str:
         try:
             messages_prompt = [
                 {"role": "system", "content": message},
-                {"role": "system", "content": "꿈을 바탕으로 DALLE2에 넣을 프롬프트를 영어로 만들어줘, illustration라는 단어를 포함시켜줘"}
+                {"role": "system", "content": "이 꿈을 바탕으로 DALLE2에 넣을 프롬프트를 영어로 만들어줘, illustration라는 단어를 포함시켜줘"}
             ]
             chat = openai.ChatCompletion.create(model="gpt-4", messages=messages_prompt)
         except Exception as e:
             print(e)
             return "OpenAI API Error"
-        dream_image_data, dream_image_url = await create_img("test", chat.choices[0].message.content)
-        return dream_image_data, dream_image_url
+        dream_image_url = await create_img(chat.choices[0].message.content, userId)
+        return dream_image_url, chat.choices[0].message.content
 
     async def get_gpt_response_and_more(message: str):
         dream = await get_gpt_response(message)
@@ -72,10 +74,32 @@ async def generate_text(text: str) -> str:
         )
         return dream_name, dream, dream_resolution, today_luck
 
-    results, dream_image_url = await asyncio.gather(
+    results, L = await asyncio.gather(
         get_gpt_response_and_more(text),
         DALLE2(text)
     )
     dream_name, dream, dream_resolution, today_luck = results
+    dream_image_url, dream_image_prompt = L
+
+    # 데이터베이스에 DreamText 저장하기
+    dream_text = DreamText(
+        User_id=userId,
+        User_text=text,
+        dream_name=dream_name,
+        dream=dream,
+        DALLE2=dream_image_prompt
+    )
+    db.add(dream_text)
+    db.commit()
+    db.refresh(dream_text)
+
+    # 데이터베이스에 DreamImage 저장하기
+    dream_image = DreamImage(
+        Text_id=dream_text.id,
+        dream_image_url=dream_image_url
+    )
+    db.add(dream_image)
+    db.commit()
+    db.refresh(dream_image)
 
     return dream_name, dream, dream_resolution, today_luck, dream_image_url

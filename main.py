@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse
-from app.routers import generate, auth
+from app.routers import auth, generate
 from app.schemas.common import ApiResponse
 from app.core.timing_middleware import TimingMiddleware
 from fastapi.middleware.cors import CORSMiddleware

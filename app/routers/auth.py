@@ -1,18 +1,21 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-
+from fastapi.responses import JSONResponse
 from app import crud
 from app.db.database import get_db
 from app.core.config import settings
 from app.core.security import create_access_token
-from app.schemas.token import TokenData
+from app.schemas.response.token import TokenData
 from datetime import timedelta
 from app.crud import user
-from app.schemas.user import UserCreate
+from app.schemas.request.user import UserCreate
 from app.schemas.common import ApiResponse
 
 router = APIRouter(prefix="/auth")
+
+access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+
 @router.post("/login", response_model=ApiResponse, tags=["auth"])
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
@@ -28,13 +31,20 @@ async def login(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user.email}, expires_delta=access_token_expires
     )
 
-    return ApiResponse(success=True, data=TokenData(access_token=access_token, token_type="bearer"))
+    response_data = ApiResponse(success=True, data=TokenData(access_token=access_token, token_type="bearer"))
 
+    response = JSONResponse(content=response_data.dict())
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        max_age=access_token_expires.total_seconds(),
+    )
+    return response
 @router.post("/signup", response_model=ApiResponse, tags=["auth"])
 async def signup(
     user_data: UserCreate,
@@ -48,11 +58,8 @@ async def signup(
         )
 
     new_user = crud.user.create_user(db, user_data)
-
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": new_user.email}, expires_delta=access_token_expires
     )
-
-
     return ApiResponse(success=True, data=TokenData(access_token=access_token, token_type="bearer"))
