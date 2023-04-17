@@ -25,6 +25,7 @@ class DreamResolution(Base):
     id = Column(Integer, primary_key=True)
     Text_id = Column(Integer, nullable=False)
     dream_resolution = Column(Text, nullable=False)
+    today_checklist = Column(Text, nullable=False)
 
 def get_DreamBase():
     return Base

@@ -11,10 +11,8 @@ import time
 
 openai.api_key = get_openai_key()
 
-async def create_img(prompt: str, userId: int):
+async def generate_img(prompt: str, userId: int):
     SERVICE_ACCOUNT_INFO = load_bucket_credentials()
-    print(prompt)
-
     async def upload_image_to_gcp(client, bucket_name, image_file, destination_blob_name):
         bucket = client.get_bucket(bucket_name)
         blob = bucket.blob(destination_blob_name)
@@ -47,7 +45,8 @@ async def create_img(prompt: str, userId: int):
     dream_image_data = await download_image(dream_image_url)
 
     imgName = str(userId) + str(int(time.time()))
-    destination_blob_name = "testimg/" + imgName + ".png"  # 원하는 파일명을 지정하세요.
+    # TODO: 디렉토리 이름을 userid/imageName.png로 바꿔야함
+    destination_blob_name = "testimg/" + imgName + ".png"
     bucket_name = "docent"  # 구글 클라우드 버킷 이름을 지정하세요.
 
     client = create_storage_client_hardcoded()
