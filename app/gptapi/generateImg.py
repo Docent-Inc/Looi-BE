@@ -7,15 +7,20 @@ import requests
 from PIL import Image
 from google.cloud import storage
 from google.oauth2 import service_account
+import time
+
 openai.api_key = get_openai_key()
 
-async def create_img(imgName: str, prompt: str):
+async def create_img(prompt: str, userId: int):
     SERVICE_ACCOUNT_INFO = load_bucket_credentials()
+    print(prompt)
 
     async def upload_image_to_gcp(client, bucket_name, image_file, destination_blob_name):
         bucket = client.get_bucket(bucket_name)
         blob = bucket.blob(destination_blob_name)
         blob.upload_from_file(image_file)
+        blob.make_public()
+        return blob.public_url
 
     def create_storage_client_hardcoded():
         credentials = service_account.Credentials.from_service_account_info(SERVICE_ACCOUNT_INFO)
@@ -41,11 +46,12 @@ async def create_img(imgName: str, prompt: str):
     dream_image_url = await get_image_url(prompt)
     dream_image_data = await download_image(dream_image_url)
 
+    imgName = str(userId) + str(int(time.time()))
     destination_blob_name = "testimg/" + imgName + ".png"  # 원하는 파일명을 지정하세요.
     bucket_name = "docent"  # 구글 클라우드 버킷 이름을 지정하세요.
 
     client = create_storage_client_hardcoded()
     with BytesIO(dream_image_data) as image_file:
-        await upload_image_to_gcp(client, bucket_name, image_file, destination_blob_name)
+        bucket_image_url = await upload_image_to_gcp(client, bucket_name, image_file, destination_blob_name)
 
-    return dream_image_url
+    return bucket_image_url
