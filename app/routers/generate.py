@@ -19,9 +19,9 @@ async def get_text_data(textId: int, user_id: int, db: Session):
 
 @router.post("/dream", response_model=ApiResponse, tags=["generate"])
 async def generate_basic(
-    text: str,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    text: str, # 사용자가 입력한 텍스트
+    db: Session = Depends(get_db), # 데이터베이스 세션
+    current_user: User = Depends(get_current_user), # 로그인한 사용자의 정보
 ) -> BasicResponse:
     dream_name, dream, dream_image_url = await generate_text(text, current_user.id, db)
     return ApiResponse(
@@ -35,7 +35,7 @@ async def generate_basic(
 
 @router.post("/image", response_model=ApiResponse, tags=["generate"])
 async def generate_image(
-    textId: int,
+    textId: int, # 생성된 꿈 텍스트의 id
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> ImageResponse:
@@ -46,7 +46,7 @@ async def generate_image(
     if text_data is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="생성된 꿈이 없습니다.")
 
-    prompt = text_data.DALLE2
+    prompt = text_data.DALLE2 # 생성된 DALLE2 프롬프트 정보 불러오기
     dream_image_url = await generate_img(prompt, current_user.id)
     # 데이터베이스에 dream_image_url 저장
     dream_image = DreamImage(
@@ -65,7 +65,7 @@ async def generate_image(
 
 @router.post("/checklist", response_model=ApiResponse, tags=["generate"])
 async def generate_image(
-    textId: int,
+    textId: int, # 생성된 꿈 텍스트의 id
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> ImageResponse:
@@ -75,7 +75,7 @@ async def generate_image(
     if text_data is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="생성된 꿈이 없습니다.")
 
-    dream = text_data.dream
+    dream = text_data.dream # 생성된 꿈 정보 불러오기
     dream_resolution, today_checklist = await generate_checklist(textId, dream, db)
     return ApiResponse(
         success=True,
