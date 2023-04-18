@@ -6,9 +6,9 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from fastapi.security.api_key import APIKeyHeader
-from app import crud
 from app.db.database import get_db
-from app.schemas.response.user import User
+from app.db.models import User
+from typing import Optional
 from app.core.config import settings # .env파일에 저장된 secret key셋팅을 불러온다.
 
 API_KEY_NAME = "Authorization"
@@ -65,7 +65,7 @@ async def get_current_user(
     except JWTError:
         raise credentials_exception
 
-    user = crud.user.get_user_by_email(db, email=email) # email을 통해 유저를 가져온다.
+    user = get_user_by_email(db, email=email) # email을 통해 유저를 가져온다.
     if user is None:
         raise credentials_exception
     return user # 토큰을 복호화하여 유저 정보를 가져온다.
@@ -79,3 +79,6 @@ def create_refresh_token(data: dict, expires_delta: timedelta = None) -> str:
     to_encode.update({"exp": expire, "type": "refresh"}) # 토큰에 만료시간과 type을 추가
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM) # 토큰을 생성
     return encoded_jwt # 토큰을 반환
+
+def get_user_by_email(db: Session, email: str) -> Optional[User]:
+    return db.query(User).filter(User.email == email).first()
