@@ -8,10 +8,10 @@ from PIL import Image
 from google.cloud import storage
 from google.oauth2 import service_account
 import time
-
 openai.api_key = get_openai_key()
 
 async def generate_img(prompt: str, userId: int):
+    '''
     SERVICE_ACCOUNT_INFO = load_bucket_credentials()
     async def upload_image_to_gcp(client, bucket_name, image_file, destination_blob_name):
         bucket = client.get_bucket(bucket_name)
@@ -52,5 +52,6 @@ async def generate_img(prompt: str, userId: int):
     client = create_storage_client_hardcoded()
     with BytesIO(dream_image_data) as image_file:
         bucket_image_url = await upload_image_to_gcp(client, bucket_name, image_file, destination_blob_name)
-
+    '''
+    bucket_image_url = "test_url"
     return bucket_image_url
