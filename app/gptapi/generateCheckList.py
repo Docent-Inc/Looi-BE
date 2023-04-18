@@ -3,6 +3,7 @@ from app.gptapi.gptRequset import send_gpt_request
 from app.db.database import get_db
 from app.db.models.dream import DreamResolution
 async def generate_checklist(TextId: int, dream: str, db: get_db()) -> str:
+    '''
     async def get_dream_resolution(message: str) -> str:
         messages_prompt = [
             {"role": "system", "content": message},
@@ -27,6 +28,9 @@ async def generate_checklist(TextId: int, dream: str, db: get_db()) -> str:
             get_dream_resolution(dream),
             get_today_checklist(dream)
     )
+    '''
+    dream_resolution = "test"
+    today_checklist = "test"
 
     data = DreamResolution(
         Text_id=TextId,

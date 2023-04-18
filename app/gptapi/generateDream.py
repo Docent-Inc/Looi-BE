@@ -6,6 +6,7 @@ from app.db.database import get_db
 from app.gptapi.gptRequset import send_gpt_request
 
 async def generate_text(text: str, userId: int, db: get_db()) -> str:
+    '''
     async def get_gpt_response(message: str) -> str:
         messages_prompt = [
             {"role": "system", "content": "당신은 내 조각난 꿈을 완성시켜줄거야. 나 대신에 꿈을 약간의 스토리텔링을 통해 한국어로 만들어줄거야"},
@@ -36,6 +37,12 @@ async def generate_text(text: str, userId: int, db: get_db()) -> str:
     dream_name = dream[dream.find("[") + 1:dream.find("]")]
     dream = dream[dream.find("]") + 1:]
     dream_image_url, dream_image_prompt = L
+    '''
+
+    dream = "test"
+    dream_name = "test"
+    dream_image_url = "test"
+    dream_image_prompt = "test"
 
     # 데이터베이스에 DreamText 저장하기
     dream_text = DreamText(
