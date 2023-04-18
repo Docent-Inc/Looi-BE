@@ -19,9 +19,9 @@ def create_user(db: Session, user: UserCreate) -> User:
     return db_user
 
 def authenticate_user(db: Session, email: str, password: str) -> Optional[User]:
-    user = get_user_by_email(db, email)
+    user = get_user_by_email(db, email) # 이메일로 사용자 정보 가져오기
     if not user:
         return None
-    if not verify_password(password, user.hashed_password):
+    if not verify_password(password, user.hashed_password): # 비밀번호 확인
         return None
     return user

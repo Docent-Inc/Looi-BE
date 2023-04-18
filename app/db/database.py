@@ -17,7 +17,7 @@ Base.metadata.create_all(bind=engine)  # 테이블 생성
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-def get_db() -> Session:
+def get_db() -> Session: # db 세션 생성
     db = SessionLocal()
     try:
         yield db
