@@ -7,3 +7,6 @@ class User(BaseModel):
 
     class Config:
         orm_mode = True
+
+class PasswordChangeResponse(BaseModel):
+    message: str

@@ -12,7 +12,7 @@ from app.schemas.common import ApiResponse
 from app.auth.user import get_user_by_email, create_user, authenticate_user
 from app.schemas.request.user import UserCreate, PasswordChangeRequest
 from app.core.security import get_current_user, verify_password, get_password_hash
-from app.schemas.response.user import User
+from app.schemas.response.user import User, PasswordChangeResponse
 
 router = APIRouter(prefix="/auth")
 access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -112,4 +112,4 @@ async def change_password(
     db.add(current_user)
     db.commit()
 
-    return ApiResponse(success=True, data="Password changed successfully")
+    return ApiResponse(success=True, data=PasswordChangeResponse(message="Password changed successfully"))
