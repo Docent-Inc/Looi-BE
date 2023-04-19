@@ -3,6 +3,7 @@ from app.gptapi.chatGPT import generate_text
 from app.schemas.gpt import GPTResponse
 from app.schemas.common import ApiResponse
 from pydantic import BaseModel
+import time
 
 from sqlalchemy import create_engine
 from app.models.test import Dream
@@ -16,6 +17,7 @@ Base = declarative_base()
 router = APIRouter(prefix="/gpt")
 @router.post("/survey", response_model=ApiResponse, tags=["gpt"])
 async def get_gpt_result(survey_data: SurveyData) -> GPTResponse:
+    print(time.strftime("%H:%M:%S", time.localtime())+"에 요청됨")
     dream_name, dream, dream_resolution, today_luck, dream_image_url = await generate_text(survey_data.dream, survey_data)
 
     return ApiResponse(
