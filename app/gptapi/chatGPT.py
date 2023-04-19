@@ -36,7 +36,7 @@ async def generate_text(text: str, survey_data: SurveyData) -> str:
     async def get_time(name, start_time):
         print(f"{name} took {time.time() - start_time} seconds")
 
-    async def send_gpt_request(messages_prompt, retries=3):
+    async def send_gpt_request(messages_prompt, retries=2):
         for i in range(retries):
             try:
                 chat = openai.ChatCompletion.create(model="gpt-4", messages=messages_prompt)
@@ -48,6 +48,7 @@ async def generate_text(text: str, survey_data: SurveyData) -> str:
                 else:
                     print("Failed to get response after maximum retries")
                     return "ERROR"
+                await asyncio.sleep(1)
 
     async def get_gpt_response_and_more(message: str):
         dream = await get_gpt_response(message)
