@@ -8,6 +8,7 @@ from app.db.database import SessionLocal
 with open("app/gptapi/gptkey.txt", "r") as f:
     openai.api_key = f.read().rstrip()
 
+
 async def save_to_db_async(text, dream, dream_resolution, survey_data):
     def save_to_db(text, dream, dream_resolution, survey_data: SurveyData):
         session = SessionLocal()
