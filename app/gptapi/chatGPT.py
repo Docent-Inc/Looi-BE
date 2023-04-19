@@ -128,8 +128,8 @@ async def generate_text(text: str, survay_data: SurveyData) -> str:
             print(e)
             return "OpenAI API Error"
         dream_image_url = await get_image_url(chat.choices[0].message.content)
-        dream_image_data = await download_image(dream_image_url)
-        dream_image = " "
+        # dream_image_data = await download_image(dream_image_url)
+        dream_image_data = " "
         await get_time("DALLE2", start_time)
         return [dream_image_data, dream_image_url]
 
@@ -146,8 +146,8 @@ async def generate_text(text: str, survay_data: SurveyData) -> str:
         credentials = service_account.Credentials.from_service_account_info(SERVICE_ACCOUNT_INFO)
         return storage.Client(credentials=credentials, project=SERVICE_ACCOUNT_INFO['project_id'])
 
-    client = create_storage_client_hardcoded()
-    await upload_image_to_gcs(client, bucket_name, dream_image_data, destination_blob_name)
+    # client = create_storage_client_hardcoded()
+    # await upload_image_to_gcs(client, bucket_name, dream_image_data, destination_blob_name)
 
     save_to_db(text, dream_name + dream, dream_resolution + today_luck, survay_data)
 
