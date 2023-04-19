@@ -15,4 +15,5 @@ class Dream(Base):
     phone = Column(Text)
     dreamName = Column(Text)
 
+
 Base.metadata.create_all(bind=engine)
