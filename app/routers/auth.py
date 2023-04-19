@@ -68,7 +68,7 @@ async def login(
         key="access_token",
         value=access_token,
         httponly=True,
-        max_age=access_token_expires.total_seconds(), # 쿠키의 만료 기간을 설정합니다.
+        max_age=access_token_expires.total_seconds() # 쿠키의 만료 기간을 설정합니다.
     )
     return response
 @router.post("/refresh-token", response_model=ApiResponse, tags=["auth"])
