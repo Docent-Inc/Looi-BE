@@ -54,10 +54,9 @@ async def generate_text(text: str, survey_data: SurveyData) -> str:
             return "ERROR"
         dream_name = dream[dream.find("[") + 1:dream.find("]")]
         dream = dream[dream.find("]") + 1:]
-        dream_resolution, today_luck = await asyncio.gather(
-            get_dream_resolution(dream),
-            get_today_luck(dream)
-        )
+        dream_resolution_task = asyncio.create_task(get_dream_resolution(dream))
+        today_luck_task = asyncio.create_task(get_today_luck(dream))
+        dream_resolution, today_luck = await asyncio.gather(dream_resolution_task, today_luck_task)
         return dream_name, dream, dream_resolution, today_luck
 
     async def get_gpt_response(message: str) -> str:
