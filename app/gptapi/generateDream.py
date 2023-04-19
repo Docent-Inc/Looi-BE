@@ -4,6 +4,7 @@ from app.gptapi.generateImg import generate_img
 from app.db.models.dream import DreamText, DreamImage
 from app.db.database import get_db
 from app.gptapi.gptRequset import send_gpt_request
+import time
 
 async def generate_text(text: str, userId: int, db: get_db()) -> str:
     '''
@@ -50,7 +51,9 @@ async def generate_text(text: str, userId: int, db: get_db()) -> str:
         User_text=text,
         dream_name=dream_name,
         dream=dream,
-        DALLE2=dream_image_prompt
+        DALLE2=dream_image_prompt,
+        date=time.strftime('%Y%m%d%H%M%S', time.localtime(time.time())),
+        is_deleted=False
     )
     db.add(dream_text)
     db.commit()

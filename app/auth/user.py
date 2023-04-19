@@ -10,7 +10,10 @@ def create_user(db: Session, user: UserCreate) -> User:
     db_user = User(
         nickName=user.nickName,
         email=user.email,
-        hashed_password=hashed_password)
+        hashed_password=hashed_password,
+        is_active=True,
+        is_deleted=False
+    )
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
