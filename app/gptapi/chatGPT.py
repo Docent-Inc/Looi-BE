@@ -1,3 +1,4 @@
+from typing import Tuple
 import openai
 import asyncio
 import time
@@ -9,7 +10,7 @@ with open("app/gptapi/gptkey.txt", "r") as f:
     openai.api_key = f.read().rstrip()
 
 
-async def save_to_db_async(text, dream, dream_resolution, survey_data):
+async def save_to_db_async(text, dream, dream_resolution, survey_data) -> Tuple[str, str, str, str, str]:
     def save_to_db(text, dream, dream_resolution, survey_data: SurveyData):
         session = SessionLocal()
         new_dream = Dream(
@@ -115,15 +116,17 @@ async def generate_text(text: str, survey_data: SurveyData) -> str:
         await get_time("DALLE2", start_time)
         return dream_image_url
 
-    results, dream_image_url = await asyncio.gather(
-        get_gpt_response_and_more(text),
-        DALLE2(text)
-    )
-    dream_name, dream, dream_resolution, today_luck = results
+    async def run_concurrently():
+        results, dream_image_url = await asyncio.gather(
+            get_gpt_response_and_more(text),
+            DALLE2(text)
+        )
+        return results + (dream_image_url,)
+
+    dream_name, dream, dream_resolution, today_luck, dream_image_url = await run_concurrently()
 
     db_task = asyncio.create_task(
         save_to_db_async(text, dream_name + dream, dream_resolution + today_luck, survey_data))
     await get_time("total", start_time)
 
     return dream_name, dream, dream_resolution, today_luck, dream_image_url
-
