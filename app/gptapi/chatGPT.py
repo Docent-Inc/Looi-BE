@@ -71,7 +71,7 @@ async def generate_text(text: str, survey_data: SurveyData) -> str:
             {"role": "system", "content": "당신은 내 조각난 꿈을 완성시켜줄거야. 나 대신에 꿈을 약간의 스토리텔링을 통해 한국어로 만들어줄거야"},
             {"role": "system",
              "content": "꿈 제목은 창의적인 제목으로 너가 정해주고, 꿈 내용은 1인칭 시점으로 작성해줘, 만약 내용이 짧으면 추가적인 내용을 만들어줘"},
-            {"role": "system", "content": "꿈 내용은 110자가 넘지 않도록 만들어줘"},
+            {"role": "system", "content": "꿈 내용은 90자가 넘지 않도록 만들어줘"},
             {"role": "system", "content": "꿈 제목은 []로 감싸주고 이어서 내용을 만들어줘"}, {"role": "user", "content": message}]
         response = await send_gpt_request(messages_prompt)
         asyncio.create_task(get_time("Dream text", start_time))
