@@ -2,13 +2,13 @@ from typing import Tuple
 import openai
 import asyncio
 import time
+import os
+from dotenv import load_dotenv
 from app.schemas.survey import SurveyData
 from app.models.dream import Dream
 from app.db.database import SessionLocal
-# gptkey.txt 파일 읽어오기
-with open("app/gptapi/gptkey.txt", "r") as f:
-    openai.api_key = f.read().rstrip()
-
+load_dotenv()
+openai.api_key = os.getenv("GPT_API_KEY")
 
 async def save_to_db_async(text, dream, dream_resolution, survey_data) -> Tuple[str, str, str, str, str]:
     def save_to_db(text, dream, dream_resolution, survey_data: SurveyData):
@@ -39,7 +39,11 @@ async def generate_text(text: str, survey_data: SurveyData) -> str:
     async def send_gpt_request(messages_prompt, retries=2):
         for i in range(retries):
             try:
-                chat = openai.ChatCompletion.create(model="gpt-4", messages=messages_prompt)
+                chat = await asyncio.to_thread(
+                    openai.ChatCompletion.create,
+                    model="gpt-4",
+                    messages=messages_prompt
+                )
                 return chat.choices[0].message.content
             except Exception as e:
                 print(e)
