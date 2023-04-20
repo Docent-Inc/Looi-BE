@@ -4,22 +4,28 @@ from app.schemas.gpt import GPTResponse
 from app.schemas.common import ApiResponse
 from pydantic import BaseModel
 import time
-
+from datetime import datetime
 from sqlalchemy import create_engine
 from app.models.test import Dream
 from app.schemas.survey import SurveyData
 from sqlalchemy.orm import declarative_base, sessionmaker
+import pytz
 DB_URL = 'mysql+pymysql://dmz:1234@swiftsjh.tplinkdns.com:3306/BMSM'
 engine = create_engine(DB_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
+# 한국 시간대 설정
+korea_timezone = pytz.timezone("Asia/Seoul")
+# 현재 시간을 한국 시간대로 변환
+korea_time = datetime.now(korea_timezone)
+# 시간을 문자열로 변환
+formatted_time = korea_time.strftime("%H:%M:%S")
 
 router = APIRouter(prefix="/gpt")
 @router.post("/survey", response_model=ApiResponse, tags=["gpt"])
 async def get_gpt_result(survey_data: SurveyData) -> GPTResponse:
-    print(time.strftime("%H:%M:%S", time.localtime())+"에 요청됨")
+    print(f"{formatted_time}에 요청됨")
     dream_name, dream, dream_resolution, today_luck, dream_image_url = await generate_text(survey_data.dream, survey_data)
-
     return ApiResponse(
         success=True,
         data=GPTResponse(

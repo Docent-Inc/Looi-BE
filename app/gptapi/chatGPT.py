@@ -60,10 +60,11 @@ async def generate_text(text: str, survey_data: SurveyData) -> str:
             return "ERROR"
         dream_name = dream[dream.find("[") + 1:dream.find("]")]
         dream = dream[dream.find("]") + 1:]
-        dream_resolution_task = asyncio.create_task(get_dream_resolution(dream))
+        dream_image_url = asyncio.create_task(DALLE2(dream))
         today_luck_task = asyncio.create_task(get_today_luck(dream))
-        dream_resolution, today_luck = await asyncio.gather(dream_resolution_task, today_luck_task)
-        return dream_name, dream, dream_resolution, today_luck
+        dream_resolution_task = asyncio.create_task(get_dream_resolution(dream))
+        dream_resolution, today_luck, dream_image_url = await asyncio.gather(dream_resolution_task, today_luck_task, dream_image_url)
+        return dream_name, dream, dream_resolution, today_luck, dream_image_url
 
     async def get_gpt_response(message: str) -> str:
         messages_prompt = [
@@ -73,7 +74,7 @@ async def generate_text(text: str, survey_data: SurveyData) -> str:
             {"role": "system", "content": "꿈 내용은 120자가 넘지 않도록 만들어줘"},
             {"role": "system", "content": "꿈 제목은 []로 감싸주고 이어서 내용을 만들어줘"}, {"role": "user", "content": message}]
         response = await send_gpt_request(messages_prompt)
-        await get_time("get_gpt_response", start_time)
+        asyncio.create_task(get_time("Dream text", start_time))
         return response
 
     async def get_image_url(prompt):
@@ -93,7 +94,7 @@ async def generate_text(text: str, survey_data: SurveyData) -> str:
             {"role": "system", "content": "꿈 해몽은 70자가 넘지 않도록 해줘"},
         ]
         response = await send_gpt_request(messages_prompt)
-        await get_time("get_dream_resolution", start_time)
+        asyncio.create_task(get_time("Resolution dream", start_time))
         return response
 
     async def get_today_luck(message: str) -> str:
@@ -105,7 +106,7 @@ async def generate_text(text: str, survey_data: SurveyData) -> str:
             {"role": "system", "content": "오늘은 으로 시작해줘"},
         ]
         response = await send_gpt_request(messages_prompt)
-        await get_time("get_today_luck", start_time)
+        asyncio.create_task(get_time("Today luck", start_time))
         return response
     async def DALLE2(message: str) -> str:
         try:
@@ -118,20 +119,12 @@ async def generate_text(text: str, survey_data: SurveyData) -> str:
             print(e)
             return "OpenAI API Error"
         dream_image_url = await get_image_url(chat.choices[0].message.content)
-        await get_time("DALLE2", start_time)
+        asyncio.create_task(get_time("DALLE2 image", start_time))
         return dream_image_url
 
-    async def run_concurrently():
-        results, dream_image_url = await asyncio.gather(
-            get_gpt_response_and_more(text),
-            DALLE2(text)
-        )
-        return results + (dream_image_url,)
+    dream_name, dream, dream_resolution, today_luck, dream_image_url = await get_gpt_response_and_more(text)
 
-    dream_name, dream, dream_resolution, today_luck, dream_image_url = await run_concurrently()
+    asyncio.create_task(save_to_db_async(text, dream_name + dream, dream_resolution + today_luck, survey_data))
 
-    db_task = asyncio.create_task(
-        save_to_db_async(text, dream_name + dream, dream_resolution + today_luck, survey_data))
-    await get_time("total", start_time)
-
+    asyncio.create_task(get_time("Total", start_time))
     return dream_name, dream, dream_resolution, today_luck, dream_image_url
