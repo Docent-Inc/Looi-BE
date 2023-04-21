@@ -74,7 +74,7 @@ async def generate_text(text: str, survey_data: SurveyData) -> str:
             {"role": "system", "content": "꿈 내용은 90자가 넘지 않도록 만들어줘"},
             {"role": "system", "content": "꿈 제목은 []로 감싸주고 이어서 내용을 만들어줘"}, {"role": "user", "content": message}]
         response = await send_gpt_request(messages_prompt)
-        asyncio.create_task(get_time("Dream text", start_time))
+        await get_time("Dream text", start_time)
         return response
 
     async def get_image_url(prompt):
@@ -94,7 +94,7 @@ async def generate_text(text: str, survey_data: SurveyData) -> str:
             {"role": "system", "content": "꿈 해몽은 60자가 넘지 않도록 해줘"},
         ]
         response = await send_gpt_request(messages_prompt)
-        asyncio.create_task(get_time("Resolution dream", start_time))
+        await get_time("Resolution dream", start_time)
         return response
 
     async def get_today_luck(message: str) -> str:
@@ -106,7 +106,7 @@ async def generate_text(text: str, survey_data: SurveyData) -> str:
             {"role": "system", "content": "오늘은 으로 시작해줘"},
         ]
         response = await send_gpt_request(messages_prompt)
-        asyncio.create_task(get_time("Today luck", start_time))
+        await get_time("Today luck", start_time)
         return response
     async def DALLE2(message: str) -> str:
         try:
@@ -119,12 +119,12 @@ async def generate_text(text: str, survey_data: SurveyData) -> str:
             print(e)
             return "OpenAI API Error"
         dream_image_url = await get_image_url(chat.choices[0].message.content)
-        asyncio.create_task(get_time("DALLE2 image", start_time))
+        await get_time("DALLE2 image", start_time)
         return dream_image_url
 
     dream_name, dream, dream_resolution, today_luck, dream_image_url = await get_gpt_response_and_more(text)
 
     asyncio.create_task(save_to_db_async(text, dream_name + dream, dream_resolution + today_luck, survey_data))
 
-    asyncio.create_task(get_time("Total", start_time))
+    await get_time("Total", start_time)
     return dream_name, dream, dream_resolution, today_luck, dream_image_url
