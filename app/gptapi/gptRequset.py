@@ -1,6 +1,8 @@
 import openai
-from app.core.openaikey import get_openai_key
-openai.api_key = get_openai_key()
+from dotenv import load_dotenv
+import os
+load_dotenv()
+openai.api_key = os.getenv("GPT_API_KEY")
 
 async def send_gpt_request(messages_prompt, retries=3):
     for i in range(retries):

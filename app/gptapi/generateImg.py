@@ -1,6 +1,3 @@
-import openai
-from app.core.openaikey import get_openai_key
-from app.core.bucket import load_bucket_credentials
 from io import BytesIO
 import asyncio
 import requests
@@ -8,11 +5,17 @@ from PIL import Image
 from google.cloud import storage
 from google.oauth2 import service_account
 import time
-openai.api_key = get_openai_key()
+import openai
+from dotenv import load_dotenv
+import os
+import pytz
+from datetime import datetime
+import json
+load_dotenv()
+openai.api_key = os.getenv("GPT_API_KEY")
+SERVICE_ACCOUNT_INFO = json.loads(os.getenv('GOOGLE_APPLICATION_CREDENTIALS_JSON'))
 
 async def generate_img(prompt: str, userId: int):
-    '''
-    SERVICE_ACCOUNT_INFO = load_bucket_credentials()
     async def upload_image_to_gcp(client, bucket_name, image_file, destination_blob_name):
         bucket = client.get_bucket(bucket_name)
         blob = bucket.blob(destination_blob_name)
@@ -44,7 +47,10 @@ async def generate_img(prompt: str, userId: int):
     dream_image_url = await get_image_url(prompt)
     dream_image_data = await download_image(dream_image_url)
 
-    imgName = str(userId) + str(int(time.time()))
+    korea_timezone = pytz.timezone("Asia/Seoul")
+    korea_time = datetime.now(korea_timezone)
+    formatted_time = korea_time.strftime("%Y%m%d%H%M%S")
+    imgName = str(formatted_time) + str(userId)
     # TODO: 디렉토리 이름을 userid/imageName.png로 바꿔야함
     destination_blob_name = "testimg/" + imgName + ".png"
     bucket_name = "docent"  # 구글 클라우드 버킷 이름을 지정하세요.
@@ -52,6 +58,5 @@ async def generate_img(prompt: str, userId: int):
     client = create_storage_client_hardcoded()
     with BytesIO(dream_image_data) as image_file:
         bucket_image_url = await upload_image_to_gcp(client, bucket_name, image_file, destination_blob_name)
-    '''
     bucket_image_url = "test_url"
     return bucket_image_url
