@@ -17,7 +17,7 @@ async def get_text_data(textId: int, user_id: int, db: Session):
     # 쿼리를 실행한 후, 해당하는 데이터가 없으면 None을 반환하고, 데이터가 있으면 해당 데이터를 반환하세요.
     return text_data
 
-@router.post("/dream", response_model=ApiResponse, tags=["generate"])
+@router.post("/dream", response_model=ApiResponse, tags=["Generate"])
 async def generate_basic(
     text: str, # 사용자가 입력한 텍스트
     db: Session = Depends(get_db), # 데이터베이스 세션
@@ -33,7 +33,7 @@ async def generate_basic(
         )
     )
 
-@router.post("/image", response_model=ApiResponse, tags=["generate"])
+@router.post("/image", response_model=ApiResponse, tags=["Generate"])
 async def generate_image(
     textId: int, # 생성된 꿈 텍스트의 id
     current_user: User = Depends(get_current_user),
@@ -63,7 +63,7 @@ async def generate_image(
         )
     )
 
-@router.post("/checklist", response_model=ApiResponse, tags=["generate"])
+@router.post("/checklist", response_model=ApiResponse, tags=["Generate"])
 async def generate_image(
     textId: int, # 생성된 꿈 텍스트의 id
     current_user: User = Depends(get_current_user),

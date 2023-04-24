@@ -18,7 +18,7 @@ router = APIRouter(prefix="/auth")
 access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
 refresh_token_expires = timedelta(days=7)  # 리프레시 토큰 만료 기간을 설정합니다.
 
-@router.post("/signup", response_model=ApiResponse, tags=["auth"])
+@router.post("/signup", response_model=ApiResponse, tags=["Auth"])
 async def signup(
     user_data: UserCreate, # UserCreate 스키마를 사용합니다.
     db: Session = Depends(get_db), # 데이터베이스 세션을 받아옵니다.
@@ -40,7 +40,7 @@ async def signup(
     )
     return ApiResponse(success=True, data=TokenData(access_token=access_token, token_type="bearer", refresh_token=refresh_token))
 
-@router.post("/login", response_model=ApiResponse, tags=["auth"])
+@router.post("/login", response_model=ApiResponse, tags=["Auth"])
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(), # OAuth2PasswordRequestForm을 사용합니다.
     db: Session = Depends(get_db),
@@ -71,7 +71,7 @@ async def login(
         max_age=access_token_expires.total_seconds() # 쿠키의 만료 기간을 설정합니다.
     )
     return response
-@router.post("/refresh-token", response_model=ApiResponse, tags=["auth"])
+@router.post("/refresh-token", response_model=ApiResponse, tags=["Auth"])
 async def refresh_token(
     token_refresh: TokenRefresh, # TokenRefresh 스키마를 사용합니다.
     db: Session = Depends(get_db),
@@ -94,7 +94,7 @@ async def refresh_token(
 
     return ApiResponse(success=True, data=TokenData(access_token=access_token, token_type="bearer"))
 
-@router.post("/setpw", response_model=ApiResponse, tags=["auth"])
+@router.post("/setpw", response_model=ApiResponse, tags=["Auth"])
 async def change_password(
     password_change_request: PasswordChangeRequest,
     current_user: User = Depends(get_current_user),
