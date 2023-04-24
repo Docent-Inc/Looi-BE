@@ -31,6 +31,7 @@ jobs:
             docker rmi $(docker images -q) || true
             docker pull ssohye/docent:${GITHUB_SHA::7}
             docker tag ssohye/docent:${GITHUB_SHA::7} docent
-            docker stop server
+            docker stop server || true
+            docker rm server || true
             # Use ssohye/docent:${GITHUB_SHA::7} instead of docent:latest
             docker run -d --rm --name server -p 8000:8000 docent
