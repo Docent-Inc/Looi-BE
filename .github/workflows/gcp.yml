@@ -28,8 +28,7 @@ jobs:
           envs: GITHUB_SHA
           script: |
             # Stop and remove the existing server container
-            sudo docker stop server || true
-            sudo docker rm server || true
+            sudo docker stop server
 
             # Remove all existing Docker images on the target host
             sudo docker rmi -f $(sudo docker images -q) || true
@@ -39,4 +38,4 @@ jobs:
             sudo docker tag ssohye/docent:${GITHUB_SHA::7} docent
 
             # Run the new image
-            sudo docker run -it --name server -p 8000:8000 docent
+            sudo docker run -d --rm --name server -p 8000:8000 docent
