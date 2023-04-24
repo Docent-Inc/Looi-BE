@@ -8,7 +8,7 @@ from app.schemas.request.crud import Create
 from app.crud.diary import createDiary
 router = APIRouter(prefix="/diary")
 
-@router.post("/create", response_model=ApiResponse, tags=["generate"])
+@router.post("/create", response_model=ApiResponse, tags=["Diary"])
 async def create_diary(
     create: Create,
     db: Session = Depends(get_db),
