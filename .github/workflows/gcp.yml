@@ -27,8 +27,8 @@ jobs:
           key: ${{ secrets.DMZ_GCP_KEY }}
           envs: GITHUB_SHA
           script: |
-            docker pull docent:${GITHUB_SHA::7}
-            docker tag docent:${GITHUB_SHA::7} docent
+            docker pull ssohye/docent:${GITHUB_SHA::7}
+            docker tag ssohye/docent:${GITHUB_SHA::7} docent
             docker stop server || true
             docker rm server || true
             docker run -d --rm --name server -p 8000:8000 docent
