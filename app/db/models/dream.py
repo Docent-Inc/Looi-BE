@@ -11,7 +11,7 @@ class DreamText(Base):
     User_text = Column(String(255), nullable=False)
     dream_name = Column(String(20), nullable=False)
     dream = Column(Text, nullable=False)
-    DALLE2 = Column(String(30), nullable=False)
+    DALLE2 = Column(String(40), nullable=False)
     date = Column(String(14), nullable=False)
     is_deleted = Column(Boolean, default=False)
 

@@ -13,12 +13,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: Make gptkey.txt
-        run : |
-          cd ./keyfiles
-          touch gptkey.txt
-          echo ${{ secrets.GPT_KEY }} > gptkey.txt
-
       - name: Docker build
         run: |
           docker login -u ${{ secrets.USERNAME }} -p ${{ secrets.PASSWORD }}
