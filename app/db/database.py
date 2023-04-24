@@ -1,17 +1,23 @@
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import sessionmaker, Session
+from app.db.models.diary import get_DiaryBase
 
-DB_URL = 'mysql+pymysql://dmz:1234@swiftsjh.tplinkdns.com:3306/BMSM'
+PUBLIC_IP_ADDRESS = '34.64.33.205' # gcp sdl database
+DB_USER = 'docent'
+DB_PASSWORD = 'cocone0331'
+DB_NAME = 'test'
 
+# TCP 연결을 사용하여 인스턴스에 연결
+DB_URL = f'mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{PUBLIC_IP_ADDRESS}/{DB_NAME}'
 engine = create_engine(DB_URL, pool_recycle=500)
+
+Base = get_DiaryBase()
+# Base.metadata.drop_all(bind=engine) # 테이블 변경 사항 있을 시 주석 제거
+Base.metadata.create_all(bind=engine)  # 테이블 생성
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-Base = declarative_base()
-Base.metadata.create_all(bind=engine)
-
-def get_db() -> Session:
+def get_db() -> Session: # db 세션 생성
     db = SessionLocal()
     try:
         yield db
