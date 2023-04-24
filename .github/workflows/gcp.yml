@@ -30,13 +30,13 @@ jobs:
             # Stop and remove the existing server container
             sudo docker stop server || true
             sudo docker rm server || true
-            
+
             # Remove all existing Docker images on the target host
-            sudo docker rmi $(sudo docker images -q) || true
-            
+            sudo docker rmi -f $(sudo docker images -q) || true
+
             # Pull the new image
             sudo docker pull ssohye/docent:${GITHUB_SHA::7}
             sudo docker tag ssohye/docent:${GITHUB_SHA::7} docent
-            
+
             # Run the new image
             sudo docker run -d --rm --name server -p 8000:8000 docent
