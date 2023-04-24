@@ -33,4 +33,5 @@ jobs:
             docker tag ssohye/docent:${GITHUB_SHA::7} docent
             docker stop server || true
             docker rm server || true
-            docker run -d --rm --name server -p 8000:8000 ssohye/docent
+            # Use ssohye/docent:${GITHUB_SHA::7} instead of docent:latest
+            docker run -d --rm --name server -p 8000:8000 ssohye/docent:${GITHUB_SHA::7}
