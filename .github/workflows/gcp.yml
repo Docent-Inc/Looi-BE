@@ -27,8 +27,10 @@ jobs:
           key: ${{ secrets.DMZ_GCP_KEY }}
           envs: GITHUB_SHA
           script: |
+            # Remove all existing Docker images on the target host
+            docker rmi $(docker images -q) || true
             docker pull ssohye/docent:${GITHUB_SHA::7}
             docker tag ssohye/docent:${GITHUB_SHA::7} docent
             docker stop server || true
             docker rm server || true
-            docker run -d --rm --name server -p 8000:8000 docent
+            docker run -d --rm --name server -p 8000:8000 ssohye/docent
