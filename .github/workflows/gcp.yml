@@ -47,7 +47,6 @@ jobs:
                 sudo docker stop ${NEW_SERVICE}
             fi
 
-
             # Determine the new port
             if [ "$NEW_SERVICE" = "blue" ]; then
               NEW_PORT="8001"
@@ -77,5 +76,5 @@ jobs:
             echo "${NEW_SERVICE}" > current_service.txt
 
             # Cleanup old images
-            echo "🧹 Cleaning up old Docker images"
-            sudo docker rmi -f $(sudo docker images -q) || true
+            # echo "🧹 Cleaning up old Docker images"
+            # sudo docker rmi -f $(sudo docker images -q) || true
