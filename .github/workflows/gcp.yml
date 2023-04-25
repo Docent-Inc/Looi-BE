@@ -28,14 +28,14 @@ jobs:
           envs: GITHUB_SHA
           script: |
             # Stop and remove the existing server container
-            sudo docker stop server 
+            docker stop server 
 
             # Remove all existing Docker images on the target host
-            # sudo docker rmi -f $(sudo docker images -q) || true
+            sudo docker rmi -f $(sudo docker images -q) || true
 
             # Pull the new image
-            sudo docker pull taewan2002/docent:${GITHUB_SHA::7}
-            sudo docker tag taewan2002/docent:${GITHUB_SHA::7} docent
+            docker pull taewan2002/docent:${GITHUB_SHA::7}
+            docker tag taewan2002/docent:${GITHUB_SHA::7} docent
 
             # Run the new image
             docker run -d --rm --name server -p 8000:8000 docent
