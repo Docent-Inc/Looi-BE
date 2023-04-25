@@ -71,6 +71,6 @@ jobs:
             echo "${NEW_SERVICE}" > current_service.txt
 
             # Cleanup old images
-            # echo "🧹 Cleaning up old Docker images"
-            # sudo docker rmi -f $(sudo docker images -q) || true
+            echo "🧹 Cleaning up old Docker images"
+            sudo docker rmi -f $(sudo docker images -q) || true
             
