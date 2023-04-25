@@ -18,7 +18,6 @@ jobs:
           docker build -t docent .
           docker tag docent taewan2002/docent:${GITHUB_SHA::7}
           docker push taewan2002/docent:${GITHUB_SHA::7}
-          docker push taewan2002/docent:latest
       - name: Deploy
         uses: appleboy/ssh-action@master
         with:
