@@ -42,10 +42,8 @@ jobs:
             # Pull the new image
             sudo docker pull taewan2002/docent:${GITHUB_SHA::7}
 
-            # Stop the previous service, if any
-            if sudo docker ps -a --filter "name=^/${NEW_SERVICE}$" --format '{{.Names}}' | grep -qw "${NEW_SERVICE}"; then
-                sudo docker stop ${NEW_SERVICE}
-            fi
+            # Run the new service
+            sudo docker run -d --rm --name ${NEW_SERVICE} -p ${NEW_PORT}:8000 taewan2002/docent:${GITHUB_SHA::7}
 
             # Determine the new port
             if [ "$NEW_SERVICE" = "blue" ]; then
@@ -53,9 +51,6 @@ jobs:
             else
               NEW_PORT="8002"
             fi
-
-            # Run the new service
-            sudo docker run -d --rm --name ${NEW_SERVICE} -p ${NEW_PORT}:8000 taewan2002/docent:${GITHUB_SHA::7}
 
             # Update the NGINX configuration
             sudo sed -i "s/server localhost:800[1-2];/server localhost:${NEW_PORT};/g" /etc/nginx/nginx.conf
@@ -66,9 +61,9 @@ jobs:
             # Reload the NGINX service
             sudo systemctl reload nginx
 
-            # Stop the previous service, if any
-            if sudo docker ps -a --filter "name=^/${NEW_SERVICE}$" --format '{{.Names}}' | grep -qw "${NEW_SERVICE}"; then
-              sudo docker stop ${NEW_SERVICE}
+            # Stop the previous service
+            if sudo docker ps -a --filter "name=^/${CURRENT_SERVICE}$" --format '{{.Names}}' | grep -qw "${CURRENT_SERVICE}"; then
+              sudo docker stop ${CURRENT_SERVICE}
             fi
 
             # Save the new service version
@@ -78,4 +73,3 @@ jobs:
             # Cleanup old images
             # echo "🧹 Cleaning up old Docker images"
             # sudo docker rmi -f $(sudo docker images -q) || true
-
