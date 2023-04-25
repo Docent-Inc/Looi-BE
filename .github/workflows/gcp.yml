@@ -43,7 +43,10 @@ jobs:
             sudo docker pull taewan2002/docent:${GITHUB_SHA::7}
 
             # Stop the previous service, if any
-            sudo docker stop ${NEW_SERVICE} || true
+            if sudo docker ps -a --filter "name=^/${NEW_SERVICE}$" --format '{{.Names}}' | grep -qw "${NEW_SERVICE}"; then
+                sudo docker stop ${NEW_SERVICE}
+            fi
+
 
             # Determine the new port
             if [ "$NEW_SERVICE" = "blue" ]; then
