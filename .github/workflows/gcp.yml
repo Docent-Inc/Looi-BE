@@ -41,16 +41,16 @@ jobs:
 
             # Pull the new image
             sudo docker pull taewan2002/docent:${GITHUB_SHA::7}
-
-            # Run the new service
-            sudo docker run -d --rm --name ${NEW_SERVICE} -p ${NEW_PORT}:8000 taewan2002/docent:${GITHUB_SHA::7}
-
+            
             # Determine the new port
             if [ "$NEW_SERVICE" = "blue" ]; then
               NEW_PORT="8001"
             else
               NEW_PORT="8002"
             fi
+
+            # Run the new service
+            sudo docker run -d --rm --name ${NEW_SERVICE} -p ${NEW_PORT}:8000 taewan2002/docent:${GITHUB_SHA::7}
 
             # Update the NGINX configuration
             sudo sed -i "s/server localhost:800[1-2];/server localhost:${NEW_PORT};/g" /etc/nginx/nginx.conf
