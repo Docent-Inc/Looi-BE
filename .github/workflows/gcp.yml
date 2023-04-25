@@ -45,11 +45,18 @@ jobs:
             # Stop the previous service, if any
             sudo docker stop ${NEW_SERVICE} || true
 
+            # Determine the new port
+            if [ "$NEW_SERVICE" = "blue" ]; then
+              NEW_PORT="8001"
+            else
+              NEW_PORT="8002"
+            fi
+
             # Run the new service
-            sudo docker run -d --rm --name ${NEW_SERVICE} -p 800${NEW_SERVICE##*n}:8000 taewan2002/docent:${GITHUB_SHA::7}
+            sudo docker run -d --rm --name ${NEW_SERVICE} -p ${NEW_PORT}:8000 taewan2002/docent:${GITHUB_SHA::7}
 
             # Update the NGINX configuration
-            sudo sed -i "s/server localhost:800[1-2];/server localhost:800${NEW_SERVICE##*n};/g" /etc/nginx/nginx.conf
+            sudo sed -i "s/server localhost:800[1-2];/server localhost:${NEW_PORT};/g" /etc/nginx/nginx.conf
 
             # Reload the NGINX service
             sudo systemctl reload nginx
@@ -60,3 +67,7 @@ jobs:
             # Save the new service version
             echo "📝 Saving new service version to current_service.txt"
             echo "${NEW_SERVICE}" > current_service.txt
+
+            # Cleanup old images
+            echo "🧹 Cleaning up old Docker images"
+            sudo docker image prune -a -f --filter "until=24h"
