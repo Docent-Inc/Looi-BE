@@ -56,7 +56,7 @@ jobs:
             sudo sed -i "s/server localhost:800[1-2];/server localhost:${NEW_PORT};/g" /etc/nginx/nginx.conf
 
             # Update the service-url.inc file
-            sudo sed -i "s|http://localhost:800[1-2]|http://localhost:${NEW_PORT}|g" /etc/nginx/conf.d/service-url.inc
+            echo "set \$service_url http://127.0.0.1:${NEW_PORT};" | sudo tee /etc/nginx/conf.d/service-url.inc
 
             # Reload the NGINX service
             sudo systemctl reload nginx
