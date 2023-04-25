@@ -64,8 +64,10 @@ jobs:
             # Reload the NGINX service
             sudo systemctl reload nginx
 
-            # Stop the old service
-            sudo docker stop ${CURRENT_SERVICE} || true
+            # Stop the previous service, if any
+            if sudo docker ps -a --filter "name=^/${NEW_SERVICE}$" --format '{{.Names}}' | grep -qw "${NEW_SERVICE}"; then
+              sudo docker stop ${NEW_SERVICE}
+            fi
 
             # Save the new service version
             echo "📝 Saving new service version to current_service.txt"
@@ -73,6 +75,9 @@ jobs:
 
             # Cleanup old images
             echo "🧹 Cleaning up old Docker images"
-            sudo docker images -f "dangling=true"
-            sudo docker rmi $(docker images -f "dangling=true" -q)
+            OLD_IMAGES=$(sudo docker images -f "dangling=true" -q)
+            if [ ! -z "$OLD_IMAGES" ]; then
+              sudo docker rmi $OLD_IMAGES
+            fi
+
             
