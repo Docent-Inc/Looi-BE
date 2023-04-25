@@ -64,10 +64,8 @@ jobs:
             # Reload the NGINX service
             sudo systemctl reload nginx
 
-            # Stop the previous service, if any
-            if sudo docker ps -a --filter "name=^/${NEW_SERVICE}$" --format '{{.Names}}' | grep -qw "${NEW_SERVICE}"; then
-              sudo docker stop ${NEW_SERVICE}
-            fi
+            # Stop the service
+            sudo docker stop ${NEW_SERVICE}
 
             # Save the new service version
             echo "📝 Saving new service version to current_service.txt"
