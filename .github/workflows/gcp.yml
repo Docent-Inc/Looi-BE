@@ -27,7 +27,9 @@ jobs:
           envs: GITHUB_SHA
           script: |
             # Load the current service version (blue or green)
+            echo "🔍 Checking current_service.txt"
             CURRENT_SERVICE=$(cat current_service.txt || echo "blue")
+            echo "Current service: ${CURRENT_SERVICE}"
 
             # Determine the new service version
             if [ "$CURRENT_SERVICE" = "blue" ]; then
@@ -35,6 +37,7 @@ jobs:
             else
               NEW_SERVICE="blue"
             fi
+            echo "New service: ${NEW_SERVICE}"
 
             # Pull the new image
             sudo docker pull taewan2002/docent:${GITHUB_SHA::7}
@@ -55,4 +58,5 @@ jobs:
             sudo docker stop ${CURRENT_SERVICE} || true
 
             # Save the new service version
+            echo "📝 Saving new service version to current_service.txt"
             echo "${NEW_SERVICE}" > current_service.txt
