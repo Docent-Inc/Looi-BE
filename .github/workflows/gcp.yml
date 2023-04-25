@@ -18,6 +18,7 @@ jobs:
           docker build -t docent .
           docker tag docent taewan2002/docent:${GITHUB_SHA::7}
           docker push taewan2002/docent:${GITHUB_SHA::7}
+          docker push taewan2002/docent:latest
       - name: Deploy
         uses: appleboy/ssh-action@master
         with:
@@ -60,4 +61,3 @@ jobs:
             # Save the new service version
             echo "📝 Saving new service version to current_service.txt"
             echo "${NEW_SERVICE}" > current_service.txt
-            
