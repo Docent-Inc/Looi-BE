@@ -8,6 +8,7 @@ on:
 
 jobs:
   build:
+
     runs-on: ubuntu-20.04
 
     steps:
@@ -21,42 +22,20 @@ jobs:
       - name: Deploy
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.DMZ_GCP }}
+          host: ${{ secrets.DMZ_GCP}}
           username: ${{ secrets.DMZ_GCP_USER }}
           key: ${{ secrets.DMZ_GCP_KEY }}
           envs: GITHUB_SHA
           script: |
-            # Load the current service version (blue or green)
-            echo "🔍 Checking current_service.txt"
-            CURRENT_SERVICE=$(cat current_service.txt || echo "blue")
-            echo "Current service: ${CURRENT_SERVICE}"
+            # Stop and remove the existing server container
+            sudo docker stop server
 
-            # Determine the new service version
-            if [ "$CURRENT_SERVICE" = "blue" ]; then
-              NEW_SERVICE="green"
-            else
-              NEW_SERVICE="blue"
-            fi
-            echo "New service: ${NEW_SERVICE}"
+            # Remove all existing Docker images on the target host
+            sudo docker rmi -f $(sudo docker images -q) || true
 
             # Pull the new image
             sudo docker pull taewan2002/docent:${GITHUB_SHA::7}
+            sudo docker tag taewan2002/docent:${GITHUB_SHA::7} docent
 
-            # Stop the previous service, if any
-            sudo docker stop ${NEW_SERVICE} || true
-
-            # Run the new service
-            sudo docker run -d --rm --name ${NEW_SERVICE} -p 800${NEW_SERVICE##*n}:8000 taewan2002/docent:${GITHUB_SHA::7}
-
-            # Update the NGINX configuration
-            sudo sed -i "s/server localhost:800[1-2];/server localhost:800${NEW_SERVICE##*n};/g" /etc/nginx/nginx.conf
-
-            # Reload the NGINX service
-            sudo systemctl reload nginx
-
-            # Stop the old service
-            sudo docker stop ${CURRENT_SERVICE} || true
-
-            # Save the new service version
-            echo "📝 Saving new service version to current_service.txt"
-            echo "${NEW_SERVICE}" > current_service.txt
+            # Run the new image
+            sudo docker run -d --rm --name server -p 8000:8000 docent
