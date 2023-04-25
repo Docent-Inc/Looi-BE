@@ -39,3 +39,4 @@ jobs:
 
             # Run the new image
             docker run -d --rm --name server -p 8000:8000 docent
+            
