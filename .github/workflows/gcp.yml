@@ -17,8 +17,8 @@ jobs:
         run: |
           docker login -u ${{ secrets.USERNAME }} -p ${{ secrets.PASSWORD }}
           docker build -t docent .
-          docker tag docent ssohye/docent:${GITHUB_SHA::7}
-          docker push ssohye/docent:${GITHUB_SHA::7}
+          docker tag docent taewan2002/docent:${GITHUB_SHA::7}
+          docker push taewan2002/docent:${GITHUB_SHA::7}
       - name: Deploy
         uses: appleboy/ssh-action@master
         with:
@@ -27,7 +27,7 @@ jobs:
           key: ${{ secrets.DMZ_GCP_KEY }}
           envs: GITHUB_SHA
           script: |
-            docker pull ssohye/docent:${GITHUB_SHA::7}
-            docker tag ssohye/docent:${GITHUB_SHA::7} docent
+            docker pull taewan2002/docent:${GITHUB_SHA::7}
+            docker tag taewan2002/docent:${GITHUB_SHA::7} docent
             docker stop server
             docker run -d --rm --name server -p 8000:8000 docent
