@@ -1,4 +1,4 @@
-name: docent
+name: fastapi-cicd
 
 on:
   push:
@@ -13,12 +13,18 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - name: Make gptkey.txt
+        run : |
+          cd ./app/gptapi
+          touch gptkey.txt
+          echo ${{ secrets.GPT_KEY }} > gptkey.txt
+
       - name: Docker build
         run: |
-          docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
-          docker build -t docent .
-          docker tag docent taewan2002/docent:${GITHUB_SHA::7}
-          docker push taewan2002/docent:${GITHUB_SHA::7}
+          docker login -u ${{ secrets.USERNAME }} -p ${{ secrets.PASSWORD }}
+          docker build -t fastapi-cicd .
+          docker tag fastapi-cicd ssohye/fastapi-cicd:${GITHUB_SHA::7}
+          docker push ssohye/fastapi-cicd:${GITHUB_SHA::7}
       - name: Deploy
         uses: appleboy/ssh-action@master
         with:
@@ -27,15 +33,7 @@ jobs:
           key: ${{ secrets.DMZ_GCP_KEY }}
           envs: GITHUB_SHA
           script: |
-            # Stop and remove the existing server container
-            docker stop server 
-
-            # Remove all existing Docker images on the target host
-            sudo docker rmi -f $(sudo docker images -q) || true
-
-            # Pull the new image
-            docker pull taewan2002/docent:${GITHUB_SHA::7}
-            docker tag taewan2002/docent:${GITHUB_SHA::7} docent
-
-            # Run the new image
-            docker run -d --rm --name server -p 8000:8000 docent
+            docker pull ssohye/fastapi-cicd:${GITHUB_SHA::7}
+            docker tag ssohye/fastapi-cicd:${GITHUB_SHA::7} fastapi-cicd
+            docker stop server
+            docker run -d --rm --name server -p 8000:8000 fastapi-cicd
