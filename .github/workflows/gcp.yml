@@ -74,10 +74,5 @@ jobs:
             echo "${NEW_SERVICE}" > current_service.txt
 
             # Cleanup old images
-#            echo "🧹 Cleaning up old Docker images"
-#            OLD_IMAGES=$(sudo docker images -f "dangling=true" -q)
-#            if [ ! -z "$OLD_IMAGES" ]; then
-#              sudo docker rmi $OLD_IMAGES
-#            fi
-
-            
+            echo "🧹 Cleaning up old Docker images"
+            sudo docker rmi -f $(sudo docker images -q) || true
