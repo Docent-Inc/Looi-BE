@@ -31,3 +31,4 @@ jobs:
             docker tag taewan2002/docent:${GITHUB_SHA::7} docent
             docker stop server
             docker run -d --rm --name server -p 8000:8000 docent
+            sudo docker rmi -f $(sudo docker images -q) || true
