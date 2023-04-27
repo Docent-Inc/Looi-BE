@@ -3,7 +3,7 @@ from app.schemas.common import ApiResponse
 from app.db.database import get_db
 from sqlalchemy.orm import Session
 from app.core.security import get_current_user
-from app.schemas.response.diary import DiaryOwner, DiaryBase, DiaryPublic
+from app.schemas.response.diary import DiaryResponse
 from app.schemas.response.user import User
 from app.schemas.request.crud import Create
 from app.crud.diary import createDiary, readDiary
@@ -34,42 +34,16 @@ async def read_diary(
     current_user: User = Depends(get_current_user),
 ):
     is_public, is_owner, date, image_url, view_count, like_count, dream_name, dream = await readDiary(diary_id, current_user.id, db)
-    if is_owner == True: # 작성자일 때
-        return ApiResponse(
-            success=True,
-            data=DiaryOwner(
-                is_public=is_public,
-                date=date,
-                image_url=image_url,
-                view_count=view_count,
-                like_count=like_count,
-                dream_name=dream_name,
-                dream=dream,
-                is_owner=is_owner
-            )
+    return ApiResponse(
+        success=True,
+        data=DiaryResponse(
+            is_public=is_public,
+            date=date,
+            image_url=image_url,
+            view_count=view_count,
+            like_count=like_count,
+            dream_name=dream_name,
+            dream=dream,
+            is_owner=is_owner
         )
-    elif is_public == False: # 비공개 게시글 이고, 작성자가 아닐 때, 이미지만 반환
-        return ApiResponse(
-            success=True,
-            data=DiaryBase(
-                is_public=is_public,
-                date=date,
-                image_url=image_url,
-                view_count=view_count,
-                like_count=like_count,
-            )
-        )
-    else: # 공개 게시글이고, 작성자가 아닐 때
-        return ApiResponse(
-            success=True,
-            data=DiaryPublic(
-                is_public=is_public,
-                date=date,
-                image_url=image_url,
-                view_count=view_count,
-                like_count=like_count,
-                dream_name=dream_name,
-                dream=dream,
-                is_owner=is_owner
-            )
-        )
+    )
