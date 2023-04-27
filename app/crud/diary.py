@@ -60,3 +60,18 @@ async def readDiary(diaryId: int, userId: int, db: get_db()):
             None
         )
 
+async def deleteDiary(diaryId: int, userId: int, db: get_db()):
+    diary = db.query(Diary).filter(Diary.id == diaryId).first()
+
+    if diary is None: # 해당 id의 게시글이 없을 때
+        raise HTTPException(status_code=404, detail="Diary not found")
+
+    if diary.is_deleted: # 해당 id의 게시글이 이미 삭제되었을 때
+        raise HTTPException(status_code=400, detail="Diary has been deleted")
+
+    if diary.User_id != userId: # 해당 id의 게시글이 작성자가 아닐 때
+        raise HTTPException(status_code=400, detail="You are not the owner of this diary")
+
+    diary.is_deleted = True
+    db.commit()
+    return True
