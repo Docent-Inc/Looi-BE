@@ -1,16 +1,11 @@
 from pydantic import BaseModel
 
-class DiaryBase(BaseModel):
+class DiaryResponse(BaseModel):
     is_public: bool
-    date: str
-    image_url: str
-    view_count: int
-    like_count: int
-
-class DiaryPublic(DiaryBase):
+    is_owner: bool
     dream_name: str
     dream: str
-    is_owner: bool
-
-class DiaryOwner(DiaryPublic):
-    pass
+    image_url: str
+    date: str
+    view_count: int
+    like_count: int
