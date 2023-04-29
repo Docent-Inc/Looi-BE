@@ -10,3 +10,6 @@ class User(BaseModel):
 
 class PasswordChangeResponse(BaseModel):
     message: str
+
+class NicknameChangeResponse(BaseModel):
+    message: str

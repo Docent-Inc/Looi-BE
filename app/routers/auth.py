@@ -9,10 +9,10 @@ from app.schemas.response.token import TokenData
 from app.schemas.request.token import TokenRefresh
 from datetime import timedelta
 from app.schemas.common import ApiResponse
-from app.auth.user import get_user_by_email, create_user, authenticate_user
-from app.schemas.request.user import UserCreate, PasswordChangeRequest
-from app.core.security import get_current_user, verify_password, get_password_hash
-from app.schemas.response.user import User, PasswordChangeResponse
+from app.auth.user import get_user_by_email, create_user, authenticate_user, changeNickName
+from app.schemas.request.user import UserCreate, PasswordChangeRequest, NicknameChangeRequest
+from app.core.security import get_current_user, verify_password, get_password_hash, get_user_by_nickName
+from app.schemas.response.user import User, PasswordChangeResponse, NicknameChangeResponse
 
 router = APIRouter(prefix="/auth")
 access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -28,6 +28,13 @@ async def signup(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered", # 에러 메시지를 반환합니다.
+        )
+
+    existing_user = get_user_by_nickName(db, nickName=user_data.nickName)  # 닉네임으로 사용자를 조회합니다.
+    if existing_user:  # 사용자가 존재하면
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="NickName already registered",  # 에러 메시지를 반환합니다.
         )
 
     new_user = create_user(db, user_data) # 사용자를 생성합니다.
@@ -94,7 +101,7 @@ async def refresh_token(
 
     return ApiResponse(success=True, data=TokenData(access_token=access_token, token_type="bearer"))
 
-@router.post("/setpw", response_model=ApiResponse, tags=["Auth"])
+@router.post("/change/password", response_model=ApiResponse, tags=["Auth"])
 async def change_password(
     password_change_request: PasswordChangeRequest,
     current_user: User = Depends(get_current_user),
@@ -111,5 +118,16 @@ async def change_password(
     current_user.hashed_password = get_password_hash(password_change_request.new_password)
     db.add(current_user)
     db.commit()
+    db.refresh(current_user)
 
     return ApiResponse(success=True, data=PasswordChangeResponse(message="Password changed successfully"))
+
+@router.post("/change/nickname", response_model=ApiResponse, tags=["Auth"])
+async def change_nickname(
+    nickname_change_request: NicknameChangeRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    # 닉네임을 변경합니다.
+    changeNickName(nickname_change_request.nickname, current_user, db)
+    return ApiResponse(success=True, data=NicknameChangeResponse(message="Nickname changed successfully"))

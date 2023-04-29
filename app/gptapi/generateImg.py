@@ -58,5 +58,4 @@ async def generate_img(prompt: str, userId: int):
     client = create_storage_client_hardcoded()
     with BytesIO(dream_image_data) as image_file:
         bucket_image_url = await upload_image_to_gcp(client, bucket_name, image_file, destination_blob_name)
-    bucket_image_url = "test_url"
     return bucket_image_url

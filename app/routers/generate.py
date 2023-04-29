@@ -41,7 +41,7 @@ async def generate_image(
 ) -> ImageResponse:
 
     # 데이터베이스에서 textId와 current_user.id를 확인 후 prompt 가져오기
-    # TODO : 생성된 이미지의 갯수 확인 후 제한 걸기
+    # TODO : 생성된 이미지의 갯수 확인 후 제한 걸기, 무료 버전은 일단 3개가 좋으려나?
     text_data = await get_text_data(textId, current_user.id, db)
     if text_data is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="생성된 꿈이 없습니다.")
