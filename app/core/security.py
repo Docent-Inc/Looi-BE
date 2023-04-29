@@ -82,3 +82,6 @@ def create_refresh_token(data: dict, expires_delta: timedelta = None) -> str:
 
 def get_user_by_email(db: Session, email: str) -> Optional[User]:
     return db.query(User).filter(User.email == email).first()
+
+def get_user_by_nickName(db: Session, nickName: str) -> Optional[User]:
+    return db.query(User).filter(User.nickName == nickName).first()
