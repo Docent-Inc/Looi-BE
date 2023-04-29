@@ -53,3 +53,10 @@ def changePassword(request_password: str, current_user: User, db: Session) -> Op
     db.add(current_user)
     db.commit()
     db.refresh(current_user)
+
+def deleteUser(current_user: User, db: Session) -> Optional[User]:
+    # 사용자의 삭제 상태를 변경합니다.
+    current_user.is_deleted = True
+    db.add(current_user)
+    db.commit()
+    db.refresh(current_user)
