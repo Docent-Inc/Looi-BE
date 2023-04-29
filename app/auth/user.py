@@ -40,3 +40,16 @@ def changeNickName(requset_nickName: str, current_user: User, db: Session) -> Op
     db.add(current_user)
     db.commit()
     db.refresh(current_user)
+
+def changePassword(request_password: str, current_user: User, db: Session) -> Optional[User]:
+    # 증명되지 않은 사용자는 비밀번호를 변경할 수 없습니다.
+    if not verify_password(request_password, current_user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current password is incorrect",
+        )
+    # 새로운 비밀번호를 해시합니다.
+    current_user.hashed_password = get_password_hash(request_password)
+    db.add(current_user)
+    db.commit()
+    db.refresh(current_user)

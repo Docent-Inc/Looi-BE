@@ -9,7 +9,7 @@ from app.schemas.response.token import TokenData
 from app.schemas.request.token import TokenRefresh
 from datetime import timedelta
 from app.schemas.common import ApiResponse
-from app.auth.user import get_user_by_email, create_user, authenticate_user, changeNickName
+from app.auth.user import get_user_by_email, create_user, authenticate_user, changeNickName, changePassword
 from app.schemas.request.user import UserCreate, PasswordChangeRequest, NicknameChangeRequest
 from app.core.security import get_current_user, verify_password, get_password_hash, get_user_by_nickName
 from app.schemas.response.user import User, PasswordChangeResponse, NicknameChangeResponse
@@ -107,19 +107,8 @@ async def change_password(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    # 증명되지 않은 사용자는 비밀번호를 변경할 수 없습니다.
-    if not verify_password(password_change_request.current_password, current_user.hashed_password):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Current password is incorrect",
-        )
-
-    # 새로운 비밀번호를 해시합니다.
-    current_user.hashed_password = get_password_hash(password_change_request.new_password)
-    db.add(current_user)
-    db.commit()
-    db.refresh(current_user)
-
+    # 비밀번호를 변경합니다.
+    changePassword(db, current_user, password_change_request)
     return ApiResponse(success=True, data=PasswordChangeResponse(message="Password changed successfully"))
 
 @router.post("/change/nickname", response_model=ApiResponse, tags=["Auth"])
