@@ -66,7 +66,7 @@ async def get_current_user(
         raise credentials_exception
 
     user = get_user_by_email(db, email=email) # email을 통해 유저를 가져온다.
-    if user is None:
+    if user is None or user.is_deleted == True: # 유저가 없거나 삭제된 유저면
         raise credentials_exception
     return user # 토큰을 복호화하여 유저 정보를 가져온다.
 

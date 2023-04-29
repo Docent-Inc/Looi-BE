@@ -13,3 +13,5 @@ class PasswordChangeResponse(BaseModel):
 
 class NicknameChangeResponse(BaseModel):
     message: str
+class DeleteUserResponse(BaseModel):
+    message: str

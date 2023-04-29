@@ -9,10 +9,10 @@ from app.schemas.response.token import TokenData
 from app.schemas.request.token import TokenRefresh
 from datetime import timedelta
 from app.schemas.common import ApiResponse
-from app.auth.user import get_user_by_email, create_user, authenticate_user, changeNickName, changePassword
+from app.auth.user import get_user_by_email, create_user, authenticate_user, changeNickName, changePassword, deleteUser
 from app.schemas.request.user import UserCreate, PasswordChangeRequest, NicknameChangeRequest
 from app.core.security import get_current_user, verify_password, get_password_hash, get_user_by_nickName
-from app.schemas.response.user import User, PasswordChangeResponse, NicknameChangeResponse
+from app.schemas.response.user import User, PasswordChangeResponse, NicknameChangeResponse, DeleteUserResponse
 
 router = APIRouter(prefix="/auth")
 access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -120,3 +120,12 @@ async def change_nickname(
     # 닉네임을 변경합니다.
     changeNickName(nickname_change_request.nickname, current_user, db)
     return ApiResponse(success=True, data=NicknameChangeResponse(message="Nickname changed successfully"))
+
+@router.delete("/delete", response_model=ApiResponse, tags=["Auth"])
+async def delete_user(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    # 사용자를 삭제합니다.
+    deleteUser(current_user, db)
+    return ApiResponse(success=True, data=DeleteUserResponse(message="User deleted successfully"))
