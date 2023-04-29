@@ -23,7 +23,7 @@ async def generate_text(text: str, userId: int, db: get_db()) -> str:
         try:
             messages_prompt = [
                 {"role": "system", "content": message},
-                {"role": "system", "content": "이 꿈을 바탕으로 DALLE2에 넣을 프롬프트를 영어로 만들어줘, illustration라는 단어를 포함시켜줘"}
+                {"role": "system", "content": "너가 이 꿈을 이해하고, DALLE2에 넣을 프롬프트를 영어로 만들어줘, illustration라는 단어를 포함시켜줘"}
             ]
             chat = openai.ChatCompletion.create(model="gpt-4", messages=messages_prompt)
         except Exception as e:
