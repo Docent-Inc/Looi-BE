@@ -50,8 +50,9 @@ async def generate_img(prompt: str, userId: int):
     korea_timezone = pytz.timezone("Asia/Seoul")
     korea_time = datetime.now(korea_timezone)
     formatted_time = korea_time.strftime("%Y%m%d%H%M%S")
-    imgName = str(formatted_time) + str(userId)
-    # TODO: 디렉토리 이름을 userid/imageName.png로 바꿔야함
+    imgName = str(userId) + str(formatted_time)
+    # TODO: 디렉토리 이름을 dreams/userid/imageName.png로 바꿔야함
+    destination_blob_name = "dreams/" + str(userId) + "/" + imgName + ".png"
     destination_blob_name = "testimg/" + imgName + ".png"
     bucket_name = "docent"  # 구글 클라우드 버킷 이름을 지정하세요.
 
