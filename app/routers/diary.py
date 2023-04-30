@@ -30,18 +30,20 @@ async def read_diary(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    is_public, is_owner, date, image_url, view_count, like_count, dream_name, dream = await readDiary(diary_id, current_user.id, db)
+    is_public, is_owner, create_date, modified_date, image_url, view_count, like_count, dream_name, dream, is_modified = await readDiary(diary_id, current_user.id, db)
     return ApiResponse(
         success=True,
         data=DiaryResponse(
             is_public=is_public,
-            date=date,
+            create_date=create_date,
+            modified_date=modified_date,
             image_url=image_url,
             view_count=view_count,
             like_count=like_count,
             dream_name=dream_name,
             dream=dream,
-            is_owner=is_owner
+            is_owner=is_owner,
+            is_modified=is_modified,
         )
     )
 @router.post("/update", response_model=ApiResponse, tags=["Diary"])
