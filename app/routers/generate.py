@@ -1,14 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 from app.gptapi.generateDream import generate_text
 from app.schemas.response.gpt import BasicResponse, ImageResponse, CheckListResponse
 from app.schemas.common import ApiResponse
-from app.gptapi.generateImg import generate_img, additional_generate_image, get_text_data
+from app.gptapi.generateImg import additional_generate_image
 from app.gptapi.generateCheckList import generate_checklist
 from app.core.security import get_current_user
 from app.schemas.response.user import User
 from app.db.database import get_db
 from sqlalchemy.orm import Session
-from app.db.models.dream import DreamText, DreamImage
 router = APIRouter(prefix="/generate")
 
 @router.post("/dream", response_model=ApiResponse, tags=["Generate"])
@@ -47,14 +46,7 @@ async def generate_image(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> ImageResponse:
-
-    # 데이터베이스에서 textId와 current_user.id를 확인 후 dream 가져오기
-    text_data = await get_text_data(textId, current_user.id, db)
-    if text_data is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="생성된 꿈이 없습니다.")
-
-    dream = text_data.dream # 생성된 꿈 정보 불러오기
-    dream_resolution, today_checklist = await generate_checklist(textId, dream, db)
+    dream_resolution, today_checklist = await generate_checklist(textId, current_user.id, db)
     return ApiResponse(
         success=True,
         data=CheckListResponse(
