@@ -44,21 +44,6 @@ async def read_diary(
             is_owner=is_owner
         )
     )
-
-@router.delete("/delete", response_model=ApiResponse, tags=["Diary"])
-async def delete_diary(
-    diary_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    await deleteDiary(diary_id, current_user.id, db)
-    return ApiResponse(
-        success=True,
-        data={
-            "message": "일기가 성공적으로 삭제되었습니다."
-        }
-    )
-
 @router.post("/update", response_model=ApiResponse, tags=["Diary"])
 async def update_diary(
     diary_id: int,
@@ -71,5 +56,18 @@ async def update_diary(
         success=True,
         data={
             "message": "일기가 성공적으로 수정되었습니다."
+        }
+    )
+@router.delete("/delete", response_model=ApiResponse, tags=["Diary"])
+async def delete_diary(
+    diary_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    await deleteDiary(diary_id, current_user.id, db)
+    return ApiResponse(
+        success=True,
+        data={
+            "message": "일기가 성공적으로 삭제되었습니다."
         }
     )
