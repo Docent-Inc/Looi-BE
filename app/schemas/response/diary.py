@@ -6,6 +6,8 @@ class DiaryResponse(BaseModel):
     dream_name: str
     dream: str
     image_url: str
-    date: str
+    create_date: str
+    modified_date: str
     view_count: int
     like_count: int
+    is_modified: bool
