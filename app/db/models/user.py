@@ -10,6 +10,8 @@ class User(Base):
     hashed_password = Column(String(255), nullable=False)
     is_active = Column(Boolean, default=True)
     is_deleted = Column(Boolean, default=False)
+    subscription_status = Column(Boolean, default=False)
+
 
 def get_UserBase():
     return Base

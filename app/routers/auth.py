@@ -9,10 +9,10 @@ from app.schemas.response.token import TokenData
 from app.schemas.request.token import TokenRefresh
 from datetime import timedelta
 from app.schemas.common import ApiResponse
-from app.auth.user import get_user_by_email, create_user, authenticate_user
-from app.schemas.request.user import UserCreate, PasswordChangeRequest
-from app.core.security import get_current_user, verify_password, get_password_hash
-from app.schemas.response.user import User, PasswordChangeResponse
+from app.auth.user import get_user_by_email, create_user, authenticate_user, changeNickName, changePassword, deleteUser
+from app.schemas.request.user import UserCreate, PasswordChangeRequest, NicknameChangeRequest
+from app.core.security import get_current_user, verify_password, get_password_hash, get_user_by_nickName
+from app.schemas.response.user import User, PasswordChangeResponse, NicknameChangeResponse, DeleteUserResponse
 
 router = APIRouter(prefix="/auth")
 access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -29,7 +29,12 @@ async def signup(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered", # 에러 메시지를 반환합니다.
         )
-
+    existing_user = get_user_by_nickName(db, nickName=user_data.nickName)  # 닉네임으로 사용자를 조회합니다.
+    if existing_user:  # 사용자가 존재하면
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="NickName already registered",  # 에러 메시지를 반환합니다.
+        )
     new_user = create_user(db, user_data) # 사용자를 생성합니다.
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token( # 액세스 토큰을 생성합니다.
@@ -94,22 +99,31 @@ async def refresh_token(
 
     return ApiResponse(success=True, data=TokenData(access_token=access_token, token_type="bearer"))
 
-@router.post("/setpw", response_model=ApiResponse, tags=["Auth"])
+@router.post("/change/password", response_model=ApiResponse, tags=["Auth"])
 async def change_password(
     password_change_request: PasswordChangeRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    # 증명되지 않은 사용자는 비밀번호를 변경할 수 없습니다.
-    if not verify_password(password_change_request.current_password, current_user.hashed_password):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Current password is incorrect",
-        )
-
-    # 새로운 비밀번호를 해시합니다.
-    current_user.hashed_password = get_password_hash(password_change_request.new_password)
-    db.add(current_user)
-    db.commit()
-
+    # 비밀번호를 변경합니다.
+    changePassword(db, current_user, password_change_request)
     return ApiResponse(success=True, data=PasswordChangeResponse(message="Password changed successfully"))
+
+@router.post("/change/nickname", response_model=ApiResponse, tags=["Auth"])
+async def change_nickname(
+    nickname_change_request: NicknameChangeRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    # 닉네임을 변경합니다.
+    changeNickName(nickname_change_request.nickname, current_user, db)
+    return ApiResponse(success=True, data=NicknameChangeResponse(message="Nickname changed successfully"))
+
+@router.delete("/delete", response_model=ApiResponse, tags=["Auth"])
+async def delete_user(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    # 사용자를 삭제합니다.
+    deleteUser(current_user, db)
+    return ApiResponse(success=True, data=DeleteUserResponse(message="User deleted successfully"))

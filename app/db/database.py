@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from app.db.models.diary import get_DiaryBase
 
-PUBLIC_IP_ADDRESS = '34.64.33.205' # gcp sdl database
+PUBLIC_IP_ADDRESS = '34.64.33.205' # gcp sql database
 DB_USER = 'docent'
 DB_PASSWORD = 'cocone0331'
 DB_NAME = 'test'
