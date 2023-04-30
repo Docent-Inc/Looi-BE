@@ -16,16 +16,13 @@ async def create_diary(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    diary = await createDiary(create, current_user.id, db)
-    if diary == True:
-        return ApiResponse(
-            success=True,
-            data={
-                "message": "일기가 성공적으로 작성되었습니다."
-            }
-        )
-    else:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="꿈 일기 작성에 실패하였습니다.")
+    await createDiary(create, current_user.id, db)
+    return ApiResponse(
+        success=True,
+        data={
+            "message": "일기가 성공적으로 작성되었습니다."
+        }
+    )
 
 @router.get("/read", response_model=ApiResponse, tags=["Diary"])
 async def read_diary(
@@ -54,13 +51,10 @@ async def delete_diary(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    diary = await deleteDiary(diary_id, current_user.id, db)
-    if diary == True:
-        return ApiResponse(
-            success=True,
-            data={
-                "message": "일기가 성공적으로 삭제되었습니다."
-            }
-        )
-    else:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="꿈 일기 삭제에 실패하였습니다.")
+    await deleteDiary(diary_id, current_user.id, db)
+    return ApiResponse(
+        success=True,
+        data={
+            "message": "일기가 성공적으로 삭제되었습니다."
+        }
+    )

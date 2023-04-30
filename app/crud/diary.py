@@ -5,7 +5,7 @@ from app.schemas.request.crud import Create
 from fastapi import HTTPException
 
 
-async def createDiary(create: Create, userId: int, db: get_db()) -> bool:
+async def createDiary(create: Create, userId: int, db: get_db()):
     try:
         diary = Diary(
             User_id=userId,
@@ -17,10 +17,8 @@ async def createDiary(create: Create, userId: int, db: get_db()) -> bool:
         db.add(diary)
         db.commit()
         db.refresh(diary)
-        return True
     except Exception as e:
         print(e)
-        return False
 
 
 async def readDiary(diaryId: int, userId: int, db: get_db()):
@@ -70,4 +68,4 @@ async def deleteDiary(diaryId: int, userId: int, db: get_db()):
 
     diary.is_deleted = True
     db.commit()
-    return True
+    db.refresh(diary)
