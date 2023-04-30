@@ -29,14 +29,12 @@ async def signup(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered", # 에러 메시지를 반환합니다.
         )
-
     existing_user = get_user_by_nickName(db, nickName=user_data.nickName)  # 닉네임으로 사용자를 조회합니다.
     if existing_user:  # 사용자가 존재하면
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="NickName already registered",  # 에러 메시지를 반환합니다.
         )
-
     new_user = create_user(db, user_data) # 사용자를 생성합니다.
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token( # 액세스 토큰을 생성합니다.
