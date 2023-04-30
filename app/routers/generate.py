@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.gptapi.generateDream import generate_text
 from app.schemas.response.gpt import BasicResponse, ImageResponse, CheckListResponse
 from app.schemas.common import ApiResponse
-from app.gptapi.generateImg import generate_img, additional_generate_image
+from app.gptapi.generateImg import generate_img, additional_generate_image, get_text_data
 from app.gptapi.generateCheckList import generate_checklist
 from app.core.security import get_current_user
 from app.schemas.response.user import User

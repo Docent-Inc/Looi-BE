@@ -1,12 +1,10 @@
 import openai
 import asyncio
+from app.core.current_time import get_current_time
 from app.gptapi.generateImg import generate_img
 from app.db.models.dream import DreamText, DreamImage
 from app.db.database import get_db
 from app.gptapi.gptRequset import send_gpt_request
-import time
-import pytz
-from datetime import datetime
 
 async def generate_text(text: str, userId: int, db: get_db()) -> str:
     async def get_gpt_response(message: str) -> str:
@@ -45,10 +43,6 @@ async def generate_text(text: str, userId: int, db: get_db()) -> str:
     # dream_image_url = "test"
     # dream_image_prompt = "test"
 
-    korea_timezone = pytz.timezone("Asia/Seoul")
-    korea_time = datetime.now(korea_timezone)
-    formatted_time = korea_time.strftime("%Y%m%d%H%M%S")
-
     # 데이터베이스에 DreamText 저장하기
     dream_text = DreamText(
         User_id=userId,
@@ -56,7 +50,7 @@ async def generate_text(text: str, userId: int, db: get_db()) -> str:
         dream_name=dream_name,
         dream=dream,
         DALLE2=dream_image_prompt,
-        date=formatted_time,
+        date=get_current_time(),
         is_deleted=False
     )
     db.add(dream_text)
