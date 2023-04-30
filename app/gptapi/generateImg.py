@@ -77,7 +77,6 @@ async def get_image_count(imageId: int, db: Session):
     # 쿼리를 실행한 후, 해당하는 데이터가 없으면 0을 반환하고, 데이터가 있으면 해당 데이터의 갯수를 반환합니다.
     return image_count
 async def additional_generate_image(textId, user_id, db):
-
     # 생성된 이미지의 갯수가 3개가 넘는지 확인합니다.
     if await get_image_count(textId, db) >= 3:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="이미지 생성 횟수 초과")
@@ -85,7 +84,6 @@ async def additional_generate_image(textId, user_id, db):
     text_data = await get_text_data(textId, user_id, db)
     if text_data is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="생성된 꿈이 없습니다.")
-
     prompt = text_data.DALLE2  # 생성된 DALLE2 프롬프트 정보 불러오기
     # 새로운 꿈 이미지 생성
     dream_image_url = await generate_img(prompt, user_id)
