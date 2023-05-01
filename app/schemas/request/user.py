@@ -20,3 +20,6 @@ class PasswordChangeRequest(BaseModel):
 
 class NicknameChangeRequest(BaseModel):
     nickname: str
+
+class KakaoLoginRequest(BaseModel):
+    code: str
