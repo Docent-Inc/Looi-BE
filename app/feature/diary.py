@@ -54,11 +54,11 @@ async def readDiary(diaryId: int, userId: int, db: get_db()):
             new_index = oldest_index
 
         # Hot 테이블에 가중치 추가
-        existing_hot = db.query(Hot).filter(Hot.Diary_id == diaryId, Hot.User_id == userId, Hot.weight == 5).first()
+        existing_hot = db.query(Hot).filter(Hot.Diary_id == diaryId, Hot.User_id == userId, Hot.weight == 1).first()
         if existing_hot is None:
             hot = Hot(
                 index=new_index,
-                weight=5,  # 좋아요 가중치
+                weight=1,  # 좋아요 가중치
                 Diary_id=diaryId,
                 User_id=userId
             )
