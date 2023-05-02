@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 from app.schemas.common import ApiResponse
 from app.db.database import get_db
 from sqlalchemy.orm import Session
@@ -6,10 +6,9 @@ from app.core.security import get_current_user
 from app.schemas.response.diary import DiaryResponse
 from app.schemas.response.user import User
 from app.schemas.request.crud import Create, Update
-from app.crud.diary import createDiary, readDiary, deleteDiary, updateDiary
+from app.crud.diary import createDiary, readDiary, deleteDiary, updateDiary, likeDiary, unlikeDiary
 
 router = APIRouter(prefix="/diary")
-
 @router.post("/create", response_model=ApiResponse, tags=["Diary"])
 async def create_diary(
     create: Create,
@@ -71,5 +70,33 @@ async def delete_diary(
         success=True,
         data={
             "message": "일기가 성공적으로 삭제되었습니다."
+        }
+    )
+
+@router.post("/like", response_model=ApiResponse, tags=["Diary"])
+async def like_diary(
+    diary_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    await likeDiary(diary_id, current_user.id, db)
+    return ApiResponse(
+        success=True,
+        data={
+            "message": "일기가 성공적으로 좋아요 되었습니다."
+        }
+    )
+
+@router.post("/unlike", response_model=ApiResponse, tags=["Diary"])
+async def unlike_diary(
+    diary_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    await unlikeDiary(diary_id, current_user.id, db)
+    return ApiResponse(
+        success=True,
+        data={
+            "message": "일기가 성공적으로 좋아요 취소되었습니다."
         }
     )
