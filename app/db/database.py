@@ -12,6 +12,9 @@ DB_URL = f'mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{PUBLIC_IP_ADDRESS}/{DB_NAME}
 engine = create_engine(DB_URL, pool_recycle=500)
 
 Base = get_CommentBase()
+def get_Base():
+    return Base
+
 # Base.metadata.drop_all(bind=engine) # 테이블 변경 사항 있을 시 주석 제거
 Base.metadata.create_all(bind=engine)  # 테이블 생성
 
