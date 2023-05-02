@@ -25,7 +25,6 @@ async def createDiary(create: Create, userId: int, db: get_db()):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 async def readDiary(diaryId: int, userId: int, db: get_db()):
     diary = db.query(Diary).filter(Diary.id == diaryId).first()
 
@@ -91,8 +90,8 @@ async def readDiary(diaryId: int, userId: int, db: get_db()):
             diary.image_url,
             diary.view_count,
             diary.like_count,
-            None,
-            None,
+            "",  # 빈 문자열로 기본값 설정
+            "",  # 빈 문자열로 기본값 설정
             diary.is_modified,
         )
 
