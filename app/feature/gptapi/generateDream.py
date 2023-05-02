@@ -1,10 +1,10 @@
 import openai
 import asyncio
 from app.core.current_time import get_current_time
-from app.gptapi.generateImg import generate_img
+from app.feature.gptapi.generateImg import generate_img
 from app.db.models.dream import DreamText, DreamImage
 from app.db.database import get_db
-from app.gptapi.gptRequset import send_gpt_request
+from app.feature.gptapi.gptRequset import send_gpt_request
 
 async def generate_text(text: str, userId: int, db: get_db()) -> str:
     async def get_gpt_response(message: str) -> str:

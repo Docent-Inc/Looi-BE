@@ -1,8 +1,8 @@
 import asyncio
 from fastapi import HTTPException
 from starlette import status
-from app.gptapi.generateImg import get_text_data
-from app.gptapi.gptRequset import send_gpt_request
+from app.feature.gptapi.generateImg import get_text_data
+from app.feature.gptapi.gptRequset import send_gpt_request
 from app.db.database import get_db
 from app.db.models.dream import DreamResolution
 async def generate_checklist(TextId: int, user_id: int, db: get_db()) -> str:
