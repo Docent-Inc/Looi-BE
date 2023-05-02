@@ -281,3 +281,11 @@ async def uncommentDiary(diaryId: int, commentId: int, db: get_db()):
         db.refresh(comment)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+async def listDiary(page: int, id: int , db: get_db()):
+    # 페이지당 게시글 수 10개, 자신의 게시물과 삭제된 게시물을 제외한 게시물만 보여줍니다.
+    try:
+        diary = db.query(Diary).filter(Diary.User_id != id, Diary.is_deleted == False).order_by(Diary.create_date.desc()).limit(10).offset((page-1)*10).all()
+        return diary
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
