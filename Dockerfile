@@ -6,6 +6,8 @@ COPY main.py /app/
 COPY app /app/app/
 COPY .env /app/
 COPY requirements.txt /app/
+# COPY alembic.ini /app/
+# COPY alembic /app/
 
 RUN pip install --no-cache-dir -r requirements.txt
 
