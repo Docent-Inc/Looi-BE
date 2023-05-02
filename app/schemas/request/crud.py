@@ -7,3 +7,6 @@ class Create(BaseModel):
 class Update(BaseModel):
     dream_name: str
     dream: str
+
+class commentRequest(BaseModel):
+    comment: str
