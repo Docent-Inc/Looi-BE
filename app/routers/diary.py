@@ -5,8 +5,9 @@ from sqlalchemy.orm import Session
 from app.core.security import get_current_user
 from app.schemas.response.diary import DiaryResponse
 from app.schemas.response.user import User
-from app.schemas.request.crud import Create, Update
-from app.crud.diary import createDiary, readDiary, deleteDiary, updateDiary, likeDiary, unlikeDiary
+from app.schemas.request.crud import Create, Update, commentRequest
+from app.feature.diary import createDiary, readDiary, deleteDiary, updateDiary, likeDiary, unlikeDiary, commentDiary, \
+    uncommentDiary
 
 router = APIRouter(prefix="/diary")
 @router.post("/create", response_model=ApiResponse, tags=["Diary"])
@@ -98,5 +99,36 @@ async def unlike_diary(
         success=True,
         data={
             "message": "일기가 성공적으로 좋아요 취소되었습니다."
+        }
+    )
+
+@router.post("/comment", response_model=ApiResponse, tags=["Diary"])
+async def comment_diary(
+    diary_id: int,
+    comment: commentRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    await commentDiary(diary_id, current_user.id, comment, db)
+    return ApiResponse(
+        success=True,
+        data={
+            "message": "댓글이 성공적으로 등록되었습니다."
+        }
+    )
+
+
+@router.delete("/uncomment", response_model=ApiResponse, tags=["Diary"])
+async def uncomment_diary(
+    diary_id: int,
+    comment_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    await uncommentDiary(diary_id, comment_id, db)
+    return ApiResponse(
+        success=True,
+        data={
+            "message": "댓글이 성공적으로 삭제되었습니다."
         }
     )

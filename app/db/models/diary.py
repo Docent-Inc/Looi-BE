@@ -17,6 +17,7 @@ class Diary(Base):
     report_count = Column(Integer, default=0)
     view_count = Column(Integer, default=0)
     like_count = Column(Integer, default=0)
+    comment_count = Column(Integer, default=0)
     is_modified = Column(Boolean, default=False)
 
 def get_DiaryBase():
