@@ -1,11 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.responses import JSONResponse
 from app.auth.kakaoOAuth2 import KAKAO_AUTH_URL, get_user_kakao
 from app.db.database import get_db
 from app.core.config import settings
 from sqlalchemy.orm import Session
-from app.core.security import create_access_token, decode_access_token, create_refresh_token, create_token
+from app.core.security import create_access_token, decode_access_token, create_token
 from app.schemas.response.token import TokenData
 from app.schemas.request.token import TokenRefresh
 from datetime import timedelta
