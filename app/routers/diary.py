@@ -3,11 +3,11 @@ from app.schemas.common import ApiResponse
 from app.db.database import get_db
 from sqlalchemy.orm import Session
 from app.core.security import get_current_user
-from app.schemas.response.diary import DiaryResponse
+from app.schemas.response.diary import DiaryResponse, DiaryListResponse
 from app.schemas.response.user import User
 from app.schemas.request.crud import Create, Update, commentRequest
 from app.feature.diary import createDiary, readDiary, deleteDiary, updateDiary, likeDiary, unlikeDiary, commentDiary, \
-    uncommentDiary
+    uncommentDiary, listDiary
 
 router = APIRouter(prefix="/diary")
 @router.post("/create", response_model=ApiResponse, tags=["Diary"])
@@ -131,4 +131,28 @@ async def uncomment_diary(
         data={
             "message": "댓글이 성공적으로 삭제되었습니다."
         }
+    )
+
+@router.get("/list", response_model=ApiResponse, tags=["Diary"])
+async def list_diary(
+    page: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    diary_list = await listDiary(page, current_user.id, db)
+    diary_list_response = []
+    for diary in diary_list:
+        diary_response = DiaryListResponse(
+            id=diary.id,
+            dream_name=diary.dream_name,
+            image_url=diary.image_url,
+            view_count=diary.view_count,
+            like_count=diary.like_count,
+            comment_count=diary.comment_count
+        )
+        diary_list_response.append(diary_response)
+
+    return ApiResponse(
+        success=True,
+        data=diary_list_response
     )

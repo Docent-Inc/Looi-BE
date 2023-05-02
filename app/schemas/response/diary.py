@@ -11,3 +11,11 @@ class DiaryResponse(BaseModel):
     view_count: int
     like_count: int
     is_modified: bool
+
+class DiaryListResponse(BaseModel):
+    id: int
+    dream_name: str
+    image_url: str
+    view_count: int
+    like_count: int
+    comment_count: int
