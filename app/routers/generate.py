@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends
-from app.gptapi.generateDream import generate_text
+from app.feature.gptapi import generate_text
 from app.schemas.response.gpt import BasicResponse, ImageResponse, CheckListResponse
 from app.schemas.common import ApiResponse
-from app.gptapi.generateImg import additional_generate_image
-from app.gptapi.generateCheckList import generate_checklist
+from app.feature.gptapi.generateImg import additional_generate_image
+from app.feature.gptapi import generate_checklist
 from app.core.security import get_current_user
 from app.schemas.response.user import User
 from app.db.database import get_db
