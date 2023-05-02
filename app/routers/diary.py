@@ -88,7 +88,7 @@ async def like_diary(
         }
     )
 
-@router.post("/unlike", response_model=ApiResponse, tags=["Diary"])
+@router.delete("/unlike", response_model=ApiResponse, tags=["Diary"])
 async def unlike_diary(
     diary_id: int,
     db: Session = Depends(get_db),
