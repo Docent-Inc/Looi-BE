@@ -1,15 +1,12 @@
 import openai
 import asyncio
-from app.gptapi.generateImg import generate_img
+from app.core.current_time import get_current_time
+from app.feature.gptapi.generateImg import generate_img
 from app.db.models.dream import DreamText, DreamImage
 from app.db.database import get_db
-from app.gptapi.gptRequset import send_gpt_request
-import time
-import pytz
-from datetime import datetime
+from app.feature.gptapi.gptRequset import send_gpt_request
 
 async def generate_text(text: str, userId: int, db: get_db()) -> str:
-    '''
     async def get_gpt_response(message: str) -> str:
         messages_prompt = [
             {"role": "system", "content": "당신은 내 조각난 꿈을 완성시켜줄거야. 나 대신에 꿈을 약간의 스토리텔링을 통해 한국어로 만들어줄거야"},
@@ -24,7 +21,7 @@ async def generate_text(text: str, userId: int, db: get_db()) -> str:
         try:
             messages_prompt = [
                 {"role": "system", "content": message},
-                {"role": "system", "content": "이 꿈을 바탕으로 DALLE2에 넣을 프롬프트를 영어로 만들어줘, illustration라는 단어를 포함시켜줘"}
+                {"role": "system", "content": "너가 이 꿈을 이해하고, DALLE2에 넣을 프롬프트를 영어로 만들어줘, illustration라는 단어를 포함시켜줘"}
             ]
             chat = openai.ChatCompletion.create(model="gpt-4", messages=messages_prompt)
         except Exception as e:
@@ -40,16 +37,11 @@ async def generate_text(text: str, userId: int, db: get_db()) -> str:
     dream_name = dream[dream.find("[") + 1:dream.find("]")]
     dream = dream[dream.find("]") + 1:]
     dream_image_url, dream_image_prompt = L
-    '''
 
-    dream = "test"
-    dream_name = "test"
-    dream_image_url = "test"
-    dream_image_prompt = "test"
-
-    korea_timezone = pytz.timezone("Asia/Seoul")
-    korea_time = datetime.now(korea_timezone)
-    formatted_time = korea_time.strftime("%Y%m%d%H%M%S")
+    # dream = "test"
+    # dream_name = "test"
+    # dream_image_url = "test"
+    # dream_image_prompt = "test"
 
     # 데이터베이스에 DreamText 저장하기
     dream_text = DreamText(
@@ -58,7 +50,7 @@ async def generate_text(text: str, userId: int, db: get_db()) -> str:
         dream_name=dream_name,
         dream=dream,
         DALLE2=dream_image_prompt,
-        date=formatted_time,
+        date=get_current_time(),
         is_deleted=False
     )
     db.add(dream_text)
