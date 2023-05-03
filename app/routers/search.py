@@ -20,7 +20,7 @@ async def get_hot(
     diary_list_response = []
     for hot_item in hot_list:
         diary_id, total_weight = hot_item
-        diary = db.query(Diary).filter(Diary.id == diary_id).first()
+        diary = db.query(Diary).filter(Diary.id == diary_id, Diary.is_deleted == False).first()
         diary_response = DiaryListResponse(
             id=diary.id,
             dream_name=diary.dream_name,
