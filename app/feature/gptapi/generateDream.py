@@ -1,4 +1,3 @@
-import openai
 import asyncio
 from app.core.current_time import get_current_time
 from app.feature.gptapi.generateImg import generate_img
@@ -7,41 +6,32 @@ from app.db.database import get_db
 from app.feature.gptapi.gptRequset import send_gpt_request
 
 async def generate_text(text: str, userId: int, db: get_db()) -> str:
-    async def get_gpt_response(message: str) -> str:
+    async def get_dreamName(message: str) -> str:
         messages_prompt = [
-            {"role": "system", "content": "당신은 내 조각난 꿈을 완성시켜줄거야. 나 대신에 꿈을 약간의 스토리텔링을 통해 한국어로 만들어줄거야"},
-            {"role": "system",
-             "content": "꿈 제목은 창의적인 제목으로 너가 정해주고, 꿈 내용은 1인칭 시점으로 작성해줘, 만약 내용이 짧으면 추가적인 내용을 만들어줘"},
-            {"role": "system", "content": "꿈 내용은 120자가 넘지 않도록 만들어줘"},
-            {"role": "system", "content": "꿈 제목은 []로 감싸주고 이어서 내용을 만들어줘"}, {"role": "user", "content": message}]
-        response = await send_gpt_request(messages_prompt)
-        return response
+            {"role": "system", "content": "Make a dream title in Korean."},
+            {"role": "user", "content": message}
+        ]
+        dreamName = await send_gpt_request(messages_prompt)
+        return dreamName
 
     async def DALLE2(message: str):
         try:
             messages_prompt = [
-                {"role": "system", "content": message},
-                {"role": "system", "content": "너가 이 꿈을 이해하고, DALLE2에 넣을 프롬프트를 영어로 만들어줘, illustration라는 단어를 포함시켜줘"}
+                {"role": "system", "content": "Understand this dream and make a prompt for DALLE2, include the word illustration"},
+                {"role": "user", "content": message}
             ]
-            chat = openai.ChatCompletion.create(model="gpt-4", messages=messages_prompt)
+            prompt = await send_gpt_request(messages_prompt)
         except Exception as e:
-            print(e)
-            return "OpenAI API Error"
-        dream_image_url = await generate_img(chat.choices[0].message.content, userId)
-        return dream_image_url, chat.choices[0].message.content
+            return str(e)
+        dream_image_url = await generate_img(prompt, userId)
+        return dream_image_url, prompt
 
-    dream, L = await asyncio.gather(
-        get_gpt_response(text),
+    dream_name, L = await asyncio.gather(
+        get_dreamName(text),
         DALLE2(text)
     )
-    dream_name = dream[dream.find("[") + 1:dream.find("]")]
-    dream = dream[dream.find("]") + 1:]
+    dream = text
     dream_image_url, dream_image_prompt = L
-
-    # dream = "test"
-    # dream_name = "test"
-    # dream_image_url = "test"
-    # dream_image_prompt = "test"
 
     # 데이터베이스에 DreamText 저장하기
     dream_text = DreamText(
