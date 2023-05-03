@@ -1,5 +1,5 @@
 from app.core.current_time import get_current_time
-from app.feature.hot import maintain_hot_table_limit
+from app.feature.search import maintain_hot_table_limit
 from app.db.models.comment import Comment
 from app.db.models.diary import Diary
 from app.db.models.hot import Hot

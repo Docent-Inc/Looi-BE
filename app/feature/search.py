@@ -1,6 +1,9 @@
 from fastapi import HTTPException
+
+from app.db.models.diary import Diary
 from app.db.models.hot import Hot
 from sqlalchemy import func
+from sqlalchemy.sql.expression import or_
 from sqlalchemy.orm import Session
 async def maintain_hot_table_limit(db: Session):
     hot_data_count = db.query(Hot).count()
@@ -38,3 +41,24 @@ async def listHot(page: int, db: Session):
         return hot_list
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+async def listText(page: int, text: str, db: Session):
+    try:
+        # Diary 테이블에서 dream_name 또는 dream에 text가 포함된 요소들을 불러옵니다.
+        diaries = (
+            db.query(Diary)
+            .filter(
+                or_(
+                    Diary.dream_name.ilike(f"%{text}%"),
+                    Diary.dream.ilike(f"%{text}%")
+                ),
+                Diary.is_deleted == False
+            )
+            .offset((page - 1) * 10)
+            .limit(10)
+            .all()
+        )
+        return diaries
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
