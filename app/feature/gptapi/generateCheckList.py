@@ -8,21 +8,23 @@ from app.db.models.dream import DreamResolution
 async def generate_checklist(TextId: int, user_id: int, db: get_db()) -> str:
     async def get_dream_resolution(message: str) -> str:
         messages_prompt = [
-            {"role": "system", "content": message},
-            {"role": "system", "content": "꿈 내용을 바탕으로 꿈 해몽을 만들어줘"},
-            {"role": "system", "content": "꿈 해몽은 100자 정도로 만들어줘"},
-            {"role": "system", "content": "존댓말로 만들어줘"},
+            {"role": "system", "content": "이 꿈을 간단하게 해몽해줘"},
+            {"role": "system", "content": "존댓말을 사용해줘"},
+            {"role": "system", "content": "if the dream is so short, generate a dream resolution"},
+            {"role": "system", "content": "max_length=100"},
+            {"role": "user", "content": message}
         ]
         response = await send_gpt_request(messages_prompt)
         return response
 
     async def get_today_checklist(message: str) -> str:
         messages_prompt = [
-            {"role": "system", "content": message},
-            {"role": "system", "content": "꿈 내용을 바탕으로 오늘 현실에서 내가 체크해야될 내용 3개 만들어줘"},
-            {"role": "system", "content": "제목없이 1. 2. 3. 로 적어줘"},
-            {"role": "system", "content": "도전해볼 내용 두 개, 조심해야될 내용 한 개 적어줘"},
-            {"role": "system", "content": "각 항목은 제목없이 내용만 적어줘, ~해보기, ~하기 등의 말투로 해줘"},
+            {"role": "system", "content": "Based on the dream, make 3 things that I need to check in reality today"},
+            {"role": "system", "content": "1. 2. 3. without a title"},
+            {"role": "system", "content": "two things to try and one thing to be careful about"},
+            {"role": "system", "content": "the contents of each item without a title, in the way of speaking, such as ~try, ~do. make only korean sentences"},
+            {"role": "system", "content": "max_length=100"},
+            {"role": "user", "content": message},
         ]
         response = await send_gpt_request(messages_prompt)
         return response
@@ -38,8 +40,6 @@ async def generate_checklist(TextId: int, user_id: int, db: get_db()) -> str:
             get_dream_resolution(dream),
             get_today_checklist(dream)
     )
-    # dream_resolution = "test"
-    # today_checklist = "test"
 
     data = DreamResolution(
         Text_id=TextId,
