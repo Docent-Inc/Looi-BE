@@ -1,15 +1,14 @@
 from app.core.current_time import get_current_time
 from app.feature.hot import maintain_hot_table_limit
-from app.db.database import get_db
 from app.db.models.comment import Comment
 from app.db.models.diary import Diary
 from app.db.models.hot import Hot
 from app.db.models.like import Like
 from app.schemas.request.crud import Create, Update, commentRequest
 from fastapi import HTTPException
+from sqlalchemy.orm import Session
 
-
-async def createDiary(create: Create, userId: int, db: get_db()):
+async def createDiary(create: Create, userId: int, db: Session):
     try:
         diary = Diary(
             User_id=userId,
@@ -25,7 +24,7 @@ async def createDiary(create: Create, userId: int, db: get_db()):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-async def readDiary(diaryId: int, userId: int, db: get_db()):
+async def readDiary(diaryId: int, userId: int, db: Session):
     diary = db.query(Diary).filter(Diary.id == diaryId).first()
 
     if diary is None: # 해당 id의 게시글이 없을 때
@@ -95,7 +94,7 @@ async def readDiary(diaryId: int, userId: int, db: get_db()):
             diary.is_modified,
         )
 
-async def deleteDiary(diaryId: int, userId: int, db: get_db()):
+async def deleteDiary(diaryId: int, userId: int, db: Session):
     diary = db.query(Diary).filter(Diary.id == diaryId).first()
 
     if diary is None: # 해당 id의 게시글이 없을 때
@@ -114,7 +113,7 @@ async def deleteDiary(diaryId: int, userId: int, db: get_db()):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-async def updateDiary(diaryId: int, userId: int, create: Update, db: get_db()):
+async def updateDiary(diaryId: int, userId: int, create: Update, db: Session):
     diary = db.query(Diary).filter(Diary.id == diaryId).first()
     if diary is None: # 해당 id의 게시글이 없을 때
         raise HTTPException(status_code=404, detail="Diary not found")
@@ -134,7 +133,7 @@ async def updateDiary(diaryId: int, userId: int, create: Update, db: get_db()):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-async def likeDiary(diaryId: int, userId: int, db: get_db()):
+async def likeDiary(diaryId: int, userId: int, db: Session):
     diary = db.query(Diary).filter(Diary.id == diaryId).first()
     if diary is None: # 해당 id의 게시글이 없을 때
         raise HTTPException(status_code=404, detail="Diary not found")
@@ -186,7 +185,7 @@ async def likeDiary(diaryId: int, userId: int, db: get_db()):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-async def unlikeDiary(diaryId: int, userId: int, db: get_db()):
+async def unlikeDiary(diaryId: int, userId: int, db: Session):
     diary = db.query(Diary).filter(Diary.id == diaryId).first()
 
     if diary is None: # 해당 id의 게시글이 없을 때
@@ -212,7 +211,7 @@ async def unlikeDiary(diaryId: int, userId: int, db: get_db()):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-async def commentDiary(diaryId: int, userId: int, create: commentRequest, db: get_db()):
+async def commentDiary(diaryId: int, userId: int, create: commentRequest, db: Session):
     diary = db.query(Diary).filter(Diary.id == diaryId).first()
 
     if diary is None: # 해당 id의 게시글이 없을 때
@@ -261,7 +260,7 @@ async def commentDiary(diaryId: int, userId: int, create: commentRequest, db: ge
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-async def uncommentDiary(diaryId: int, commentId: int, db: get_db()):
+async def uncommentDiary(diaryId: int, commentId: int, db: Session):
     diary = db.query(Diary).filter(Diary.id == diaryId).first()
 
     if diary is None: # 해당 id의 게시글이 없을 때
@@ -281,7 +280,7 @@ async def uncommentDiary(diaryId: int, commentId: int, db: get_db()):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-async def listDiary(page: int, id: int , db: get_db()):
+async def listDiary(page: int, id: int , db: Session):
     # 페이지당 게시글 수 10개, 자신의 게시물과 삭제된 게시물을 제외한 게시물만 보여줍니다.
     try:
         diary = db.query(Diary).filter(Diary.User_id != id, Diary.is_deleted == False).order_by(Diary.create_date.desc()).limit(10).offset((page-1)*10).all()
