@@ -10,6 +10,8 @@ from app.db.database import get_db
 from app.db.models import User
 from typing import Optional
 from app.core.config import settings # .env파일에 저장된 secret key셋팅을 불러온다.
+access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+refresh_token_expires = timedelta(days=7)  # 리프레시 토큰 만료 기간을 설정합니다.
 
 API_KEY_NAME = "Authorization"
 
@@ -66,7 +68,7 @@ async def get_current_user(
         raise credentials_exception
 
     user = get_user_by_email(db, email=email) # email을 통해 유저를 가져온다.
-    if user is None:
+    if user is None or user.is_deleted == True: # 유저가 없거나 삭제된 유저면
         raise credentials_exception
     return user # 토큰을 복호화하여 유저 정보를 가져온다.
 
@@ -82,3 +84,15 @@ def create_refresh_token(data: dict, expires_delta: timedelta = None) -> str:
 
 def get_user_by_email(db: Session, email: str) -> Optional[User]:
     return db.query(User).filter(User.email == email).first()
+
+def get_user_by_nickName(db: Session, nickName: str) -> Optional[User]:
+    return db.query(User).filter(User.nickName == nickName).first()
+
+async def create_token(email):
+    access_token = create_access_token(  # 액세스 토큰을 생성합니다.
+        data={"sub": email}, expires_delta=access_token_expires
+    )
+    refresh_token = create_refresh_token(  # 리프레시 토큰을 생성합니다.
+        data={"sub": email}, expires_delta=refresh_token_expires
+    )
+    return access_token, refresh_token

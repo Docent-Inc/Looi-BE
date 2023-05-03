@@ -1,8 +1,8 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
-from app.db.models.diary import get_DiaryBase
+from app.db.models.comment import get_CommentBase
 
-PUBLIC_IP_ADDRESS = '34.64.33.205' # gcp sdl database
+PUBLIC_IP_ADDRESS = '34.64.33.205' # gcp sql database
 DB_USER = 'docent'
 DB_PASSWORD = 'cocone0331'
 DB_NAME = 'test'
@@ -11,7 +11,10 @@ DB_NAME = 'test'
 DB_URL = f'mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{PUBLIC_IP_ADDRESS}/{DB_NAME}'
 engine = create_engine(DB_URL, pool_recycle=500)
 
-Base = get_DiaryBase()
+Base = get_CommentBase()
+def get_Base():
+    return Base
+
 # Base.metadata.drop_all(bind=engine) # 테이블 변경 사항 있을 시 주석 제거
 Base.metadata.create_all(bind=engine)  # 테이블 생성
 
