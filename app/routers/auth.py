@@ -144,7 +144,7 @@ async def kakao():
     # 카카오 인증을 위한 URL을 반환합니다.
     return ApiResponse(success=True, data={"url": KAKAO_AUTH_URL})
 
-@router.post("/kakao/callback", response_model=ApiResponse, tags=["Auth"])
+@router.get("/kakao/callback", response_model=ApiResponse, tags=["Auth"])
 async def kakao_callback(
         code: str,
         db: Session = Depends(get_db),
