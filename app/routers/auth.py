@@ -146,11 +146,11 @@ async def kakao():
 
 @router.post("/kakao/callback", response_model=ApiResponse, tags=["Auth"])
 async def kakao_callback(
-        request: KakaoLoginRequest,
+        code: str,
         db: Session = Depends(get_db),
 ):
     # 카카오 로그인 콜백을 처리합니다.
-    data = await get_user_kakao(request)
+    data = await get_user_kakao(code)
     user = user_kakao(data, db)
     access_token, refresh_token = await create_token(user.email)
     return ApiResponse(
