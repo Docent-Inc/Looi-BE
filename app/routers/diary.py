@@ -189,7 +189,7 @@ async def list_diary_by_user(
         data=diary_list_response
     )
 
-@router.get("/list/mydiary", response_model=ApiResponse, tags=["Diary"])
+@router.get("/list/mydiary/{page}", response_model=ApiResponse, tags=["Diary"])
 async def list_my_diary(
     page: int,
     db: Session = Depends(get_db),
