@@ -297,6 +297,7 @@ async def listDiary(page: int, id: int , db: Session):
         raise HTTPException(status_code=500, detail=str(e))
 
 async def listDiaryByUser(user_id: int, page: int, currentUser_id: int, db: Session):
+    print(user_id, page, currentUser_id)
     try:
         diary = db.query(Diary).filter(Diary.User_id == user_id, Diary.is_deleted == False).order_by(Diary.create_date.desc()).limit(10).offset((page-1)*10).all()
         for i in range(len(diary)):
