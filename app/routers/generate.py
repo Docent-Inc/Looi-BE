@@ -16,10 +16,11 @@ async def generate_basic(
     db: Session = Depends(get_db), # 데이터베이스 세션
     current_user: User = Depends(get_current_user), # 로그인한 사용자의 정보
 ) -> BasicResponse:
-    dream_name, dream, dream_image_url = await generate_text(text, current_user.id, db)
+    id, dream_name, dream, dream_image_url = await generate_text(text, current_user.id, db)
     return ApiResponse(
         success=True,
         data=BasicResponse(
+            id=id,
             dream_name=dream_name,
             dream=dream,
             image_url=dream_image_url
