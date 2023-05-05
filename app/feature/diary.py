@@ -1,4 +1,5 @@
 from app.core.current_time import get_current_time
+from app.db.models import User
 from app.feature.search import maintain_hot_table_limit
 from app.db.models.comment import Comment
 from app.db.models.diary import Diary
@@ -284,6 +285,13 @@ async def listDiary(page: int, id: int , db: Session):
     # 페이지당 게시글 수 10개, 자신의 게시물과 삭제된 게시물을 제외한 게시물만 보여줍니다.
     try:
         diary = db.query(Diary).filter(Diary.User_id != id, Diary.is_deleted == False).order_by(Diary.create_date.desc()).limit(10).offset((page-1)*10).all()
+        # 각 diary의 user 정보를 가져옵니다.
+        for i in range(len(diary)):
+            diary[i].User = db.query(User).filter(User.id == diary[i].User_id).first()
+        # 각 diary에 user.nickname과 user.id를 추가합니다.
+        for i in range(len(diary)):
+            diary[i].nickname = diary[i].User.nickname
+            diary[i].userId = diary[i].User.id
         return diary
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
