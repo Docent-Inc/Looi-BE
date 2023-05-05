@@ -21,3 +21,6 @@ class DiaryListResponse(BaseModel):
     comment_count: int
     userNickname: str
     userId: int
+
+class DiaryUserListResponse(DiaryListResponse):
+    isMine: bool

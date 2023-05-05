@@ -3,11 +3,11 @@ from app.schemas.common import ApiResponse
 from app.db.database import get_db
 from sqlalchemy.orm import Session
 from app.core.security import get_current_user
-from app.schemas.response.diary import DiaryResponse, DiaryListResponse
+from app.schemas.response.diary import DiaryResponse, DiaryListResponse, DiaryUserListResponse
 from app.schemas.response.user import User
 from app.schemas.request.crud import Create, Update, commentRequest
 from app.feature.diary import createDiary, readDiary, deleteDiary, updateDiary, likeDiary, unlikeDiary, commentDiary, \
-    uncommentDiary, listDiary
+    uncommentDiary, listDiary, listDiaryByUser
 
 router = APIRouter(prefix="/diary")
 @router.post("/create", response_model=ApiResponse, tags=["Diary"])
@@ -151,6 +151,34 @@ async def list_diary(
             comment_count=diary.comment_count,
             userNickname=diary.nickname,
             userId=diary.userId,
+        )
+        diary_list_response.append(diary_response)
+
+    return ApiResponse(
+        success=True,
+        data=diary_list_response
+    )
+
+@router.get("/list/{user_id}", response_model=ApiResponse, tags=["Diary"])
+async def list_diary_by_user(
+    user_id: int,
+    page: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    diary_list = await listDiaryByUser(user_id, page, current_user.id, db)
+    diary_list_response = []
+    for diary in diary_list:
+        diary_response = DiaryUserListResponse(
+            id=diary.id,
+            dream_name=diary.dream_name,
+            image_url=diary.image_url,
+            view_count=diary.view_count,
+            like_count=diary.like_count,
+            comment_count=diary.comment_count,
+            userNickname=diary.nickname,
+            userId=diary.userId,
+            isMine=diary.isMine,
         )
         diary_list_response.append(diary_response)
 
