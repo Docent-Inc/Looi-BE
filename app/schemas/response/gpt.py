@@ -5,6 +5,7 @@ bmongsmong.com
 pretotyping 설문조사 페이지 response 구조
 '''
 class BasicResponse(BaseModel):
+    id: int
     dream_name: str
     dream: str
     image_url: str
