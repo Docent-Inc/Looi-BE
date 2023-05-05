@@ -290,7 +290,7 @@ async def listDiary(page: int, id: int , db: Session):
             diary[i].User = db.query(User).filter(User.id == diary[i].User_id).first()
         # 각 diary에 user.nickname과 user.id를 추가합니다.
         for i in range(len(diary)):
-            diary[i].nickname = diary[i].User.nickname
+            diary[i].nickname = diary[i].User.nickName
             diary[i].userId = diary[i].User.id
         return diary
     except Exception as e:
