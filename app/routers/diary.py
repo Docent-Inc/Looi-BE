@@ -148,7 +148,9 @@ async def list_diary(
             image_url=diary.image_url,
             view_count=diary.view_count,
             like_count=diary.like_count,
-            comment_count=diary.comment_count
+            comment_count=diary.comment_count,
+            userNickname=diary.nickname,
+            userId=diary.userId,
         )
         diary_list_response.append(diary_response)
 

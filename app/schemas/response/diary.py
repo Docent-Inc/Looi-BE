@@ -19,3 +19,5 @@ class DiaryListResponse(BaseModel):
     view_count: int
     like_count: int
     comment_count: int
+    userNickname: str
+    userId: int
