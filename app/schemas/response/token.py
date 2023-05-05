@@ -6,3 +6,4 @@ class TokenData(BaseModel):
     token_type: str
     user_email: str
     user_password: str
+    user_nickname: str
