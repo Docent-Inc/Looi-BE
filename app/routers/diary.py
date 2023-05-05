@@ -188,3 +188,30 @@ async def list_diary_by_user(
         success=True,
         data=diary_list_response
     )
+
+@router.get("/list/mydiary", response_model=ApiResponse, tags=["Diary"])
+async def list_my_diary(
+    page: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    diary_list = await listDiaryByUser(current_user.id, page, current_user.id, db)
+    diary_list_response = []
+    for diary in diary_list:
+        diary_response = DiaryListResponse(
+            id=diary.id,
+            dream_name=diary.dream_name,
+            image_url=diary.image_url,
+            view_count=diary.view_count,
+            like_count=diary.like_count,
+            comment_count=diary.comment_count,
+            userNickname=diary.nickname,
+            userId=diary.userId,
+            is_liked=diary.is_liked,
+        )
+        diary_list_response.append(diary_response)
+
+    return ApiResponse(
+        success=True,
+        data=diary_list_response
+    )
