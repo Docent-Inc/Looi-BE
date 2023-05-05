@@ -283,7 +283,7 @@ async def uncommentDiary(diaryId: int, commentId: int, db: Session):
 
 async def listDiary(page: int, id: int , db: Session):
     try:
-        diary = db.query(Diary).filter(Diary.User_id != id, Diary.is_deleted == False).order_by(Diary.create_date.desc()).limit(10).offset((page-1)*10).all()
+        diary = db.query(Diary).filter(Diary.User_id != id, Diary.is_deleted == False).order_by(Diary.create_date.desc()).limit(5).offset((page-1)*5).all()
         for i in range(len(diary)):
             diary[i].User = db.query(User).filter(User.id == diary[i].User_id).first()
         for i in range(len(diary)):
@@ -299,7 +299,7 @@ async def listDiary(page: int, id: int , db: Session):
 async def listDiaryByUser(user_id: int, page: int, currentUser_id: int, db: Session):
     print(user_id, page, currentUser_id)
     try:
-        diary = db.query(Diary).filter(Diary.User_id == user_id, Diary.is_deleted == False).order_by(Diary.create_date.desc()).limit(10).offset((page-1)*10).all()
+        diary = db.query(Diary).filter(Diary.User_id == user_id, Diary.is_deleted == False).order_by(Diary.create_date.desc()).limit(5).offset((page-1)*5).all()
         for i in range(len(diary)):
             diary[i].User = db.query(User).filter(User.id == diary[i].User_id).first()
         for i in range(len(diary)):
