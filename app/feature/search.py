@@ -32,8 +32,8 @@ async def listHot(page: int, db: Session):
             )
             .group_by(Hot.Diary_id)
             .order_by(func.sum(Hot.weight).desc())
-            .limit(10)
-            .offset((page - 1) * 10)
+            .limit(5)
+            .offset((page - 1) * 5)
             .all()
         )
 
@@ -54,8 +54,8 @@ async def listText(page: int, text: str, db: Session):
                 ),
                 Diary.is_deleted == False
             )
-            .offset((page - 1) * 10)
-            .limit(10)
+            .offset((page - 1) * 5)
+            .limit(5)
             .all()
         )
         return diaries

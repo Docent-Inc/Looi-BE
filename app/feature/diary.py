@@ -1,4 +1,5 @@
 from app.core.current_time import get_current_time
+from app.db.models import User
 from app.feature.search import maintain_hot_table_limit
 from app.db.models.comment import Comment
 from app.db.models.diary import Diary
@@ -281,9 +282,37 @@ async def uncommentDiary(diaryId: int, commentId: int, db: Session):
         raise HTTPException(status_code=500, detail=str(e))
 
 async def listDiary(page: int, id: int , db: Session):
-    # 페이지당 게시글 수 10개, 자신의 게시물과 삭제된 게시물을 제외한 게시물만 보여줍니다.
     try:
-        diary = db.query(Diary).filter(Diary.User_id != id, Diary.is_deleted == False).order_by(Diary.create_date.desc()).limit(10).offset((page-1)*10).all()
+        diary = db.query(Diary).filter(Diary.User_id != id, Diary.is_deleted == False).order_by(Diary.create_date.desc()).limit(5).offset((page-1)*5).all()
+        for i in range(len(diary)):
+            diary[i].User = db.query(User).filter(User.id == diary[i].User_id).first()
+        for i in range(len(diary)):
+            diary[i].nickname = diary[i].User.nickName
+            diary[i].userId = diary[i].User.id
+            # 현재 사용자가 좋아요를 눌렀는지 확인하여 is_liked를 추가합니다.
+            is_liked = db.query(Like).filter(Like.Diary_id == diary[i].id, Like.User_id == id).first() is not None
+            diary[i].is_liked = is_liked
         return diary
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+async def listDiaryByUser(user_id: int, page: int, currentUser_id: int, db: Session):
+    print(user_id, page, currentUser_id)
+    try:
+        diary = db.query(Diary).filter(Diary.User_id == user_id, Diary.is_deleted == False).order_by(Diary.create_date.desc()).limit(5).offset((page-1)*5).all()
+        for i in range(len(diary)):
+            diary[i].User = db.query(User).filter(User.id == diary[i].User_id).first()
+        for i in range(len(diary)):
+            diary[i].nickname = diary[i].User.nickName
+            diary[i].userId = diary[i].User.id
+            if diary[i].User_id == currentUser_id:
+                diary[i].isMine = True
+            else:
+                diary[i].isMine = False
+            # 현재 사용자가 좋아요를 눌렀는지 확인하여 is_liked를 추가합니다.
+            is_liked = db.query(Like).filter(Like.Diary_id == diary[i].id, Like.User_id == currentUser_id).first() is not None
+            diary[i].is_liked = is_liked
+        return diary
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
