@@ -45,6 +45,7 @@ async def signup(
             refresh_token=refresh_token,
             user_email=new_user.email,
             user_password=user_data.password,
+            user_nickname=user_data.nickName,
         )
     )
 
@@ -71,6 +72,7 @@ async def login(
             refresh_token=refresh_token,
             user_email=user.email,
             user_password=form_data.password,
+            user_nickname=user.nickName,
         )
     )
     response = JSONResponse(content=response_data.dict())
@@ -161,5 +163,6 @@ async def kakao_callback(
             refresh_token=refresh_token,
             user_email=data.get("kakao_account").get("email"),
             user_password=str(data.get("id")),
+            user_nickname=data.get("kakao_account").get("email")[0:data.get("kakao_account").get("email").find("@")],
         )
     )
