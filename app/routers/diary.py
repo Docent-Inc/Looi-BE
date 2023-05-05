@@ -151,6 +151,7 @@ async def list_diary(
             comment_count=diary.comment_count,
             userNickname=diary.nickname,
             userId=diary.userId,
+            is_liked=diary.is_liked,
         )
         diary_list_response.append(diary_response)
 
@@ -179,6 +180,7 @@ async def list_diary_by_user(
             userNickname=diary.nickname,
             userId=diary.userId,
             isMine=diary.isMine,
+            is_liked=diary.is_liked,
         )
         diary_list_response.append(diary_response)
 
