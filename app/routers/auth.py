@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.responses import JSONResponse
-from app.auth.kakaoOAuth2 import KAKAO_AUTH_URL, get_user_kakao
+from app.auth.kakaoOAuth2 import KAKAO_AUTH_URL, get_user_kakao, mobile_create_token
 from app.db.database import get_db
 from app.core.config import settings
 from sqlalchemy.orm import Session
@@ -164,5 +164,26 @@ async def kakao_callback(
             user_email=data.get("kakao_account").get("email"),
             user_password=str(data.get("id")),
             user_nickname=data.get("kakao_account").get("email")[0:data.get("kakao_account").get("email").find("@")],
+        )
+    )
+
+@router.get("kakao/moblie", response_model=ApiResponse, tags=["Auth"])
+async def kakao_mobile(
+        data: str,
+        db: Session = Depends(get_db),
+):
+    # 카카오 모바일 로그인을 처리합니다.
+    user_data = await mobile_create_token(data)
+    user = user_kakao(user_data, db)
+    access_token, refresh_token = await create_token(user.email)
+    return ApiResponse(
+        success=True,
+        data=TokenData(
+            access_token=access_token,
+            token_type="bearer",
+            refresh_token=refresh_token,
+            user_email=user_data.get("kakao_account").get("email"),
+            user_password=str(user_data.get("id")),
+            user_nickname=user_data.get("kakao_account").get("email")[0:user_data.get("kakao_account").get("email").find("@")],
         )
     )
