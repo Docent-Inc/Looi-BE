@@ -20,6 +20,7 @@ async def createDiary(create: Create, userId: int, db: Session):
             image_url=create.image_url,
             create_date=get_current_time(),
             modify_date=get_current_time(),
+            is_public=create.is_public,
         )
         db.add(diary)
         db.commit()
