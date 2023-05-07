@@ -15,6 +15,8 @@ async def createDiary(create: Create, userId: int, db: Session):
             User_id=userId,
             dream_name=create.dream_name,
             dream=create.dream,
+            resolution=create.resolution,
+            checklist=create.checklist,
             image_url=create.image_url,
             create_date=get_current_time(),
             modify_date=get_current_time(),
