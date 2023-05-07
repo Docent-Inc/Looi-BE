@@ -5,6 +5,8 @@ class DiaryResponse(BaseModel):
     is_owner: bool
     dream_name: str
     dream: str
+    resolution: str
+    checklist: str
     image_url: str
     create_date: str
     modified_date: str

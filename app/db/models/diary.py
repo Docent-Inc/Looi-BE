@@ -9,6 +9,8 @@ class Diary(Base):
     User_id = Column(Integer, ForeignKey('User.id'), nullable=False)
     dream_name = Column(String(20), nullable=False)
     dream = Column(Text, nullable=False)
+    resolution = Column(Text, nullable=True)
+    checklist = Column(Text, nullable=True)
     image_url = Column(String(100), nullable=True)
     create_date = Column(String(14), nullable=False)
     modify_date = Column(String(14), nullable=False)
