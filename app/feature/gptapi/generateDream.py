@@ -8,7 +8,7 @@ from app.feature.gptapi.gptRequset import send_gpt_request
 async def generate_text(text: str, userId: int, db: get_db()) -> str:
     async def get_dreamName(message: str) -> str:
         messages_prompt = [
-            {"role": "system", "content": "Understand this dream, and make a dream title in just Korean."},
+            {"role": "system", "content": "Understand this dream, and make a interested dream title in just Korean."},
             {"role": "user", "content": message}
         ]
         dreamName = await send_gpt_request(messages_prompt)
