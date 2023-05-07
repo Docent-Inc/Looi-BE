@@ -55,7 +55,6 @@ async def generate_text(text: str, userId: int, db: get_db()) -> str:
     db.add(dream_image)
     db.commit()
     db.refresh(dream_image)
-
     # 데이터베이스에서 id값 찾기
     dream_text_id = dream_text.id
 
