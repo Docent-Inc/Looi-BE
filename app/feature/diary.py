@@ -71,7 +71,7 @@ async def readDiary(diaryId: int, userId: int, db: Session):
         raise HTTPException(status_code=500, detail=str(e))
 
     is_owner = diary.User_id == userId
-    if is_owner:
+    if is_owner or diary.is_public:
         return (
             diary.is_public,
             is_owner,
@@ -84,21 +84,6 @@ async def readDiary(diaryId: int, userId: int, db: Session):
             diary.dream,
             diary.resolution,
             diary.checklist,
-            diary.is_modified,
-        )
-    elif diary.is_public:
-        return (
-            diary.is_public,
-            is_owner,
-            diary.create_date,
-            diary.modify_date,
-            diary.image_url,
-            diary.view_count,
-            diary.like_count,
-            diary.dream_name,
-            diary.dream,
-            "",
-            "",
             diary.is_modified,
         )
     else:

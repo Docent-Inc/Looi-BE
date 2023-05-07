@@ -7,7 +7,7 @@ class Diary(Base):
 
     id = Column(Integer, primary_key=True)
     User_id = Column(Integer, ForeignKey('User.id'), nullable=False)
-    dream_name = Column(String(20), nullable=False)
+    dream_name = Column(String(40), nullable=False)
     dream = Column(Text, nullable=False)
     resolution = Column(Text, nullable=True)
     checklist = Column(Text, nullable=True)
