@@ -11,7 +11,7 @@ async def generate_checklist(TextId: int, user_id: int, db: get_db()) -> str:
             {"role": "system", "content": "이 꿈을 간단하게 해몽해줘"},
             {"role": "system", "content": "존댓말을 사용해줘"},
             {"role": "system", "content": "if the dream is so short, generate a dream resolution"},
-            {"role": "system", "content": "max_length=100"},
+            {"role": "system", "content": "max_length=60"},
             {"role": "user", "content": message}
         ]
         response = await send_gpt_request(messages_prompt)
