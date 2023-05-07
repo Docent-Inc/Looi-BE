@@ -7,7 +7,7 @@ import os
 load_dotenv()
 CLIENT_ID = os.getenv("KAKAO_API_KEY")
 CLIENT_SECRET = os.getenv("KAKAO_API_SECRET")
-# REDIRECT_URI = "https://bmongsmong.com/kakao"
+# REDIRECT_URI = "https://bmongsmong.com/api/auth/kakao/callback"
 REDIRECT_URI = "http://localhost:3000/kakao"
 KAKAO_AUTH_URL = f"https://kauth.kakao.com/oauth/authorize?client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI}&response_type=code"
 AUTHORIZE_ENDPOINT = "https://kauth.kakao.com/oauth/authorize"
@@ -29,6 +29,15 @@ async def get_user_kakao(request: str):
 
         headers = {"Authorization": f"Bearer {token}"}
         user_info = requests.get(PROFILE_ENDPOINT, headers=headers).json()
+        return user_info
+    except GetIdEmailError:
+        raise HTTPException(status_code=400, detail="Could not get user info")
+
+async def mobile_create_token(data: str):
+    try:
+        headers = {"Authorization": f"Bearer {data}"}
+        user_info = requests.get(PROFILE_ENDPOINT, headers=headers).json()
+        print(user_info)
         return user_info
     except GetIdEmailError:
         raise HTTPException(status_code=400, detail="Could not get user info")

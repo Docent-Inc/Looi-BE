@@ -15,9 +15,12 @@ async def createDiary(create: Create, userId: int, db: Session):
             User_id=userId,
             dream_name=create.dream_name,
             dream=create.dream,
+            resolution=create.resolution,
+            checklist=create.checklist,
             image_url=create.image_url,
             create_date=get_current_time(),
             modify_date=get_current_time(),
+            is_public=create.is_public,
         )
         db.add(diary)
         db.commit()
@@ -68,7 +71,7 @@ async def readDiary(diaryId: int, userId: int, db: Session):
         raise HTTPException(status_code=500, detail=str(e))
 
     is_owner = diary.User_id == userId
-    if is_owner or diary.is_public:
+    if is_owner:
         return (
             diary.is_public,
             is_owner,
@@ -79,6 +82,23 @@ async def readDiary(diaryId: int, userId: int, db: Session):
             diary.like_count,
             diary.dream_name,
             diary.dream,
+            diary.resolution,
+            diary.checklist,
+            diary.is_modified,
+        )
+    elif diary.is_public:
+        return (
+            diary.is_public,
+            is_owner,
+            diary.create_date,
+            diary.modify_date,
+            diary.image_url,
+            diary.view_count,
+            diary.like_count,
+            diary.dream_name,
+            diary.dream,
+            "",
+            "",
             diary.is_modified,
         )
     else:
@@ -90,8 +110,10 @@ async def readDiary(diaryId: int, userId: int, db: Session):
             diary.image_url,
             diary.view_count,
             diary.like_count,
+            diary.dream_name,
             "",  # 빈 문자열로 기본값 설정
-            "",  # 빈 문자열로 기본값 설정
+            "",
+            "",
             diary.is_modified,
         )
 
@@ -283,7 +305,7 @@ async def uncommentDiary(diaryId: int, commentId: int, db: Session):
 
 async def listDiary(page: int, id: int , db: Session):
     try:
-        diary = db.query(Diary).filter(Diary.User_id != id, Diary.is_deleted == False).order_by(Diary.create_date.desc()).limit(5).offset((page-1)*5).all()
+        diary = db.query(Diary).filter(Diary.is_deleted == False).order_by(Diary.create_date.desc()).limit(5).offset((page-1)*5).all()
         for i in range(len(diary)):
             diary[i].User = db.query(User).filter(User.id == diary[i].User_id).first()
         for i in range(len(diary)):

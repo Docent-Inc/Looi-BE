@@ -8,7 +8,7 @@ from app.feature.gptapi.gptRequset import send_gpt_request
 async def generate_text(text: str, userId: int, db: get_db()) -> str:
     async def get_dreamName(message: str) -> str:
         messages_prompt = [
-            {"role": "system", "content": "Understand this dream, and make a dream title in just Korean."},
+            {"role": "system", "content": "꿈의 내용을 이해하고 너가 재미있는 꿈의 제목을 만들어줘"},
             {"role": "user", "content": message}
         ]
         dreamName = await send_gpt_request(messages_prompt)
@@ -55,7 +55,6 @@ async def generate_text(text: str, userId: int, db: get_db()) -> str:
     db.add(dream_image)
     db.commit()
     db.refresh(dream_image)
-
     # 데이터베이스에서 id값 찾기
     dream_text_id = dream_text.id
 
