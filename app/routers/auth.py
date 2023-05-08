@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.responses import JSONResponse
-from app.auth.kakaoOAuth2 import KAKAO_AUTH_URL, get_user_kakao, mobile_create_token
+from app.auth.kakaoOAuth2 import KAKAO_AUTH_URL, get_user_kakao, mobile_create_token, KAKAO_AUTH_URL_USEAPP
 from app.db.database import get_db
 from app.core.config import settings
 from sqlalchemy.orm import Session
@@ -145,6 +145,11 @@ async def delete_user(
 async def kakao():
     # 카카오 인증을 위한 URL을 반환합니다.
     return ApiResponse(success=True, data={"url": KAKAO_AUTH_URL})
+
+# @router.get("/kakao/useapp", response_model=ApiResponse, tags=["Auth"])
+# async def kakao_useapp():
+#     # 카카오 인증을 위한 URL을 반환합니다.
+#     return ApiResponse(success=True, data={"url": KAKAO_AUTH_URL_USEAPP})
 
 @router.get("/kakao/callback", response_model=ApiResponse, tags=["Auth"])
 async def kakao_callback(
