@@ -34,6 +34,23 @@ async def get_user_kakao(request: str):
     except GetIdEmailError:
         raise HTTPException(status_code=400, detail="Could not get user info")
 
+async def get_user_kakao_test(request: str):
+    try:
+        data = {
+            "grant_type": "authorization_code",
+            "client_id": CLIENT_ID,
+            "redirect_uri": REDIRECT_URI_TEST,
+            "code": request,
+        }
+        response = requests.post(ACCESS_TOKEN_ENDPOINT, data=data)
+        token = response.json().get("access_token")
+
+        headers = {"Authorization": f"Bearer {token}"}
+        user_info = requests.get(PROFILE_ENDPOINT, headers=headers).json()
+        return user_info
+    except GetIdEmailError:
+        raise HTTPException(status_code=400, detail="Could not get user info")
+
 async def mobile_create_token(data: str):
     try:
         headers = {"Authorization": f"Bearer {data}"}
