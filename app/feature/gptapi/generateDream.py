@@ -17,7 +17,9 @@ async def generate_text(text: str, userId: int, db: get_db()) -> str:
     async def DALLE2(message: str):
         try:
             messages_prompt = [
-                {"role": "system", "content": "Understand this dream and make a prompt for DALLE2, include the word illustration"},
+                {"role": "system", "content": "Understand this dream and make just one scene a prompt for DALLE2, include the word illustration"},
+                {"role": "system", "content": "make just prompt"},
+                {"role": "system", "content": "max_length=100"},
                 {"role": "user", "content": message}
             ]
             prompt = await send_gpt_request(messages_prompt)
