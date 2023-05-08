@@ -91,12 +91,14 @@ def user_kakao(kakao_data: dict, db: Session) -> Optional[User]:
     kakao_id = str(kakao_data["id"])
     kakao_email = kakao_data["kakao_account"]["email"]
     kakao_nickname = kakao_email.split("@")[0]
-    gender = "0"
-    age_range = "0"
-    if kakao_data["kakao_account"]["gender"]:
+    try:
         gender = kakao_data["kakao_account"]["gender"]
-    if kakao_data["kakao_account"]["age_range"]:
+    except:
+        gender = "0"
+    try:
         age_range = kakao_data["kakao_account"]["age_range"]
+    except:
+        age_range = "0"
 
     # 카카오에서 전달받은 사용자 정보로 사용자를 조회합니다.
     user = get_user_by_email(db, email=kakao_email)
