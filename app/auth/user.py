@@ -91,6 +91,13 @@ def user_kakao(kakao_data: dict, db: Session) -> Optional[User]:
     kakao_id = str(kakao_data["id"])
     kakao_email = kakao_data["kakao_account"]["email"]
     kakao_nickname = kakao_email.split("@")[0]
+    gender = "0"
+    age_range = "0"
+    if kakao_data["kakao_account"]["gender"]:
+        gender = kakao_data["kakao_account"]["gender"]
+    if kakao_data["kakao_account"]["age_range"]:
+        age_range = kakao_data["kakao_account"]["age_range"]
+
     # 카카오에서 전달받은 사용자 정보로 사용자를 조회합니다.
     user = get_user_by_email(db, email=kakao_email)
     # 사용자가 존재하지 않으면 새로운 사용자를 생성합니다.
@@ -99,6 +106,8 @@ def user_kakao(kakao_data: dict, db: Session) -> Optional[User]:
             email=kakao_email,
             nickName=kakao_nickname,
             hashed_password=get_password_hash(kakao_id),
+            gender=str(gender),
+            age_range=str(age_range),
         )
         try:
             db.add(user)
