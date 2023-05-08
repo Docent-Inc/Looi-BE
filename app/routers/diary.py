@@ -3,11 +3,11 @@ from app.schemas.common import ApiResponse
 from app.db.database import get_db
 from sqlalchemy.orm import Session
 from app.core.security import get_current_user
-from app.schemas.response.diary import DiaryResponse, DiaryListResponse, DiaryUserListResponse
+from app.schemas.response.diary import DiaryResponse, DiaryListResponse, DiaryUserListResponse, CommentListResponse
 from app.schemas.response.user import User
 from app.schemas.request.crud import Create, Update, commentRequest
 from app.feature.diary import createDiary, readDiary, deleteDiary, updateDiary, likeDiary, unlikeDiary, commentDiary, \
-    uncommentDiary, listDiary, listDiaryByUser
+    uncommentDiary, listDiary, listDiaryByUser, listComment
 
 router = APIRouter(prefix="/diary")
 @router.post("/create", response_model=ApiResponse, tags=["Diary"])
@@ -216,4 +216,28 @@ async def list_my_diary(
     return ApiResponse(
         success=True,
         data=diary_list_response
+    )
+
+@router.get("/list/comment/{id}/{page}", response_model=ApiResponse, tags=["Diary"])
+async def list_comment(
+    id: int,
+    page: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    comment_list = await listComment(id, page, db)
+    comment_list_response = []
+    for comment in comment_list:
+        comment_response = CommentListResponse(
+            id=comment.id,
+            comment=comment.comment,
+            create_date=comment.create_date,
+            userNickname=comment.nickname,
+            userId=comment.userId,
+        )
+        comment_list_response.append(comment_response)
+
+    return ApiResponse(
+        success=True,
+        data=comment_list_response
     )
