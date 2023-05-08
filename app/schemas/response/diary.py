@@ -13,6 +13,7 @@ class DiaryResponse(BaseModel):
     view_count: int
     like_count: int
     is_modified: bool
+    comment_count: int
 
 class DiaryListResponse(BaseModel):
     id: int
@@ -27,3 +28,10 @@ class DiaryListResponse(BaseModel):
 
 class DiaryUserListResponse(DiaryListResponse):
     isMine: bool
+
+class CommentListResponse(BaseModel):
+    id: int
+    userNickname: str
+    userId: int
+    comment: str
+    create_date: str
