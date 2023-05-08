@@ -13,6 +13,7 @@ class DiaryResponse(BaseModel):
     view_count: int
     like_count: int
     is_modified: bool
+    comment_count: int
 
 class DiaryListResponse(BaseModel):
     id: int

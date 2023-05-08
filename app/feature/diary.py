@@ -85,6 +85,7 @@ async def readDiary(diaryId: int, userId: int, db: Session):
             diary.resolution,
             diary.checklist,
             diary.is_modified,
+            diary.comment_count,
         )
     else:
         return (
@@ -100,6 +101,7 @@ async def readDiary(diaryId: int, userId: int, db: Session):
             "",
             "",
             diary.is_modified,
+            diary.comment_count,
         )
 
 async def deleteDiary(diaryId: int, userId: int, db: Session):
