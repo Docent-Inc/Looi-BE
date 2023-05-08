@@ -9,7 +9,7 @@ DB_NAME = 'test'
 
 # TCP 연결을 사용하여 인스턴스에 연결
 DB_URL = f'mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{PUBLIC_IP_ADDRESS}/{DB_NAME}'
-engine = create_engine(DB_URL, pool_recycle=500)
+engine = create_engine(DB_URL, pool_recycle=150)
 
 Base = get_CommentBase()
 def get_Base():
