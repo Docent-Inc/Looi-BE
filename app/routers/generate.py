@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends
-from app.feature.gptapi.generateDream import generate_text
-from app.feature.gptapi.generateCheckList import generate_checklist
-from app.schemas.response.gpt import BasicResponse, ImageResponse, CheckListResponse
+from app.feature.gptapi.generate import generate_text, generate_resolution, generate_checklist
+from app.schemas.response.gpt import BasicResponse, ImageResponse, CheckListResponse, ResolutionResponse
 from app.schemas.common import ApiResponse
 from app.feature.gptapi.generateImg import additional_generate_image
 from app.core.security import get_current_user
@@ -41,17 +40,32 @@ async def generate_image(
         )
     )
 
-@router.get("/checklist", response_model=ApiResponse, tags=["Generate"])
-async def generate_image(
+@router.post("/resolution", response_model=ApiResponse, tags=["Generate"])
+async def resolution(
     textId: int, # 생성된 꿈 텍스트의 id
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
-) -> ImageResponse:
-    dream_resolution, today_checklist = await generate_checklist(textId, current_user.id, db)
+) -> ResolutionResponse:
+    dream_resolution = await generate_resolution(textId, current_user.id, db)
+    return ApiResponse(
+        success=True,
+        data=ResolutionResponse(
+            dream_resolution=dream_resolution
+        )
+)
+
+
+@router.post("/checklist", response_model=ApiResponse, tags=["Generate"])
+async def checklist(
+    resolution: str, # 생성된 꿈 텍스트의 id
+    textId: int, # 생성된 꿈 텍스트의 id
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> CheckListResponse:
+    today_checklist = await generate_checklist(resolution, textId, db)
     return ApiResponse(
         success=True,
         data=CheckListResponse(
-            dream_resolution=dream_resolution,
             today_checklist=today_checklist
         )
     )
