@@ -88,9 +88,15 @@ def deleteUser(current_user: User, db: Session):
 
 def user_kakao(kakao_data: dict, db: Session) -> Optional[User]:
     # 카카오에서 전달받은 사용자 정보를 변수에 저장합니다.
-    kakao_id = str(kakao_data["id"])
-    kakao_email = kakao_data["kakao_account"]["email"]
-    kakao_nickname = kakao_email.split("@")[0]
+    try:
+        kakao_id = str(kakao_data["id"])
+        kakao_email = kakao_data["kakao_account"]["email"]
+        kakao_nickname = kakao_email.split("@")[0]
+    except:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="카카오에서 유저정보를 받아오는데 실패했습니다.",
+        )
     try:
         gender = kakao_data["kakao_account"]["gender"]
     except:

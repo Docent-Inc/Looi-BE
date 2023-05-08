@@ -55,7 +55,6 @@ async def mobile_create_token(data: str):
     try:
         headers = {"Authorization": f"Bearer {data}"}
         user_info = requests.get(PROFILE_ENDPOINT, headers=headers).json()
-        print(user_info)
         return user_info
     except GetIdEmailError:
         raise HTTPException(status_code=400, detail="Could not get user info")
