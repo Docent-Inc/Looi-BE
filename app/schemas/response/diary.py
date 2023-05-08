@@ -27,3 +27,10 @@ class DiaryListResponse(BaseModel):
 
 class DiaryUserListResponse(DiaryListResponse):
     isMine: bool
+
+class CommentListResponse(BaseModel):
+    id: int
+    userNickname: str
+    userId: int
+    comment: str
+    create_date: str
