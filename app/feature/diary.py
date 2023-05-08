@@ -71,7 +71,7 @@ async def readDiary(diaryId: int, userId: int, db: Session):
         raise HTTPException(status_code=500, detail=str(e))
 
     is_owner = diary.User_id == userId
-    if is_owner:
+    if is_owner or diary.is_public:
         return (
             diary.is_public,
             is_owner,
@@ -85,21 +85,7 @@ async def readDiary(diaryId: int, userId: int, db: Session):
             diary.resolution,
             diary.checklist,
             diary.is_modified,
-        )
-    elif diary.is_public:
-        return (
-            diary.is_public,
-            is_owner,
-            diary.create_date,
-            diary.modify_date,
-            diary.image_url,
-            diary.view_count,
-            diary.like_count,
-            diary.dream_name,
-            diary.dream,
-            "",
-            "",
-            diary.is_modified,
+            diary.comment_count,
         )
     else:
         return (
@@ -115,6 +101,7 @@ async def readDiary(diaryId: int, userId: int, db: Session):
             "",
             "",
             diary.is_modified,
+            diary.comment_count,
         )
 
 async def deleteDiary(diaryId: int, userId: int, db: Session):
@@ -338,3 +325,25 @@ async def listDiaryByUser(user_id: int, page: int, currentUser_id: int, db: Sess
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+async def listComment(diaryId: int, page: int, db: Session):
+    try:
+        comment = db.query(Comment).filter(Comment.Diary_id == diaryId, Comment.is_deleted == False).order_by(Comment.create_date.desc()).limit(10).offset((page-1)*10).all()
+        for i in range(len(comment)):
+            comment[i].User = db.query(User).filter(User.id == comment[i].User_id).first()
+        for i in range(len(comment)):
+            comment[i].nickname = comment[i].User.nickName
+            comment[i].userId = comment[i].User.id
+        return comment
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+async def updateDiaryIsPublic(diaryId: int, userId: int, isPublic: bool, db: Session):
+    diary = db.query(Diary).filter(Diary.id == diaryId, Diary.User_id == userId).first()
+    if diary is None:
+        raise HTTPException(status_code=404, detail="Diary not found")
+    try:
+        diary.is_public = isPublic
+        db.commit()
+        db.refresh(diary)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
