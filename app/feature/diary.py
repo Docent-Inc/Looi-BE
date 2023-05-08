@@ -335,3 +335,13 @@ async def listComment(diaryId: int, page: int, db: Session):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+async def updateDiaryIsPublic(diaryId: int, userId: int, isPublic: bool, db: Session):
+    diary = db.query(Diary).filter(Diary.id == diaryId, Diary.User_id == userId).first()
+    if diary is None:
+        raise HTTPException(status_code=404, detail="Diary not found")
+    try:
+        diary.is_public = isPublic
+        db.commit()
+        db.refresh(diary)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

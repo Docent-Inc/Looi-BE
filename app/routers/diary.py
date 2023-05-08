@@ -7,7 +7,7 @@ from app.schemas.response.diary import DiaryResponse, DiaryListResponse, DiaryUs
 from app.schemas.response.user import User
 from app.schemas.request.crud import Create, Update, commentRequest
 from app.feature.diary import createDiary, readDiary, deleteDiary, updateDiary, likeDiary, unlikeDiary, commentDiary, \
-    uncommentDiary, listDiary, listDiaryByUser, listComment
+    uncommentDiary, listDiary, listDiaryByUser, listComment, updateDiaryIsPublic
 
 router = APIRouter(prefix="/diary")
 @router.post("/create", response_model=ApiResponse, tags=["Diary"])
@@ -56,6 +56,20 @@ async def update_diary(
     current_user: User = Depends(get_current_user),
 ):
     await updateDiary(diary_id, current_user.id, create, db)
+    return ApiResponse(
+        success=True,
+        data={
+            "message": "일기가 성공적으로 수정되었습니다."
+        }
+    )
+@router.post("/update/ispublic", response_model=ApiResponse, tags=["Diary"])
+async def update_diary_ispublic(
+    diary_id: int,
+    is_public: bool,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    await updateDiaryIsPublic(diary_id, current_user.id, is_public, db)
     return ApiResponse(
         success=True,
         data={
