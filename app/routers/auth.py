@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.responses import JSONResponse
-from app.auth.kakaoOAuth2 import KAKAO_AUTH_URL, get_user_kakao, mobile_create_token, KAKAO_AUTH_URL_USEAPP
+from app.auth.kakaoOAuth2 import KAKAO_AUTH_URL, get_user_kakao, mobile_create_token, KAKAO_AUTH_URL_TEST
 from app.db.database import get_db
 from app.core.config import settings
 from sqlalchemy.orm import Session
@@ -12,7 +12,7 @@ from datetime import timedelta
 from app.schemas.common import ApiResponse
 from app.auth.user import get_user_by_email, create_user, authenticate_user, changeNickName, changePassword, deleteUser, \
     user_kakao
-from app.schemas.request.user import UserCreate, PasswordChangeRequest, NicknameChangeRequest, KakaoLoginRequest
+from app.schemas.request.user import UserCreate, PasswordChangeRequest, NicknameChangeRequest
 from app.core.security import get_current_user, get_user_by_nickName, access_token_expires
 from app.schemas.response.user import User, PasswordChangeResponse, NicknameChangeResponse, DeleteUserResponse
 
@@ -146,10 +146,10 @@ async def kakao():
     # 카카오 인증을 위한 URL을 반환합니다.
     return ApiResponse(success=True, data={"url": KAKAO_AUTH_URL})
 
-# @router.get("/kakao/useapp", response_model=ApiResponse, tags=["Auth"])
-# async def kakao_useapp():
-#     # 카카오 인증을 위한 URL을 반환합니다.
-#     return ApiResponse(success=True, data={"url": KAKAO_AUTH_URL_USEAPP})
+@router.get("/kakao/test", response_model=ApiResponse, tags=["Auth"])
+async def kakao_useapp():
+    # 카카오 인증을 위한 URL을 반환합니다.
+    return ApiResponse(success=True, data={"url": KAKAO_AUTH_URL_TEST})
 
 @router.get("/kakao/callback", response_model=ApiResponse, tags=["Auth"])
 async def kakao_callback(
