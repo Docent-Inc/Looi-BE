@@ -15,5 +15,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 ENV PYTHONUNBUFFERED=1
 
-CMD ["gunicorn", "-w", "2", "-k", "uvicorn.workers.UvicornWorker", "main:app", "--bind", "0.0.0.0:8000", "--timeout", "150", "--log-config", "gunicorn_logging.conf"]
+CMD ["gunicorn", "-w", "2", "-k", "uvicorn.workers.UvicornWorker", "main:app", "--bind", "0.0.0.0:8000", "--timeout", "200", "--log-config", "gunicorn_logging.conf", "--access-log-format", "%(h)s %(l)s %(u)s %(t)s \"%(r)s\" %(s)s %(b)s \"%(f)s\" \"%(a)s\" %({X-Forwarded-For}i)s"]
 # CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
