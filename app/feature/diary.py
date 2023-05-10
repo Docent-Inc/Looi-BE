@@ -71,6 +71,7 @@ async def readDiary(diaryId: int, userId: int, db: Session):
         raise HTTPException(status_code=500, detail=str(e))
 
     is_owner = diary.User_id == userId
+    is_liked = db.query(Like).filter(Like.Diary_id == diaryId, Like.User_id == userId).first() is not None
     if is_owner or diary.is_public:
         return (
             diary.is_public,
@@ -86,6 +87,7 @@ async def readDiary(diaryId: int, userId: int, db: Session):
             diary.checklist,
             diary.is_modified,
             diary.comment_count,
+            is_liked,
         )
     else:
         return (
@@ -102,6 +104,7 @@ async def readDiary(diaryId: int, userId: int, db: Session):
             "",
             diary.is_modified,
             diary.comment_count,
+            is_liked,
         )
 
 async def deleteDiary(diaryId: int, userId: int, db: Session):
@@ -306,7 +309,6 @@ async def listDiary(page: int, id: int , db: Session):
         raise HTTPException(status_code=500, detail=str(e))
 
 async def listDiaryByUser(user_id: int, page: int, currentUser_id: int, db: Session):
-    print(user_id, page, currentUser_id)
     try:
         diary = db.query(Diary).filter(Diary.User_id == user_id, Diary.is_deleted == False).order_by(Diary.create_date.desc()).limit(5).offset((page-1)*5).all()
         for i in range(len(diary)):
