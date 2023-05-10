@@ -11,7 +11,7 @@ class DiaryResponse(BaseModel):
     create_date: str
     modified_date: str
     view_count: int
-    like_count: int가
+    like_count: int
     is_modified: bool
     comment_count: int
     is_liked: bool
