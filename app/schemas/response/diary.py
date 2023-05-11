@@ -36,3 +36,4 @@ class CommentListResponse(BaseModel):
     userId: int
     comment: str
     create_date: str
+    isMine: bool

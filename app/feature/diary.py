@@ -327,15 +327,16 @@ async def listDiaryByUser(user_id: int, page: int, currentUser_id: int, db: Sess
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-async def listComment(diaryId: int, page: int, db: Session):
+async def listComment(userId: int, diaryId: int, page: int, db: Session):
     try:
-        comment = db.query(Comment).filter(Comment.Diary_id == diaryId, Comment.is_deleted == False).order_by(Comment.create_date.desc()).limit(10).offset((page-1)*10).all()
-        for i in range(len(comment)):
-            comment[i].User = db.query(User).filter(User.id == comment[i].User_id).first()
-        for i in range(len(comment)):
-            comment[i].nickname = comment[i].User.nickName
-            comment[i].userId = comment[i].User.id
-        return comment
+        comments = db.query(Comment).filter(Comment.Diary_id == diaryId, Comment.is_deleted == False).order_by(Comment.create_date.asc()).limit(10).offset((page-1)*10).all()
+        for i in range(len(comments)):
+            user = db.query(User).filter(User.id == comments[i].User_id).first()
+            comments[i].nickname = user.nickName
+            comments[i].userId = user.id
+            # 댓글이 내 것인지 확인
+            comments[i].is_mine = True if userId == comments[i].User_id else False
+        return comments
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

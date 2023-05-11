@@ -241,7 +241,7 @@ async def list_comment(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    comment_list = await listComment(id, page, db)
+    comment_list = await listComment(current_user.id, id, page, db)
     comment_list_response = []
     for comment in comment_list:
         comment_response = CommentListResponse(
@@ -250,6 +250,7 @@ async def list_comment(
             create_date=comment.create_date,
             userNickname=comment.nickname,
             userId=comment.userId,
+            isMine=comment.isMine,
         )
         comment_list_response.append(comment_response)
 
