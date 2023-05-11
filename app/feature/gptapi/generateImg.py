@@ -56,8 +56,8 @@ async def generate_img(prompt: str, userId: int):
     formatted_time = korea_time.strftime("%Y%m%d%H%M%S")
     imgName = str(userId) + str(formatted_time)
     # TODO: 디렉토리 이름을 dreams/userid/imageName.png로 바꿔야함
-    destination_blob_name = "dreams/" + str(userId) + "/" + imgName + ".png"
-    destination_blob_name = "testimg/" + imgName + ".png"
+    destination_blob_name = "mvp/dreams/" + userId + "/" + imgName + ".png"
+    # destination_blob_name = "testimg/" + imgName + ".png"
     bucket_name = "docent"  # 구글 클라우드 버킷 이름을 지정하세요.
 
     client = create_storage_client_hardcoded()
