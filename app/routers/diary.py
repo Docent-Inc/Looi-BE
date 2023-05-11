@@ -34,6 +34,7 @@ async def read_diary(
     return ApiResponse(
         success=True,
         data=DiaryResponse(
+            id=diary_id,
             is_public=is_public,
             create_date=create_date,
             modified_date=modified_date,
