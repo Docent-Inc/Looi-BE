@@ -250,7 +250,7 @@ async def list_comment(
             create_date=comment.create_date,
             userNickname=comment.nickname,
             userId=comment.userId,
-            isMine=comment.isMine,
+            isMine=comment.is_mine,
         )
         comment_list_response.append(comment_response)
 
