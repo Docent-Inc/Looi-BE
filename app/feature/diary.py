@@ -270,6 +270,8 @@ async def commentDiary(diaryId: int, userId: int, create: commentRequest, db: Se
         db.add(comment)
         db.commit()
         db.refresh(comment)
+
+        return comment
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
