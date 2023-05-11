@@ -128,12 +128,17 @@ async def comment_diary(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    await commentDiary(diary_id, current_user.id, comment, db)
+    newComment = await commentDiary(diary_id, current_user.id, comment, db)
     return ApiResponse(
         success=True,
-        data={
-            "message": "댓글이 성공적으로 등록되었습니다."
-        }
+        data=CommentListResponse(
+            id=newComment.id,
+            userNickname=current_user.nickName,
+            userId=current_user.id,
+            comment=newComment.comment,
+            create_date=newComment.create_date,
+            isMine=True,
+        )
     )
 
 
