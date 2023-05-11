@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 
 class DiaryResponse(BaseModel):
+    id: int
     is_public: bool
     is_owner: bool
     dream_name: str
@@ -14,6 +15,7 @@ class DiaryResponse(BaseModel):
     like_count: int
     is_modified: bool
     comment_count: int
+    is_liked: bool
 
 class DiaryListResponse(BaseModel):
     id: int
@@ -35,3 +37,4 @@ class CommentListResponse(BaseModel):
     userId: int
     comment: str
     create_date: str
+    isMine: bool

@@ -30,10 +30,11 @@ async def read_diary(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    is_public, is_owner, create_date, modified_date, image_url, view_count, like_count, dream_name, dream, resolution, checklist, is_modified, comment_count = await readDiary(diary_id, current_user.id, db)
+    is_public, is_owner, create_date, modified_date, image_url, view_count, like_count, dream_name, dream, resolution, checklist, is_modified, comment_count, is_liked = await readDiary(diary_id, current_user.id, db)
     return ApiResponse(
         success=True,
         data=DiaryResponse(
+            id=diary_id,
             is_public=is_public,
             create_date=create_date,
             modified_date=modified_date,
@@ -47,6 +48,7 @@ async def read_diary(
             is_owner=is_owner,
             is_modified=is_modified,
             comment_count=comment_count,
+            is_liked=is_liked,
         )
     )
 @router.post("/update", response_model=ApiResponse, tags=["Diary"])
@@ -126,12 +128,17 @@ async def comment_diary(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    await commentDiary(diary_id, current_user.id, comment, db)
+    newComment = await commentDiary(diary_id, current_user.id, comment, db)
     return ApiResponse(
         success=True,
-        data={
-            "message": "댓글이 성공적으로 등록되었습니다."
-        }
+        data=CommentListResponse(
+            id=newComment.id,
+            userNickname=current_user.nickName,
+            userId=current_user.id,
+            comment=newComment.comment,
+            create_date=newComment.create_date,
+            isMine=True,
+        )
     )
 
 
@@ -240,7 +247,7 @@ async def list_comment(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    comment_list = await listComment(id, page, db)
+    comment_list = await listComment(current_user.id, id, page, db)
     comment_list_response = []
     for comment in comment_list:
         comment_response = CommentListResponse(
@@ -249,6 +256,7 @@ async def list_comment(
             create_date=comment.create_date,
             userNickname=comment.nickname,
             userId=comment.userId,
+            isMine=comment.is_mine,
         )
         comment_list_response.append(comment_response)
 

@@ -22,7 +22,7 @@ async def generate_text(text: str, userId: int, db: get_db()) -> str:
         try:
             messages_prompt = [
                 {"role": "system", "content": "Understand this dream and make just one scene a prompt for DALLE2, include the word illustration"},
-                {"role": "system", "content": "make just prompt"},
+                {"role": "system", "content": "make just prompt only engilsh"},
                 {"role": "system", "content": "max_length=100"},
                 {"role": "user", "content": message}
             ]
@@ -70,7 +70,7 @@ async def generate_resolution(TextId: int, user_id: int, db: get_db()) -> str:
     async def get_dream_resolution(message: str) -> str:
         messages_prompt = [
             {"role": "system", "content": "이 꿈을 공손하게 재미요소를 담아서 해몽해줘"},
-            {"role": "system", "content": "max_length=80"},
+            {"role": "system", "content": "max_length=60"},
             {"role": "user", "content": message}
         ]
         response = await send_gpt_request(messages_prompt)
@@ -91,7 +91,7 @@ async def generate_checklist(resolution: str, TextId: int, db: get_db()) -> str:
         messages_prompt = [
             {"role": "system", "content": "이 꿈의 해몽을 바탕으로 현실에서 오늘 하루의 체크리스트 조금 자세하게 3개 만들어줘"},
             {"role": "system", "content": "~해보기, ~하기 와 같은 말투로 제목없이, 1. 2. 3. 으로 나열해주고, 줄바꿈은 한번씩만 해줘"},
-            {"role": "system", "content": "max_length=80"},
+            {"role": "system", "content": "max_length=60"},
             {"role": "user", "content": message},
         ]
         response = await send_gpt_request(messages_prompt)
