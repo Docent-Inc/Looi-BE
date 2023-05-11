@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 
 class DiaryResponse(BaseModel):
+    id: int
     is_public: bool
     is_owner: bool
     dream_name: str
