@@ -25,6 +25,7 @@ async def createDiary(create: Create, userId: int, db: Session):
         db.add(diary)
         db.commit()
         db.refresh(diary)
+        return diary.id
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

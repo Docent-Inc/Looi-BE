@@ -71,10 +71,11 @@ async def save(
     create: Create,
     db: Session = Depends(get_db),
 ):
-    await createDiary(create, 1, db)
+    diary_id = await createDiary(create, 1, db)
     return ApiResponse(
         success=True,
         data={
+            "id": diary_id,
             "message": "일기가 성공적으로 작성되었습니다."
         }
     )
