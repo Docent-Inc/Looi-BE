@@ -62,7 +62,7 @@ async def checklist(
     return ApiResponse(
         success=True,
         data=CheckListResponse(
-            dream_checklist=dream_checklist
+            today_checklist=dream_checklist
         )
     )
 
