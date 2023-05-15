@@ -112,3 +112,16 @@ async def generate_checklist(resolution: str, TextId: int, db: get_db()) -> str:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
     return check_list
+
+async def generate_resolution_mvp(text: str) -> str:
+    async def get_dream_resolution(message: str) -> str:
+        messages_prompt = [
+            {"role": "system", "content": "이 꿈을 공손하게 재미요소를 담아서 해몽하고 내용만 보내줘"},
+            {"role": "system", "content": "max_length=60"},
+            {"role": "user", "content": message}
+        ]
+        response = await send_gpt_request(messages_prompt)
+        return response
+
+    dream_resolution = await get_dream_resolution(text)
+    return dream_resolution

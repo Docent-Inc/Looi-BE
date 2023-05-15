@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.feature.diary import readDiary, createDiary
-from app.feature.gptapi.generate import generate_text, generate_resolution, generate_checklist
+from app.feature.gptapi.generate import generate_text, generate_resolution, generate_checklist, generate_resolution_mvp
 from app.feature.gptapi.generateImg import additional_generate_image
 from app.schemas.common import ApiResponse
 from app.schemas.request.crud import Create
@@ -41,10 +41,9 @@ async def generate_image(
 
 @router.post("/resolution", response_model=ApiResponse, tags=["MVP"])
 async def resolution(
-    textId: int, # 생성된 꿈 텍스트의 id
-    db: Session = Depends(get_db),
+    text: str, # 생성된 꿈 텍스트의 id
 ) -> ResolutionResponse:
-    dream_resolution = await generate_resolution(textId, 1, db)
+    dream_resolution = await generate_resolution_mvp(text)
     return ApiResponse(
         success=True,
         data=ResolutionResponse(
