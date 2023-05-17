@@ -5,7 +5,7 @@ import os
 load_dotenv()
 openai.api_key = os.getenv("GPT_API_KEY")
 os.environ['_BARD_API_KEY']=os.getenv("BARD_API_KEY")
-bard = Bard(timeout=20)
+bard = Bard(timeout=30)
 
 async def send_gpt_request(messages_prompt, retries=3):
     for i in range(retries):
