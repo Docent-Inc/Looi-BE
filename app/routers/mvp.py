@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.feature.diary import readDiary, createDiary
@@ -16,12 +16,11 @@ async def generate_basic(
     db: Session = Depends(get_db),
 ) -> BasicResponse:
     if len(text) < 10 or len(text) > 200:
-        return ApiResponse(
-            success=False,
-            data={
-                "message": "10자 이상 200자 이하로 입력해주세요."
-            }
+        raise HTTPException(
+            status_code=400,
+            detail="10자 이상 200자 이하로 입력해주세요."
         )
+
     id, dream_name, dream, dream_image_url = await generate_text(text, 1, db)
     return ApiResponse(
         success=True,
@@ -50,6 +49,12 @@ async def generate_image(
 async def resolution(
     text: str, # 생성된 꿈 텍스트의 id
 ) -> ResolutionResponse:
+    if len(text) < 10 or len(text) > 200:
+        raise HTTPException(
+            status_code=400,
+            detail="10자 이상 200자 이하로 입력해주세요."
+        )
+
     dream_resolution = await generate_resolution_mvp(text)
     return ApiResponse(
         success=True,
