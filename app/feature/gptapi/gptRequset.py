@@ -23,7 +23,7 @@ async def send_gpt_request(messages_prompt, retries=3):
 async def send_bard_request(messages_prompt, retries=3):
     for i in range(retries):
         try:
-            prompt = f"꿈 꿨는데 꿈 해몽 이 꿈 해몽 해주고 내용만 알려줘. 꿈 내용 : {messages_prompt}"
+            prompt = f"꿈 꿨는데 이 꿈을 짧게 해몽 해줘. 내용을 사람처럼 말해주고 '이 꿈은' 으로 시작해줘. langth=150, 문단 변경없이 반환해줘. 꿈 내용 : {messages_prompt}"
             return bard.get_answer(prompt)['content']
         except:
             print("Bard API Error")
