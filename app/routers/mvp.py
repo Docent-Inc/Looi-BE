@@ -15,7 +15,7 @@ async def generate_basic(
     text: str, # 사용자가 입력한 텍스트
     db: Session = Depends(get_db),
 ) -> BasicResponse:
-    if len(text) < 10 and len(text) > 200:
+    if len(text) < 10 or len(text) > 200:
         return ApiResponse(
             success=False,
             data={
