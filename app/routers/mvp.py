@@ -15,6 +15,13 @@ async def generate_basic(
     text: str, # 사용자가 입력한 텍스트
     db: Session = Depends(get_db),
 ) -> BasicResponse:
+    if len(text) < 10 and len(text) > 200:
+        return ApiResponse(
+            success=False,
+            data={
+                "message": "10자 이상 200자 이하로 입력해주세요."
+            }
+        )
     id, dream_name, dream, dream_image_url = await generate_text(text, 1, db)
     return ApiResponse(
         success=True,
