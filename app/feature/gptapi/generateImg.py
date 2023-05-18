@@ -32,13 +32,19 @@ async def generate_img(prompt: str, userId: int):
         return storage.Client(credentials=credentials, project=SERVICE_ACCOUNT_INFO['project_id'])
 
     async def get_image_url(prompt):
-        response = await asyncio.to_thread(
-            openai.Image.create,
-            prompt=prompt,
-            n=1,
-            size="512x512",
-            response_format="url"
-        )
+        try:
+            response = await asyncio.to_thread(
+                openai.Image.create,
+                prompt=prompt,
+                n=1,
+                size="512x512",
+                response_format="url"
+            )
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e)
+            )
         return response['data'][0]['url']
 
     async def download_image(url):

@@ -16,10 +16,11 @@ async def create_diary(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    await createDiary(create, current_user.id, db)
+    diary_id = await createDiary(create, current_user.id, db)
     return ApiResponse(
         success=True,
         data={
+            "id": diary_id,
             "message": "일기가 성공적으로 작성되었습니다."
         }
     )

@@ -7,7 +7,8 @@ from app.core.current_time import get_current_time
 from app.feature.gptapi.generateImg import generate_img, get_text_data
 from app.db.models.dream import DreamText, DreamImage, DreamResolution
 from app.db.database import get_db
-from app.feature.gptapi.gptRequset import send_gpt_request
+from app.feature.gptapi.gptRequset import send_gpt_request, send_bard_request
+
 
 async def generate_text(text: str, userId: int, db: get_db()) -> str:
     async def get_dreamName(message: str) -> str:
@@ -19,16 +20,15 @@ async def generate_text(text: str, userId: int, db: get_db()) -> str:
         return dreamName
 
     async def DALLE2(message: str):
-        try:
-            messages_prompt = [
-                {"role": "system", "content": "Understand this dream and make just one scene a prompt for DALLE2, include the word illustration"},
-                {"role": "system", "content": "make just prompt only engilsh"},
-                {"role": "system", "content": "max_length=100"},
-                {"role": "user", "content": message}
-            ]
-            prompt = await send_gpt_request(messages_prompt)
-        except Exception as e:
-            return str(e)
+        messages_prompt = [
+            {"role": "system", "content": "Understand this dream and make just one scene a prompt for DALLE2"},
+            {"role": "system", "content": "include the word illustration and 7 world about Subject, Medium, Environment, Lighting, Color, Mood, Compoition"},
+            {"role": "system", "content": "make just prompt only engilsh"},
+            {"role": "system", "content": "max_length=100"},
+            {"role": "user", "content": message}
+        ]
+        prompt = await send_gpt_request(messages_prompt)
+
         dream_image_url = await generate_img(prompt, userId)
         return dream_image_url, prompt
 
@@ -112,3 +112,7 @@ async def generate_checklist(resolution: str, TextId: int, db: get_db()) -> str:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
     return check_list
+
+async def generate_resolution_mvp(text: str) -> str:
+    dream_resolution = await send_bard_request(text)
+    return dream_resolution

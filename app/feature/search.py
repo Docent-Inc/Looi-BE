@@ -1,10 +1,16 @@
 from fastapi import HTTPException
-
+from sqlalchemy.orm import joinedload
 from app.db.models.diary import Diary
 from app.db.models.hot import Hot
+from app.db.models.like import Like
+from app.db.models.user import User
 from sqlalchemy import func
 from sqlalchemy.sql.expression import or_
 from sqlalchemy.orm import Session
+
+from app.schemas.response.diary import DiaryListResponse
+
+
 async def maintain_hot_table_limit(db: Session):
     hot_data_count = db.query(Hot).count()
     if hot_data_count >= 1000:
@@ -20,11 +26,10 @@ async def maintain_hot_table_limit(db: Session):
             raise HTTPException(status_code=500, detail=str(e))
     return None # 삭제할 데이터가 없을 경우 None을 반환합니다.
 
-async def listHot(page: int, db: Session):
+
+
+async def listHot(page: int, db: Session, current_user: User):
     try:
-        # Hot 테이블에서 모든 요소를 불러온 후 같은 diaryId를 가진 요소들의 weight를 합산합니다.
-        # 그 후, weight를 기준으로 내림차순 정렬합니다.
-        # 마지막으로, 페이지네이션을 적용합니다.
         hot_list = (
             db.query(
                 Hot.Diary_id,
@@ -37,10 +42,36 @@ async def listHot(page: int, db: Session):
             .all()
         )
 
-        # hot_list를 반환합니다.
-        return hot_list
+        diary_list_response = []
+        for hot_item in hot_list:
+            diary_id, total_weight = hot_item
+            diary = db.query(Diary).options(joinedload(Diary.user)).filter(Diary.id == diary_id, Diary.is_deleted == False).first()
+            if diary is None:
+                continue
+
+            user_nickname = diary.user.nickName if diary.user else None
+
+            like = db.query(Like).filter(Like.User_id == current_user.id, Like.Diary_id == diary.id).first()
+            is_liked = True if like else False
+
+            diary_response = DiaryListResponse(
+                id=diary.id,
+                dream_name=diary.dream_name,
+                image_url=diary.image_url,
+                view_count=diary.view_count,
+                like_count=diary.like_count,
+                comment_count=diary.comment_count,
+                userNickname=user_nickname,
+                userId=diary.User_id,
+                is_liked=is_liked
+            )
+            diary_list_response.append(diary_response)
+
+        return diary_list_response
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 async def listText(page: int, text: str, db: Session):
     try:
