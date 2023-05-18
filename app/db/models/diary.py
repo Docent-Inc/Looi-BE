@@ -1,4 +1,6 @@
 from sqlalchemy import Column, Integer, Text, ForeignKey, String, Boolean
+from sqlalchemy.orm import relationship
+
 from app.db.models.dream import get_DreamBase
 Base = get_DreamBase()
 
@@ -6,6 +8,7 @@ class Diary(Base):
     __tablename__ = "Diary"
 
     id = Column(Integer, primary_key=True)
+    user = relationship('User', backref='diaries')
     User_id = Column(Integer, ForeignKey('User.id'), nullable=False)
     dream_name = Column(String(40), nullable=False)
     dream = Column(Text, nullable=False)
