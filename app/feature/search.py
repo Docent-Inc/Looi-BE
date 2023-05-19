@@ -26,8 +26,6 @@ async def maintain_hot_table_limit(db: Session):
             raise HTTPException(status_code=500, detail=str(e))
     return None # 삭제할 데이터가 없을 경우 None을 반환합니다.
 
-
-
 async def listHot(page: int, db: Session, current_user: User):
     try:
         hot_list = (
@@ -35,19 +33,19 @@ async def listHot(page: int, db: Session, current_user: User):
                 Hot.Diary_id,
                 func.sum(Hot.weight).label("total_weight"),
             )
+            .join(Diary, Diary.id == Hot.Diary_id)
+            .filter(Diary.is_deleted == False)
             .group_by(Hot.Diary_id)
             .order_by(func.sum(Hot.weight).desc())
-            .limit(5)
-            .offset((page - 1) * 5)
+            .limit(10)
+            .offset((page - 1) * 10)
             .all()
         )
 
         diary_list_response = []
         for hot_item in hot_list:
             diary_id, total_weight = hot_item
-            diary = db.query(Diary).options(joinedload(Diary.user)).filter(Diary.id == diary_id, Diary.is_deleted == False).first()
-            if diary is None:
-                continue
+            diary = db.query(Diary).options(joinedload(Diary.user)).filter(Diary.id == diary_id).first()
 
             user_nickname = diary.user.nickName if diary.user else None
 
@@ -71,6 +69,7 @@ async def listHot(page: int, db: Session, current_user: User):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 
 async def listText(page: int, text: str, db: Session):
