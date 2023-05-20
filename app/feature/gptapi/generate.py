@@ -66,24 +66,8 @@ async def generate_text(text: str, userId: int, db: get_db()) -> str:
 
     return dream_text_id, dream_name, dream, dream_image_url
 
-async def generate_resolution(TextId: int, user_id: int, db: get_db()) -> str:
-    async def get_dream_resolution(message: str) -> str:
-        messages_prompt = [
-            {"role": "system", "content": "이 꿈을 공손하게 재미요소를 담아서 해몽해줘"},
-            {"role": "system", "content": "max_length=60"},
-            {"role": "user", "content": message}
-        ]
-        response = await send_gpt_request(messages_prompt)
-        return response
-
-    # 데이터베이스에서 textId와 current_user.id를 확인 후 dream 가져오기
-    text_data = await get_text_data(TextId, user_id, db)
-    if text_data is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="생성된 꿈이 없습니다.")
-
-    dream = text_data.dream  # 생성된 꿈 정보 불러오기
-
-    dream_resolution = await get_dream_resolution(dream)
+async def generate_resolution(text: str) -> str:
+    dream_resolution = await send_bard_request(text)
     return dream_resolution
 
 async def generate_checklist(resolution: str, TextId: int, db: get_db()) -> str:

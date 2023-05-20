@@ -42,18 +42,16 @@ async def generate_image(
 
 @router.post("/resolution", response_model=ApiResponse, tags=["Generate"])
 async def resolution(
-    textId: int, # 생성된 꿈 텍스트의 id
+    text: str,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
 ) -> ResolutionResponse:
-    dream_resolution = await generate_resolution(textId, current_user.id, db)
+    dream_resolution = await generate_resolution(text)
     return ApiResponse(
         success=True,
         data=ResolutionResponse(
             dream_resolution=dream_resolution
         )
 )
-
 
 @router.post("/checklist", response_model=ApiResponse, tags=["Generate"])
 async def checklist(
