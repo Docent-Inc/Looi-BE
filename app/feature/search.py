@@ -7,7 +7,8 @@ from app.db.models.user import User
 from sqlalchemy import func
 from sqlalchemy.sql.expression import or_
 from sqlalchemy.orm import Session
-from app.schemas.response.diary import DiaryListResponse
+from app.schemas.response.diary import DiaryListResponse, DiaryIamgeListResponse
+
 
 async def maintain_hot_table_limit(db: Session):
     hot_data_count = db.query(Hot).count()
@@ -45,7 +46,7 @@ async def listHot(page: int, db: Session, current_user: User):
             diary_id, total_weight = hot_item
             diary = db.query(Diary).options(joinedload(Diary.user)).filter(Diary.id == diary_id).first()
 
-            diary_response = DiaryListResponse(
+            diary_response = DiaryIamgeListResponse(
                 id=diary.id,
                 image_url=diary.image_url,
             )
@@ -77,7 +78,7 @@ async def listText(page: int, text: str, db: Session, user_id: int):
         diary_list_response = []
         for diary in diaries:
 
-            diary_response = DiaryListResponse(
+            diary_response = DiaryIamgeListResponse(
                 id=diary.id,
                 image_url=diary.image_url,
             )

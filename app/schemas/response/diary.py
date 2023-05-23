@@ -17,7 +17,7 @@ class DiaryResponse(BaseModel):
     comment_count: int
     is_liked: bool
 
-class DiaryUserListResponse(BaseModel):
+class DiaryListResponse(BaseModel):
     id: int
     dream_name: str
     image_url: str
@@ -27,6 +27,8 @@ class DiaryUserListResponse(BaseModel):
     userNickname: str
     userId: int
     is_liked: bool
+
+class DiaryUserListResponse(BaseModel):
     isMine: bool
 
 class CommentListResponse(BaseModel):
@@ -37,6 +39,6 @@ class CommentListResponse(BaseModel):
     create_date: str
     isMine: bool
 
-class DiaryListResponse(BaseModel):
+class DiaryIamgeListResponse(BaseModel):
     id: int
     image_url: str
