@@ -35,8 +35,8 @@ async def listHot(page: int, db: Session, current_user: User):
             .filter(Diary.is_deleted == False)
             .group_by(Hot.Diary_id)
             .order_by(func.sum(Hot.weight).desc())
-            .limit(10)
-            .offset((page - 1) * 10)
+            .limit(18)
+            .offset((page - 1) * 18)
             .all()
         )
 
@@ -45,21 +45,9 @@ async def listHot(page: int, db: Session, current_user: User):
             diary_id, total_weight = hot_item
             diary = db.query(Diary).options(joinedload(Diary.user)).filter(Diary.id == diary_id).first()
 
-            user_nickname = diary.user.nickName if diary.user else None
-
-            like = db.query(Like).filter(Like.User_id == current_user.id, Like.Diary_id == diary.id).first()
-            is_liked = True if like else False
-
             diary_response = DiaryListResponse(
                 id=diary.id,
-                dream_name=diary.dream_name,
                 image_url=diary.image_url,
-                view_count=diary.view_count,
-                like_count=diary.like_count,
-                comment_count=diary.comment_count,
-                userNickname=user_nickname,
-                userId=diary.User_id,
-                is_liked=is_liked
             )
             diary_list_response.append(diary_response)
 
@@ -67,6 +55,7 @@ async def listHot(page: int, db: Session, current_user: User):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 async def listText(page: int, text: str, db: Session, user_id: int):
     try:
@@ -80,26 +69,17 @@ async def listText(page: int, text: str, db: Session, user_id: int):
                 ),
                 Diary.is_deleted == False
             )
-            .offset((page - 1) * 9)
-            .limit(9)
+            .offset((page - 1) * 18)
+            .limit(18)
             .all()
         )
 
         diary_list_response = []
         for diary in diaries:
-            like = db.query(Like).filter(Like.User_id == user_id, Like.Diary_id == diary.id).first()
-            is_liked = like is not None
 
             diary_response = DiaryListResponse(
                 id=diary.id,
-                dream_name=diary.dream_name,
                 image_url=diary.image_url,
-                view_count=diary.view_count,
-                like_count=diary.like_count,
-                comment_count=diary.comment_count,
-                userNickname=diary.user.nickName if diary.user else None,
-                userId=diary.user.id if diary.user else None,
-                is_liked=is_liked
             )
             diary_list_response.append(diary_response)
 
