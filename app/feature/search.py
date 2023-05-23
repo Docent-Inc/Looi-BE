@@ -7,9 +7,7 @@ from app.db.models.user import User
 from sqlalchemy import func
 from sqlalchemy.sql.expression import or_
 from sqlalchemy.orm import Session
-
 from app.schemas.response.diary import DiaryListResponse
-
 
 async def maintain_hot_table_limit(db: Session):
     hot_data_count = db.query(Hot).count()
@@ -70,13 +68,11 @@ async def listHot(page: int, db: Session, current_user: User):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
-
-async def listText(page: int, text: str, db: Session):
+async def listText(page: int, text: str, db: Session, user_id: int):
     try:
-        # Diary 테이블에서 dream_name 또는 dream에 text가 포함된 요소들을 불러옵니다.
         diaries = (
             db.query(Diary)
+            .options(joinedload(Diary.user))
             .filter(
                 or_(
                     Diary.dream_name.ilike(f"%{text}%"),
@@ -84,11 +80,30 @@ async def listText(page: int, text: str, db: Session):
                 ),
                 Diary.is_deleted == False
             )
-            .offset((page - 1) * 5)
-            .limit(5)
+            .offset((page - 1) * 9)
+            .limit(9)
             .all()
         )
-        return diaries
+
+        diary_list_response = []
+        for diary in diaries:
+            like = db.query(Like).filter(Like.User_id == user_id, Like.Diary_id == diary.id).first()
+            is_liked = like is not None
+
+            diary_response = DiaryListResponse(
+                id=diary.id,
+                dream_name=diary.dream_name,
+                image_url=diary.image_url,
+                view_count=diary.view_count,
+                like_count=diary.like_count,
+                comment_count=diary.comment_count,
+                userNickname=diary.user.nickName if diary.user else None,
+                userId=diary.user.id if diary.user else None,
+                is_liked=is_liked
+            )
+            diary_list_response.append(diary_response)
+
+        return diary_list_response
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
