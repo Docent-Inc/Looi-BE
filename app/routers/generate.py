@@ -12,11 +12,11 @@ router = APIRouter(prefix="/generate")
 
 @router.post("/dream", response_model=ApiResponse, tags=["Generate"])
 async def generate_basic(
-    text: Resolution, # 생성된 꿈 텍스트의 id
+    generte: Generate, # 생성된 꿈 텍스트의 id
     db: Session = Depends(get_db), # 데이터베이스 세션
     current_user: User = Depends(get_current_user), # 로그인한 사용자의 정보
 ) -> BasicResponse:
-    id, dream_name, dream, dream_image_url = await generate_text(text.text, current_user.id, db)
+    id, dream_name, dream, dream_image_url = await generate_text(generte.text, current_user.id, db)
     return ApiResponse(
         success=True,
         data=BasicResponse(
