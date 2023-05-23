@@ -29,20 +29,8 @@ async def search_text(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    text_list = await listText(page, text, db)
-    diary_list_response = []
-    for diary in text_list:
-        diary_response = DiaryListResponse(
-            id=diary.id,
-            dream_name=diary.dream_name,
-            image_url=diary.image_url,
-            view_count=diary.view_count,
-            like_count=diary.like_count,
-            comment_count=diary.comment_count
-        )
-        diary_list_response.append(diary_response)
-
+    text_list = await listText(page, text, db, current_user.id)
     return ApiResponse(
         success=True,
-        data=diary_list_response
+        data=text_list
     )
