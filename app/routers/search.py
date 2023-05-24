@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app.schemas.response.diary import DiaryListResponse
 router = APIRouter(prefix="/search")
 
-@router.get("/hot", response_model=ApiResponse, tags=["Search"])
+@router.get("/hot/{page}", response_model=ApiResponse, tags=["Search"])
 async def get_hot(
     page: int,
     db: Session = Depends(get_db),
@@ -22,7 +22,7 @@ async def get_hot(
         data=diary_list_response
     )
 
-@router.get("/text", response_model=ApiResponse, tags=["Search"])
+@router.get("/text/{text}/{page}", response_model=ApiResponse, tags=["Search"])
 async def search_text(
     text: str,
     page: int,
