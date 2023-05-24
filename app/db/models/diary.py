@@ -10,7 +10,7 @@ class Diary(Base):
     id = Column(Integer, primary_key=True)
     user = relationship('User', backref='diaries')
     User_id = Column(Integer, ForeignKey('User.id'), nullable=False)
-    dream_name = Column(String(40), nullable=False)
+    dream_name = Column(Text, nullable=False)
     dream = Column(Text, nullable=False)
     resolution = Column(Text, nullable=True)
     checklist = Column(Text, nullable=True)
