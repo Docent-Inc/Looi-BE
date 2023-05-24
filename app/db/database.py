@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
-from app.db.models.comment import get_CommentBase
+from app.db.models.search import get_SearchHistoryBase
 
 PUBLIC_IP_ADDRESS = '34.64.33.205' # gcp sql database
 DB_USER = 'docent'
@@ -11,7 +11,7 @@ DB_NAME = 'test'
 DB_URL = f'mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{PUBLIC_IP_ADDRESS}/{DB_NAME}'
 engine = create_engine(DB_URL, pool_recycle=150)
 
-Base = get_CommentBase()
+Base = get_SearchHistoryBase()
 def get_Base():
     return Base
 

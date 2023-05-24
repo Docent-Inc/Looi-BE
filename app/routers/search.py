@@ -1,5 +1,5 @@
 from app.db.models.user import User
-from app.feature.search import listHot, listText
+from app.feature.search import listHot, listText, listSearchHistory, deleteSearchHistory, deleteSearchHistoryAll
 from app.schemas.common import ApiResponse
 from fastapi import APIRouter, Depends
 from app.db.database import get_db
@@ -33,4 +33,38 @@ async def search_text(
     return ApiResponse(
         success=True,
         data=text_list
+    )
+
+@router.get("/histories", response_model=ApiResponse, tags=["Search"])
+async def search_histories(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    search_history_list = await listSearchHistory(current_user.id, db)
+    return ApiResponse(
+        success=True,
+        data=search_history_list
+    )
+
+@router.delete("/histories/{id}", response_model=ApiResponse, tags=["Search"])
+async def delete_search_histories(
+    id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    await deleteSearchHistory(id, current_user.id, db)
+    return ApiResponse(
+        success=True,
+        data="검색 기록이 삭제되었습니다."
+    )
+
+@router.delete("/histories/all", response_model=ApiResponse, tags=["Search"])
+async def delete_search_histories(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    await deleteSearchHistoryAll(current_user.id, db)
+    return ApiResponse(
+        success=True,
+        data="검색 기록이 전체 삭제되었습니다."
     )
