@@ -25,7 +25,7 @@ async def create_diary(
         }
     )
 
-@router.get("/read", response_model=ApiResponse, tags=["Diary"])
+@router.get("/read/{diary_id}", response_model=ApiResponse, tags=["Diary"])
 async def read_diary(
     diary_id: int,
     db: Session = Depends(get_db),
@@ -52,7 +52,7 @@ async def read_diary(
             is_liked=is_liked,
         )
     )
-@router.post("/update", response_model=ApiResponse, tags=["Diary"])
+@router.post("/update/{diary_id}", response_model=ApiResponse, tags=["Diary"])
 async def update_diary(
     diary_id: int,
     create: Update,
@@ -66,7 +66,7 @@ async def update_diary(
             "message": "일기가 성공적으로 수정되었습니다."
         }
     )
-@router.post("/update/ispublic", response_model=ApiResponse, tags=["Diary"])
+@router.post("/update/ispublic/{diary_id}", response_model=ApiResponse, tags=["Diary"])
 async def update_diary_ispublic(
     diary_id: int,
     is_public: bool,
@@ -80,7 +80,7 @@ async def update_diary_ispublic(
             "message": "일기가 성공적으로 수정되었습니다."
         }
     )
-@router.delete("/delete", response_model=ApiResponse, tags=["Diary"])
+@router.delete("/delete/{diary_id}", response_model=ApiResponse, tags=["Diary"])
 async def delete_diary(
     diary_id: int,
     db: Session = Depends(get_db),
@@ -94,7 +94,7 @@ async def delete_diary(
         }
     )
 
-@router.post("/like", response_model=ApiResponse, tags=["Diary"])
+@router.post("/like/{diary_id}", response_model=ApiResponse, tags=["Diary"])
 async def like_diary(
     diary_id: int,
     db: Session = Depends(get_db),
@@ -108,7 +108,7 @@ async def like_diary(
         }
     )
 
-@router.delete("/unlike", response_model=ApiResponse, tags=["Diary"])
+@router.delete("/unlike/{diary_id}", response_model=ApiResponse, tags=["Diary"])
 async def unlike_diary(
     diary_id: int,
     db: Session = Depends(get_db),
@@ -122,7 +122,7 @@ async def unlike_diary(
         }
     )
 
-@router.post("/comment", response_model=ApiResponse, tags=["Diary"])
+@router.post("/comment/{diary_id}", response_model=ApiResponse, tags=["Diary"])
 async def comment_diary(
     diary_id: int,
     comment: commentRequest,
@@ -143,7 +143,7 @@ async def comment_diary(
     )
 
 
-@router.delete("/uncomment", response_model=ApiResponse, tags=["Diary"])
+@router.delete("/uncomment/{diary_id}", response_model=ApiResponse, tags=["Diary"])
 async def uncomment_diary(
     diary_id: int,
     comment_id: int,
@@ -158,7 +158,7 @@ async def uncomment_diary(
         }
     )
 
-@router.get("/list", response_model=ApiResponse, tags=["Diary"])
+@router.get("/list/{page}", response_model=ApiResponse, tags=["Diary"])
 async def list_diary(
     page: int,
     db: Session = Depends(get_db),
@@ -185,7 +185,7 @@ async def list_diary(
         data=diary_list_response
     )
 
-@router.get("/list/{user_id}", response_model=ApiResponse, tags=["Diary"])
+@router.get("/list/{user_id}/{page}", response_model=ApiResponse, tags=["Diary"])
 async def list_diary_by_user(
     user_id: int,
     page: int,

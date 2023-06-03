@@ -1,5 +1,7 @@
 from sqlalchemy import Column, Integer, String, Boolean
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
+
 Base = declarative_base()
 
 class User(Base):
@@ -13,6 +15,8 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     is_deleted = Column(Boolean, default=False)
     subscription_status = Column(Boolean, default=False)
+
+    search_history = relationship("SearchHistory", back_populates="user")
 
 
 def get_UserBase():

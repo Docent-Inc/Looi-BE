@@ -1,5 +1,5 @@
 from app.db.models.user import User
-from app.feature.search import listHot, listText
+from app.feature.search import listHot, listText, listSearchHistory, deleteSearchHistory, deleteSearchHistoryAll
 from app.schemas.common import ApiResponse
 from fastapi import APIRouter, Depends
 from app.db.database import get_db
@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app.schemas.response.diary import DiaryListResponse
 router = APIRouter(prefix="/search")
 
-@router.get("/hot", response_model=ApiResponse, tags=["Search"])
+@router.get("/hot/{page}", response_model=ApiResponse, tags=["Search"])
 async def get_hot(
     page: int,
     db: Session = Depends(get_db),
@@ -22,27 +22,49 @@ async def get_hot(
         data=diary_list_response
     )
 
-@router.get("/text", response_model=ApiResponse, tags=["Search"])
+@router.get("/text/{text}/{page}", response_model=ApiResponse, tags=["Search"])
 async def search_text(
     text: str,
     page: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    text_list = await listText(page, text, db)
-    diary_list_response = []
-    for diary in text_list:
-        diary_response = DiaryListResponse(
-            id=diary.id,
-            dream_name=diary.dream_name,
-            image_url=diary.image_url,
-            view_count=diary.view_count,
-            like_count=diary.like_count,
-            comment_count=diary.comment_count
-        )
-        diary_list_response.append(diary_response)
-
+    text_list = await listText(page, text, db, current_user.id)
     return ApiResponse(
         success=True,
-        data=diary_list_response
+        data=text_list
+    )
+
+@router.get("/histories", response_model=ApiResponse, tags=["Search"])
+async def search_histories(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    search_history_list = await listSearchHistory(current_user.id, db)
+    return ApiResponse(
+        success=True,
+        data=search_history_list
+    )
+
+@router.delete("/histories/{id}", response_model=ApiResponse, tags=["Search"])
+async def delete_search_histories(
+    id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    await deleteSearchHistory(id, current_user.id, db)
+    return ApiResponse(
+        success=True,
+        data="검색 기록이 삭제되었습니다."
+    )
+
+@router.delete("/histories/all", response_model=ApiResponse, tags=["Search"])
+async def delete_search_histories(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    await deleteSearchHistoryAll(current_user.id, db)
+    return ApiResponse(
+        success=True,
+        data="검색 기록이 전체 삭제되었습니다."
     )
