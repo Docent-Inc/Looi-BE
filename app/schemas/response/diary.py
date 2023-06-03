@@ -28,7 +28,7 @@ class DiaryListResponse(BaseModel):
     userId: int
     is_liked: bool
 
-class DiaryUserListResponse(DiaryListResponse):
+class DiaryUserListResponse(BaseModel):
     isMine: bool
 
 class CommentListResponse(BaseModel):
@@ -38,3 +38,7 @@ class CommentListResponse(BaseModel):
     comment: str
     create_date: str
     isMine: bool
+
+class DiaryIamgeListResponse(BaseModel):
+    id: int
+    image_url: str
