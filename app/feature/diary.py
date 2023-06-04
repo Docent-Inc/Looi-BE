@@ -353,3 +353,11 @@ async def updateDiaryIsPublic(diaryId: int, userId: int, isPublic: bool, db: Ses
         db.refresh(diary)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+async def countDiary(db: Session):
+    try:
+        # 마지막 인덱스를 가져옵니다.
+        last_index = db.query(Diary).filter(Diary.is_deleted == False).order_by(Diary.id.desc()).first()
+        return last_index.id
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
