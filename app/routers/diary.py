@@ -158,7 +158,7 @@ async def uncomment_diary(
         }
     )
 
-@router.get("/list/{page}", response_model=ApiResponse, tags=["Diary"])
+@router.post("/list/{page}", response_model=ApiResponse, tags=["Diary"])
 async def list_diary(
     page: int,
     db: Session = Depends(get_db),
@@ -185,7 +185,7 @@ async def list_diary(
         data=diary_list_response
     )
 
-@router.get("/list/{user_id}/{page}", response_model=ApiResponse, tags=["Diary"])
+@router.post("/list/{user_id}/{page}", response_model=ApiResponse, tags=["Diary"])
 async def list_diary_by_user(
     user_id: int,
     page: int,
@@ -214,7 +214,7 @@ async def list_diary_by_user(
         data=diary_list_response
     )
 
-@router.get("/list/mydiary/{page}", response_model=ApiResponse, tags=["Diary"])
+@router.post("/list/mydiary/{page}", response_model=ApiResponse, tags=["Diary"])
 async def list_my_diary(
     page: int,
     db: Session = Depends(get_db),
@@ -241,7 +241,7 @@ async def list_my_diary(
         data=diary_list_response
     )
 
-@router.get("/list/comment/{id}/{page}", response_model=ApiResponse, tags=["Diary"])
+@router.post("/list/comment/{id}/{page}", response_model=ApiResponse, tags=["Diary"])
 async def list_comment(
     id: int,
     page: int,
