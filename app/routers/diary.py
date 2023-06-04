@@ -3,7 +3,7 @@ from app.schemas.common import ApiResponse
 from app.db.database import get_db
 from sqlalchemy.orm import Session
 from app.core.security import get_current_user
-from app.schemas.response.diary import DiaryResponse, DiaryListResponse, DiaryUserListResponse, CommentListResponse
+from app.schemas.response.diary import DiaryResponse, DiaryUserListResponse, CommentListResponse, DiaryListResponse
 from app.schemas.response.user import User
 from app.schemas.request.crud import Create, Update, commentRequest
 from app.feature.diary import createDiary, readDiary, deleteDiary, updateDiary, likeDiary, unlikeDiary, commentDiary, \
@@ -226,6 +226,9 @@ async def list_my_diary(
         diary_response = DiaryListResponse(
             id=diary.id,
             dream_name=diary.dream_name,
+            create_date=diary.create_date,
+            dream=diary.dream,
+            resolution=diary.resolution,
             image_url=diary.image_url,
             view_count=diary.view_count,
             like_count=diary.like_count,
