@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.db.database import get_db
-from app.feature.diary import readDiary, createDiary
+from app.feature.diary import readDiary, createDiary, countDiary
 from app.feature.gptapi.generate import generate_text, generate_resolution, generate_checklist, generate_resolution_mvp
 from app.feature.gptapi.generateImg import additional_generate_image
 from app.schemas.common import ApiResponse
@@ -117,4 +117,14 @@ async def read(
             comment_count=comment_count,
             is_liked=is_liked,
         )
+    )
+
+@router.get("/number", response_model=ApiResponse, tags=["MVP"])
+async def number(
+    db: Session = Depends(get_db),
+):
+    number = await countDiary(db)
+    return ApiResponse(
+        success=True,
+        data=number
     )
