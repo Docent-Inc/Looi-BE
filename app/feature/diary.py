@@ -1,3 +1,5 @@
+from sqlalchemy import func
+
 from app.core.current_time import get_current_time
 from app.db.models import User
 from app.feature.search import maintain_hot_table_limit
@@ -354,10 +356,10 @@ async def updateDiaryIsPublic(diaryId: int, userId: int, isPublic: bool, db: Ses
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-async def countDiary(db: Session):
+async def randomDiary(db: Session):
     try:
-        # 마지막 인덱스를 가져옵니다.
-        last_index = db.query(Diary).filter(Diary.is_deleted == False).order_by(Diary.id.desc()).first()
-        return last_index.id
+        # 랜덤 다이어리를 불러옵니다
+        diary = db.query(Diary).filter(Diary.is_deleted == False).order_by(func.random()).first()
+        return diary.id
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

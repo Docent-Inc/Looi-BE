@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.db.database import get_db
-from app.feature.diary import readDiary, createDiary, countDiary
-from app.feature.gptapi.generate import generate_text, generate_resolution, generate_checklist, generate_resolution_mvp
+from app.feature.diary import readDiary, createDiary, randomDiary
+from app.feature.gptapi.generate import generate_text, generate_checklist, generate_resolution_mvp
 from app.feature.gptapi.generateImg import additional_generate_image
 from app.schemas.common import ApiResponse
 from app.schemas.request.crud import Create
@@ -119,12 +119,30 @@ async def read(
         )
     )
 
-@router.get("/number", response_model=ApiResponse, tags=["MVP"])
+@router.get("/random", response_model=ApiResponse, tags=["MVP"])
 async def number(
     db: Session = Depends(get_db),
 ):
-    number = await countDiary(db)
+    diary_id = await randomDiary(db)
+    is_public, is_owner, create_date, modified_date, image_url, view_count, like_count, dream_name, dream, resolution, checklist, is_modified, comment_count, is_liked = await readDiary(
+        diary_id, 1, db)
     return ApiResponse(
         success=True,
-        data=number
+        data=DiaryResponse(
+            id=diary_id,
+            is_public=is_public,
+            create_date=create_date,
+            modified_date=modified_date,
+            image_url=image_url,
+            view_count=view_count,
+            like_count=like_count,
+            dream_name=dream_name,
+            dream=dream,
+            resolution=resolution,
+            checklist=checklist,
+            is_owner=is_owner,
+            is_modified=is_modified,
+            comment_count=comment_count,
+            is_liked=is_liked,
+        )
     )
