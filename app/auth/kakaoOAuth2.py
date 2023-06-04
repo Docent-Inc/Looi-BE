@@ -7,7 +7,7 @@ import os
 load_dotenv()
 CLIENT_ID = os.getenv("KAKAO_API_KEY")
 CLIENT_SECRET = os.getenv("KAKAO_API_SECRET")
-REDIRECT_URI = "https://bmongsmong.com/kakao"
+REDIRECT_URI = "https://docent.zip/kakao"
 REDIRECT_URI_TEST = "http://localhost:3000/kakao"
 KAKAO_AUTH_URL_TEST = f"https://kauth.kakao.com/oauth/authorize?client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI_TEST}&response_type=code"
 KAKAO_AUTH_URL = f"https://kauth.kakao.com/oauth/authorize?client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI}&response_type=code"
