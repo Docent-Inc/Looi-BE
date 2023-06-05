@@ -363,3 +363,10 @@ async def randomDiary(db: Session):
         return diary.id
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+async def readDiaryCount(db: Session):
+    try:
+        diary = db.query(Diary).filter(Diary.is_deleted == False).count()
+        return diary
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
