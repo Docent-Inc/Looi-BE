@@ -366,7 +366,7 @@ async def randomDiary(db: Session):
 
 async def readDiaryCount(db: Session):
     try:
-        diary = db.query(Diary).filter(Diary.is_deleted == False).count()
+        diary = db.query(Diary).count() + 339 # 1차 테스트 데이터 339개
         return diary
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
