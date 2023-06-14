@@ -127,3 +127,13 @@ def user_kakao(kakao_data: dict, db: Session) -> Optional[User]:
                 detail="유저정보를 저장하는데 실패했습니다.",
             )
     return user
+
+async def readUserCount(db: Session):
+    try:
+        count = db.query(User).count()
+        return count
+    except:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="유저정보를 조회하는데 실패했습니다.",
+        )
