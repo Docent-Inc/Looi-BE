@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-18.04.5
+    runs-on: ubuntu-20.04
 
     steps:
       - uses: actions/checkout@v2
@@ -21,10 +21,9 @@ jobs:
       - name: Deploy
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.NCP_HOST }}
-          username: ${{ secrets.NCP_USER }}
-          password: ${{ secrets.NCP_PASSWORD }}
-          key: ${{ secrets.NCP_KEY }}
+          host: ${{ secrets.DMZ_GCP }}
+          username: ${{ secrets.DMZ_GCP_USER }}
+          key: ${{ secrets.DMZ_GCP_KEY }}
           envs: GITHUB_SHA
           script: |
             # Load the current service version (blue or green)
@@ -74,4 +73,3 @@ jobs:
             # Cleanup old images
             echo "🧹 Cleaning up old Docker images"
             sudo docker rmi -f $(sudo docker images -q) || true
-            
