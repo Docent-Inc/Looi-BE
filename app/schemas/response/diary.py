@@ -20,6 +20,9 @@ class DiaryResponse(BaseModel):
 class DiaryListResponse(BaseModel):
     id: int
     dream_name: str
+    create_date: str
+    dream: str
+    resolution: str
     image_url: str
     view_count: int
     like_count: int
