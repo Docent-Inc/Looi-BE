@@ -7,6 +7,12 @@ DB_USER = 'docent'
 DB_PASSWORD = 'cocone0331'
 DB_NAME = 'test'
 
+PUBLIC_IP_ADDRESS = 'db-h4kbh.pub-cdb.ntruss.com' # ncp sql database
+DB_USER = 'docent'
+DB_PASSWORD = 'cocone0331!'
+DB_NAME = 'docent'
+
+
 # TCP 연결을 사용하여 인스턴스에 연결
 DB_URL = f'mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{PUBLIC_IP_ADDRESS}/{DB_NAME}'
 engine = create_engine(DB_URL, pool_recycle=150)
