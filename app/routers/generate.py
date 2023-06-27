@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from app.feature.gptapi.generate import generate_text, generate_resolution, generate_checklist
+from app.feature.gptapi.generate import generate_text, generate_resolution
 from app.schemas.response.gpt import BasicResponse, ImageResponse, CheckListResponse, ResolutionResponse
 from app.schemas.request.generate import Generate, Image, Resolution
 from app.schemas.common import ApiResponse
@@ -53,18 +53,3 @@ async def resolution(
             dream_resolution=dream_resolution
         )
 )
-
-@router.post("/checklist", response_model=ApiResponse, tags=["Generate"])
-async def checklist(
-    resolution: str, # 생성된 꿈 텍스트의 id
-    textId: int, # 생성된 꿈 텍스트의 id
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-) -> CheckListResponse:
-    today_checklist = await generate_checklist(resolution, textId, db)
-    return ApiResponse(
-        success=True,
-        data=CheckListResponse(
-            today_checklist=today_checklist
-        )
-    )
