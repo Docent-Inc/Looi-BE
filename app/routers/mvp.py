@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.auth.user import readUserCount
 from app.db.database import get_db
 from app.feature.diary import readDiary, createDiary, randomDiary, readDiaryCount
-from app.feature.gptapi.generate import generate_text, generate_checklist, generate_resolution_mvp
+from app.feature.gptapi.generate import generate_text, generate_resolution_mvp
 from app.feature.gptapi.generateImg import additional_generate_image
 from app.schemas.common import ApiResponse
 from app.schemas.request.crud import Create
@@ -62,20 +62,6 @@ async def resolution(
         success=True,
         data=ResolutionResponse(
             dream_resolution=dream_resolution
-        )
-    )
-
-@router.post("/checklist", response_model=ApiResponse, tags=["MVP"])
-async def checklist(
-    resolution: str,
-    textId: int, # 생성된 꿈 텍스트의 id
-    db: Session = Depends(get_db),
-) -> CheckListResponse:
-    dream_checklist = await generate_checklist(resolution, textId, db)
-    return ApiResponse(
-        success=True,
-        data=CheckListResponse(
-            today_checklist=dream_checklist
         )
     )
 
