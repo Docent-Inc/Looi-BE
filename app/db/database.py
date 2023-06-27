@@ -7,7 +7,7 @@ DB_USER = 'docent'
 DB_PASSWORD = 'cocone0331'
 DB_NAME = 'test'
 
-PUBLIC_IP_ADDRESS = 'db-h4kbh.pub-cdb.ntruss.com' # ncp sql database
+PUBLIC_IP_ADDRESS = 'db-h50qv-kr.vpc-pub-cdb.ntruss.com' # ncp sql database
 DB_USER = 'docent'
 DB_PASSWORD = 'cocone0331!'
 DB_NAME = 'docent'
