@@ -46,7 +46,7 @@ jobs:
             if [ "$NEW_SERVICE" = "blue" ]; then
               NEW_PORT="8001"
             else
-              NEW_PORT="8002"
+              NEW_PORT="8003"
             fi
 
             # Run the new service
