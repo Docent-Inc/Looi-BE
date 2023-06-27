@@ -3,7 +3,6 @@ from sqlalchemy.orm import relationship
 from app.db.models.comment import get_CommentBase
 Base = get_CommentBase()
 
-
 class SearchHistory(Base):
     __tablename__ = 'search_history'
 

@@ -2,6 +2,8 @@ from sqlalchemy import func
 
 from app.core.current_time import get_current_time
 from app.db.models import User
+from app.db.models.diary_en import Diary_en
+from app.db.models.diary_ko import Diary_ko
 from app.feature.search import maintain_hot_table_limit
 from app.db.models.comment import Comment
 from app.db.models.diary import Diary
@@ -13,11 +15,9 @@ from sqlalchemy.orm import Session
 
 async def createDiary(create: Create, userId: int, db: Session):
     try:
+        user = db.query(User).filter(User.id == userId).first()
         diary = Diary(
             User_id=userId,
-            dream_name=create.dream_name,
-            dream=create.dream,
-            resolution=create.resolution,
             checklist=create.checklist,
             image_url=create.image_url,
             create_date=get_current_time(),
@@ -27,11 +27,33 @@ async def createDiary(create: Create, userId: int, db: Session):
         db.add(diary)
         db.commit()
         db.refresh(diary)
+
+        diary_content = Diary_ko(
+            Diary_id=diary.id,
+            dream_name=create.dream_name,
+            dream=create.dream,
+            resolution=create.resolution,
+        )
+        db.add(diary_content)
+        db.commit()
+        db.refresh(diary_content)
+
+        if user.language_id == 2:
+            diary_content = Diary_en(
+                Diary_id=diary.id,
+                dream_name=create.dream_name,
+                dream=create.dream,
+                resolution=create.resolution,
+            )
+            db.add(diary_content)
+            db.commit()
+            db.refresh(diary_content)
         return diary.id
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 async def readDiary(diaryId: int, userId: int, db: Session):
+    user = db.query(User).filter(User.id == userId).first()
     diary = db.query(Diary).filter(Diary.id == diaryId).first()
 
     if diary is None: # 해당 id의 게시글이 없을 때
@@ -39,6 +61,11 @@ async def readDiary(diaryId: int, userId: int, db: Session):
 
     if diary.is_deleted: # 해당 id의 게시글이 삭제되었을 때
         raise HTTPException(status_code=400, detail="Diary has been deleted")
+
+    diary_content = db.query(Diary_ko).filter(Diary_ko.Diary_id == diaryId).first()
+    if user.language_id == 2: # 영어
+        diary_content = db.query(Diary_ko).filter(Diary_ko.Diary_id == diaryId).first()
+
 
     try:
         diary.view_count += 1
@@ -84,9 +111,9 @@ async def readDiary(diaryId: int, userId: int, db: Session):
             diary.image_url,
             diary.view_count,
             diary.like_count,
-            diary.dream_name,
-            diary.dream,
-            diary.resolution,
+            diary_content.dream_name,
+            diary_content.dream,
+            diary_content.resolution,
             diary.checklist,
             diary.is_modified,
             diary.comment_count,
@@ -101,7 +128,7 @@ async def readDiary(diaryId: int, userId: int, db: Session):
             diary.image_url,
             diary.view_count,
             diary.like_count,
-            diary.dream_name,
+            diary_content.dream_name,
             "",  # 빈 문자열로 기본값 설정
             "",
             "",
