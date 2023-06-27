@@ -5,7 +5,7 @@ from starlette import status
 
 from app.core.current_time import get_current_time
 from app.feature.gptapi.generateImg import generate_img, get_text_data
-from app.db.models.dream import DreamText, DreamImage, DreamResolution
+from app.db.models.dream import DreamText, DreamImage
 from app.db.database import get_db
 from app.feature.gptapi.gptRequset import send_gpt_request, send_bard_request
 
@@ -69,33 +69,6 @@ async def generate_text(text: str, userId: int, db: get_db()) -> str:
 async def generate_resolution(text: str) -> str:
     dream_resolution = await send_bard_request(text)
     return dream_resolution
-
-async def generate_checklist(resolution: str, TextId: int, db: get_db()) -> str:
-    async def get_today_checklist(message: str) -> str:
-        messages_prompt = [
-            {"role": "system", "content": "이 꿈의 해몽을 바탕으로 현실에서 오늘 하루의 체크리스트 조금 자세하게 3개 만들어줘"},
-            {"role": "system", "content": "~해보기, ~하기 와 같은 말투로 제목없이, 1. 2. 3. 으로 나열해주고, 줄바꿈은 한번씩만 해줘"},
-            {"role": "system", "content": "max_length=60"},
-            {"role": "user", "content": message},
-        ]
-        response = await send_gpt_request(messages_prompt)
-        return response
-
-    check_list = await get_today_checklist(resolution)
-
-    try:
-        data = DreamResolution(
-            Text_id=TextId,
-            dream_resolution=resolution,
-            today_checklist=check_list
-        )
-        db.add(data)
-        db.commit()
-        db.refresh(data)
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-
-    return check_list
 
 async def generate_resolution_mvp(text: str) -> str:
     dream_resolution = await send_bard_request(text)

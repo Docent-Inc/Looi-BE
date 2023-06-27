@@ -22,13 +22,5 @@ class DreamImage(Base):
     Text_id = Column(Integer, ForeignKey('DreamText.id'), nullable=False)
     dream_image_url = Column(String(100), nullable=False)
 
-class DreamResolution(Base):
-    __tablename__ = "DreamResolution"
-
-    id = Column(Integer, primary_key=True)
-    Text_id = Column(Integer, ForeignKey('DreamText.id'), nullable=False)
-    dream_resolution = Column(String(200), nullable=False)
-    today_checklist = Column(String(200), nullable=False)
-
 def get_DreamBase():
     return Base
