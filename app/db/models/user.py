@@ -15,9 +15,8 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     is_deleted = Column(Boolean, default=False)
     subscription_status = Column(Boolean, default=False)
-
+    Language = Column(String(10), nullable=True)
     search_history = relationship("SearchHistory", back_populates="user")
-
 
 def get_UserBase():
     return Base
