@@ -8,11 +8,10 @@ async def translate_ko_to_en(create: Diary_ko, diary_id: int, db: Session) -> st
     dream_name = create.dream_name
     dream = create.dream
     resolution = create.resolution
-    try:
-        isDiary_en = db.query(Diary_en).filter(Diary_en.diary_id == diary_id).first()
-        return "already translated"
-    except:
-        pass
+
+    isDiary_en = db.query(Diary_en).filter(Diary_en.Diary_id == diary_id).first()
+    if isDiary_en:
+        return "already exists"
     async def translate_text(text: str) -> str:
         messages_prompt = [
             {"role": "system", "content": "translate this text to english"},
@@ -40,11 +39,10 @@ async def translate_en_to_ko(create: Diary_en, diary_id: int, db: Session) -> st
     dream_name = create.dream_name
     dream = create.dream
     resolution = create.resolution
-    try:
-        isDiary_ko = db.query(Diary_ko).filter(Diary_ko.diary_id == diary_id).first()
-        return "already translated"
-    except:
-        pass
+
+    isDiary_ko = db.query(Diary_ko).filter(Diary_ko.Diary_id == diary_id).first()
+    if isDiary_ko:
+        return "already exists"
     async def translate_text(text: str) -> str:
         messages_prompt = [
             {"role": "system", "content": "translate this text to korean"},
