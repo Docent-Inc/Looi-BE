@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, BackgroundTasks
 from app.schemas.common import ApiResponse
 from app.db.database import get_db
 from sqlalchemy.orm import Session
@@ -28,10 +28,11 @@ async def create_diary(
 @router.get("/read", response_model=ApiResponse, tags=["Diary"])
 async def read_diary(
     diary_id: int,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    is_public, is_owner, create_date, modified_date, image_url, view_count, like_count, dream_name, dream, resolution, checklist, is_modified, comment_count, is_liked = await readDiary(diary_id, current_user.id, db)
+    is_public, is_owner, create_date, modified_date, image_url, view_count, like_count, dream_name, dream, resolution, checklist, is_modified, comment_count, is_liked = await readDiary(diary_id, current_user.id, db, background_tasks)
     return ApiResponse(
         success=True,
         data=DiaryResponse(
