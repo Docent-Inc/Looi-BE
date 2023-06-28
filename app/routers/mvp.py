@@ -1,6 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
-
 from app.auth.user import readUserCount
 from app.db.database import get_db
 from app.feature.diary import readDiary, createDiary, randomDiary, readDiaryCount
@@ -82,10 +81,11 @@ async def save(
 @router.get("/read", response_model=ApiResponse, tags=["MVP"])
 async def read(
     diary_id: int,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
 ):
     is_public, is_owner, create_date, modified_date, image_url, view_count, like_count, dream_name, dream, resolution, checklist, is_modified, comment_count, is_liked = await readDiary(
-        diary_id, 1, db)
+        diary_id, 1, db, background_tasks)
     return ApiResponse(
         success=True,
         data=DiaryResponse(
