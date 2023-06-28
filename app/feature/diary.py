@@ -1,9 +1,11 @@
-from sqlalchemy import func
 
+from sqlalchemy import func
+from fastapi import BackgroundTasks
 from app.core.current_time import get_current_time
 from app.db.models import User
 from app.db.models.diary_en import Diary_en
 from app.db.models.diary_ko import Diary_ko
+from app.feature.gptapi.translate import translate_ko_to_en, translate_en_to_ko
 from app.feature.search import maintain_hot_table_limit
 from app.db.models.comment import Comment
 from app.db.models.diary import Diary
@@ -28,15 +30,16 @@ async def createDiary(create: Create, userId: int, db: Session):
         db.commit()
         db.refresh(diary)
 
-        diary_content = Diary_ko(
-            Diary_id=diary.id,
-            dream_name=create.dream_name,
-            dream=create.dream,
-            resolution=create.resolution,
-        )
-        db.add(diary_content)
-        db.commit()
-        db.refresh(diary_content)
+        if user.language_id == 1:
+            diary_content = Diary_ko(
+                Diary_id=diary.id,
+                dream_name=create.dream_name,
+                dream=create.dream,
+                resolution=create.resolution,
+            )
+            db.add(diary_content)
+            db.commit()
+            db.refresh(diary_content)
 
         if user.language_id == 2:
             diary_content = Diary_en(
@@ -48,11 +51,12 @@ async def createDiary(create: Create, userId: int, db: Session):
             db.add(diary_content)
             db.commit()
             db.refresh(diary_content)
+
         return diary.id
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-async def readDiary(diaryId: int, userId: int, db: Session):
+async def readDiary(diaryId: int, userId: int, db: Session, background_tasks: BackgroundTasks):
     user = db.query(User).filter(User.id == userId).first()
     diary = db.query(Diary).filter(Diary.id == diaryId).first()
 
@@ -62,10 +66,12 @@ async def readDiary(diaryId: int, userId: int, db: Session):
     if diary.is_deleted: # 해당 id의 게시글이 삭제되었을 때
         raise HTTPException(status_code=400, detail="Diary has been deleted")
 
-    diary_content = db.query(Diary_ko).filter(Diary_ko.Diary_id == diaryId).first()
-    if user.language_id == 2: # 영어
+    if user.language_id == 1: # 한국어
         diary_content = db.query(Diary_ko).filter(Diary_ko.Diary_id == diaryId).first()
-
+        background_tasks.add_task(translate_ko_to_en, diary_content, diary.id, db)
+    elif user.language_id == 2: # 영어
+        diary_content = db.query(Diary_ko).filter(Diary_ko.Diary_id == diaryId).first()
+        background_tasks.add_task(translate_en_to_ko, diary_content, diary.id, db)
 
     try:
         diary.view_count += 1
