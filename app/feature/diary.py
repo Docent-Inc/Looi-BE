@@ -361,6 +361,11 @@ async def listDiaryByUser(user_id: int, page: int, currentUser_id: int, db: Sess
             # 현재 사용자가 좋아요를 눌렀는지 확인하여 is_liked를 추가합니다.
             is_liked = db.query(Like).filter(Like.Diary_id == diary[i].id, Like.User_id == currentUser_id).first() is not None
             diary[i].is_liked = is_liked
+            diary_content = db.query(Diary_ko).filter(Diary_ko.Diary_id == diary[i].id).first()
+            diary[i].dream_name = diary_content.dream_name
+            diary[i].dream = diary_content.dream
+            diary[i].resolution = diary_content.resolution
+
         return diary
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
