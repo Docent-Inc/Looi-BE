@@ -68,10 +68,12 @@ async def readDiary(diaryId: int, userId: int, db: Session, background_tasks: Ba
 
     if user.language_id == 1: # 한국어
         diary_content = db.query(Diary_ko).filter(Diary_ko.Diary_id == diaryId).first()
-        background_tasks.add_task(translate_ko_to_en, diary_content, diary.id, db)
+        if diary_content.resolution != "ERROR":
+            background_tasks.add_task(translate_ko_to_en, diary_content, diary.id, db)
     elif user.language_id == 2: # 영어
         diary_content = db.query(Diary_ko).filter(Diary_ko.Diary_id == diaryId).first()
-        background_tasks.add_task(translate_en_to_ko, diary_content, diary.id, db)
+        if diary_content.resolution != "ERROR":
+            background_tasks.add_task(translate_en_to_ko, diary_content, diary.id, db)
 
     try:
         diary.view_count += 1
