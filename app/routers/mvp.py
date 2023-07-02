@@ -2,12 +2,13 @@ from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from app.auth.user import readUserCount
 from app.db.database import get_db
-from app.feature.diary import readDiary, createDiary, randomDiary, readDiaryCount
+from app.db.models.diary import Diary
+from app.feature.diary import readDiary, createDiary, randomDiary, readDiaryCount, listDiaryByUser
 from app.feature.gptapi.generate import generate_text, generate_resolution_mvp
 from app.feature.gptapi.generateImg import additional_generate_image
 from app.schemas.common import ApiResponse
 from app.schemas.request.crud import Create
-from app.schemas.response.diary import DiaryResponse
+from app.schemas.response.diary import DiaryResponse, DiaryListResponse
 from app.schemas.response.gpt import BasicResponse, ImageResponse, ResolutionResponse, CheckListResponse
 
 router = APIRouter(prefix="/mvp")
@@ -154,3 +155,33 @@ async def diary_count(
         success=True,
         data=diary_count
     )
+
+@router.get("/count/user", response_model=ApiResponse, tags=["MVP"])
+async def user_count(
+    user_id: int,
+    db: Session = Depends(get_db),
+):
+    diary_list = await listDiaryByUser(user_id, 1, user_id, db)
+    diary_list_response = []
+    for diary in diary_list:
+        diary_response = DiaryListResponse(
+            id=diary.id,
+            dream_name=diary.dream_name,
+            create_date=diary.create_date,
+            dream=diary.dream,
+            resolution=diary.resolution,
+            image_url=diary.image_url,
+            view_count=diary.view_count,
+            like_count=diary.like_count,
+            comment_count=diary.comment_count,
+            userNickname=diary.nickname,
+            userId=diary.userId,
+            is_liked=diary.is_liked,
+        )
+        diary_list_response.append(diary_response)
+
+    return ApiResponse(
+        success=True,
+        data=diary_list_response
+    )
+
