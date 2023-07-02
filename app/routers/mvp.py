@@ -110,11 +110,12 @@ async def read(
 
 @router.get("/random", response_model=ApiResponse, tags=["MVP"])
 async def number(
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
 ):
     diary_id = await randomDiary(db)
     is_public, is_owner, create_date, modified_date, image_url, view_count, like_count, dream_name, dream, resolution, checklist, is_modified, comment_count, is_liked = await readDiary(
-        diary_id, 1, db)
+        diary_id, 1, db, background_tasks)
     return ApiResponse(
         success=True,
         data=DiaryResponse(
