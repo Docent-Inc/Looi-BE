@@ -34,7 +34,7 @@ from linebotx.http_client import AioHttpClient
 
 class CustomAioHttpClient(AioHttpClient):
     def __init__(self):
-        self.timeout = ClientTimeout(total=120)
+        self.timeout = ClientTimeout(total=300)
         super().__init__()
 
     async def post(self, url, headers=None, data=None, timeout=None):
