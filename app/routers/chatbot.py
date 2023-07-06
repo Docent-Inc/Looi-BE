@@ -68,8 +68,7 @@ async def callback(request: Request):
     return 'OK'
 
 @handler.add(MessageEvent, message=TextMessage)
-async def handle_message(event):
-    db = get_db()
+async def handle_message(event, db: Session = Depends(get_db)):
     dream_text = event.message.text
 
     # 글자 수 제한
