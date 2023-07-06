@@ -10,6 +10,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from app.db.database import get_SessionLocal
 from app.feature.diary import createDiary
 from app.feature.generate_jp import generate_text, generate_resolution_linechatbot
+from app.schemas.common import ApiResponse
 from app.schemas.request.crud import Create
 from linebotx import LineBotApiAsync, WebhookHandlerAsync
 from linebotx.http_client import AioHttpClient, AioHttpResponse
@@ -77,7 +78,9 @@ async def callback(request: Request):
     except InvalidSignatureError:
         print("Invalid signature. Check your channel access token/channel secret.")
         raise HTTPException(status_code=400, detail="Invalid signature. Check your channel access token/channel secret.")
-    return 'OK'
+    return ApiResponse(
+        success=True
+    )
 
 @handler.add(MessageEvent, message=TextMessage)
 async def handle_message(event):
