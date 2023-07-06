@@ -29,13 +29,16 @@ router = APIRouter(prefix="/chatbot")
 @router.post("/callback")
 async def callback(request: Request, body: Optional[LineWebhookBody] = None):
     if body is None:
+        print("Request body is missing.")
         raise HTTPException(status_code=400, detail="Bad Request: Request body is missing.")
     signature = request.headers.get('X-Line-Signature')
     if not signature:
+        print("Signature is missing.")
         raise HTTPException(status_code=400, detail="Bad Request: Signature is missing.")
     try:
         handler.handle(body.json(), signature)
     except InvalidSignatureError:
+        print("Invalid signature. Check your channel access token/channel secret.")
         raise HTTPException(status_code=400, detail="Invalid signature. Check your channel access token/channel secret.")
     return 'OK'
 
