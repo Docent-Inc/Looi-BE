@@ -53,23 +53,22 @@ class LineWebhookBody(BaseModel):
 
 router = APIRouter(prefix="/chatbot")
 
-@router.post("/callback")
-async def callback(request: Request, background_tasks: BackgroundTasks):
+@router.post("/callback", tags=["LineChatbot"])
+async def callback(request: Request, db: Session = Depends(get_db)):
     body = await request.body()
     signature = request.headers.get('X-Line-Signature')
     if not signature:
         print("Signature is missing.")
         raise HTTPException(status_code=400, detail="Bad Request: Signature is missing.")
     try:
-        await handler.handle(body.decode(), signature)
+        await handler.handle(body.decode(), signature, db)
     except InvalidSignatureError:
         print("Invalid signature. Check your channel access token/channel secret.")
         raise HTTPException(status_code=400, detail="Invalid signature. Check your channel access token/channel secret.")
     return 'OK'
 
-
 @handler.add(MessageEvent, message=TextMessage)
-async def handle_message(event, db: Session = Depends(get_db)):
+async def handle_message(event, db):
     dream_text = event.message.text
 
     # 글자 수 제한
