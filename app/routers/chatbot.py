@@ -19,7 +19,7 @@ from aiohttp import ClientTimeout
 class CustomAioHttpClient(AioHttpClient):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.session = aiohttp.ClientSession(timeout=ClientTimeout(total=80))  # 60 seconds timeout
+        self.session = aiohttp.ClientSession(timeout=ClientTimeout(total=120))  # 60 seconds timeout
 
     async def put(self, url, headers=None, data=None, timeout=None):
         async with self.session.put(url, headers=headers, data=data, timeout=timeout) as response:
