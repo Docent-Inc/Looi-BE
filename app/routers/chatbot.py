@@ -8,7 +8,7 @@ import os
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from sqlalchemy.orm import Session
 
-from app.db.database import get_db
+from app.db.database import get_db, get_SessionLocal
 from app.feature.diary import createDiary
 from app.feature.generate_jp import generate_text, generate_resolution_linechatbot
 from app.schemas.request.crud import Create
@@ -68,46 +68,49 @@ async def callback(request: Request):
     return 'OK'
 
 @handler.add(MessageEvent, message=TextMessage)
-async def handle_message(event, db: Session = Depends(get_db)):
+async def handle_message(event):
     dream_text = event.message.text
+    db = get_SessionLocal()
+    try:
+        # 글자 수 제한
+        if len(dream_text) < 10 or len(dream_text) > 200:
+            await line_bot_api.reply_message(
+                event.reply_token,
+                TextSendMessage(text="10文字以上200文字以下で入力してください。"))  # Echo message
+            return
 
-    # 글자 수 제한
-    if len(dream_text) < 10 or len(dream_text) > 200:
+        # 꿈 생성 제한 3회
+        user_id = event.source.user_id
+        if user_id not in user_requests:
+            user_requests[user_id] = 0
+        if user_requests[user_id] > MAX_REQUESTS_PER_DAY:
+            await line_bot_api.reply_message(
+                event.reply_token,
+                TextSendMessage(text="1日3回までです。"))
+            return
+
+        # 꿈 생성
+        id, dream_name, dream, dream_image_url = await generate_text(dream_text, 3, db)
+        # 해몽 생성
+        dream_resolution = await generate_resolution_linechatbot(dream_text)
+
+        create = Create(
+            dream_name=dream_name,
+            dream=dream,
+            image_url=dream_image_url,
+            resolution=dream_resolution,
+            checklist="checklist",
+            is_public=True,
+        )
+        await createDiary(create, 3, db)
+        generated_text = f"【{dream_name}】\n{dream}\n\n【夢占い】\n{dream_resolution}"
+
         await line_bot_api.reply_message(
             event.reply_token,
-            TextSendMessage(text="10文字以上200文字以下で入力してください。"))  # Echo message
+            ImageSendMessage(original_content_url=dream_image_url, preview_image_url=dream_image_url),
+            TextSendMessage(text=generated_text)
+        )
+        user_requests[user_id] += 1
         return
-
-    # 꿈 생성 제한 3회
-    user_id = event.source.user_id
-    if user_id not in user_requests:
-        user_requests[user_id] = 0
-    if user_requests[user_id] > MAX_REQUESTS_PER_DAY:
-        await line_bot_api.reply_message(
-            event.reply_token,
-            TextSendMessage(text="1日3回までです。"))
-        return
-
-    # 꿈 생성
-    id, dream_name, dream, dream_image_url = await generate_text(dream_text, 3, db)
-    # 해몽 생성
-    dream_resolution = await generate_resolution_linechatbot(dream_text)
-
-    create = Create(
-        dream_name=dream_name,
-        dream=dream,
-        image_url=dream_image_url,
-        resolution=dream_resolution,
-        checklist="checklist",
-        is_public=True,
-    )
-    await createDiary(create, 3, db)
-    generated_text = f"【{dream_name}】\n{dream}\n\n【夢占い】\n{dream_resolution}"
-
-    await line_bot_api.reply_message(
-        event.reply_token,
-        ImageSendMessage(original_content_url=dream_image_url, preview_image_url=dream_image_url),
-        TextSendMessage(text=generated_text)
-    )
-    user_requests[user_id] += 1
-    return
+    finally:
+        db.close()
