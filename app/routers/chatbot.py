@@ -34,16 +34,18 @@ from linebotx.http_client import AioHttpClient
 
 class CustomAioHttpClient(AioHttpClient):
     def __init__(self):
-        super().__init__()
         self.timeout = ClientTimeout(total=120)
+        super().__init__()
 
     async def post(self, url, headers=None, data=None, timeout=None):
         timeout = timeout or self.timeout
         async with self.session.post(url, headers=headers, data=data, timeout=timeout) as response:
             return await response.text()
+
     async def put(self, url, headers=None, data=None, timeout=None):
         async with self.session.put(url, headers=headers, data=data, timeout=timeout) as response:
             return await response.text()
+
 
 # Use the custom http client
 line_bot_api = LineBotApiAsync(os.getenv("LINE_ACCESS_TOKEN"), http_client=CustomAioHttpClient())
