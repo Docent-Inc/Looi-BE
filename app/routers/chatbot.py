@@ -27,7 +27,6 @@ def reset_counter():
 # Schedule the function to run every day at midnight
 scheduler.add_job(reset_counter, 'cron', hour=0)
 scheduler.start()
-
 load_dotenv()
 
 
@@ -45,7 +44,6 @@ class CustomAioHttpClient(AioHttpClient):
     async def put(self, url, headers=None, data=None, timeout=None):
         async with self.session.put(url, headers=headers, data=data, timeout=timeout) as response:
             return AioHttpResponse(response)
-
 
 
 # Use the custom http client
@@ -120,13 +118,13 @@ async def handle_message(event):
         )
         await createDiary(create, 3, db)
         generated_text = f"【{dream_name}】\n{dream}\n\n【夢占い】\n{dream_resolution}"
-
+        user_requests[user_id] += 1
         await line_bot_api.reply_message(
             event.reply_token,
             [ImageSendMessage(original_content_url=dream_image_url, preview_image_url=dream_image_url),
              TextSendMessage(text=generated_text)]
         )
-        user_requests[user_id] += 1
+
         return
     finally:
         db.close()
