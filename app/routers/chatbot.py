@@ -1,7 +1,7 @@
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage, ImageSendMessage, ImageMessage
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, Request, HTTPException, BackgroundTasks
 from pydantic import BaseModel
 from typing import List
 from dotenv import load_dotenv
@@ -46,14 +46,14 @@ class LineWebhookBody(BaseModel):
 router = APIRouter(prefix="/chatbot")
 
 @router.post("/callback")
-async def callback(request: Request):
+async def callback(request: Request, background_tasks: BackgroundTasks):
     body = await request.body()
     signature = request.headers.get('X-Line-Signature')
     if not signature:
         print("Signature is missing.")
         raise HTTPException(status_code=400, detail="Bad Request: Signature is missing.")
     try:
-        handler.handle(body.decode(), signature)
+        background_tasks.add_task(handler.handle, body.decode(), signature)
     except InvalidSignatureError:
         print("Invalid signature. Check your channel access token/channel secret.")
         raise HTTPException(status_code=400, detail="Invalid signature. Check your channel access token/channel secret.")
@@ -61,7 +61,7 @@ async def callback(request: Request):
 
 
 @handler.add(MessageEvent, message=TextMessage)
-def handle_message(event):
+async def handle_message(event):
     dream_text = event.message.text
 
     # 글자 수 제한
@@ -82,9 +82,9 @@ def handle_message(event):
         return
 
     # 꿈 생성
-    id, dream_name, dream, dream_image_url = asyncio.run(generate_text(dream_text, 3, db))
+    id, dream_name, dream, dream_image_url = await generate_text(dream_text, 3, db)
     # 해몽 생성
-    dream_resolution = asyncio.run(generate_resolution_linechatbot(dream_text))
+    dream_resolution = await generate_resolution_linechatbot(dream_text)
 
     create = Create(
         dream_name=dream_name,
@@ -94,7 +94,7 @@ def handle_message(event):
         checklist="checklist",
         is_public=True,
     )
-    asyncio.run(createDiary(create, 3, db))
+    await createDiary(create, 3, db)
     generated_text = f"【{dream_name}】\n{dream}\n\n【夢占い】\n{dream_resolution}"
 
     line_bot_api.reply_message(
