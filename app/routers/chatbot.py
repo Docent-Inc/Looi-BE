@@ -120,8 +120,8 @@ async def handle_message(event):
 
         await line_bot_api.reply_message(
             event.reply_token,
-            ImageSendMessage(original_content_url=dream_image_url, preview_image_url=dream_image_url),
-            TextSendMessage(text=generated_text)
+            [ImageSendMessage(original_content_url=dream_image_url, preview_image_url=dream_image_url),
+             TextSendMessage(text=generated_text)]
         )
         user_requests[user_id] += 1
         return
