@@ -1,10 +1,6 @@
 import asyncio
-
-from fastapi import HTTPException
-from starlette import status
-
 from app.core.current_time import get_current_time
-from app.feature.gptapi.generateImg import generate_img, get_text_data
+from app.feature.gptapi.generateImg import generate_img
 from app.db.models.dream import DreamText, DreamImage
 from app.db.database import get_db
 from app.feature.gptapi.gptRequset import send_gpt_request, send_bard_request
@@ -13,7 +9,8 @@ from app.feature.gptapi.gptRequset import send_gpt_request, send_bard_request
 async def generate_text(text: str, userId: int, db: get_db()) -> str:
     async def get_dreamName(message: str) -> str:
         messages_prompt = [
-            {"role": "system", "content": "꿈의 내용을 이해하고 너가 재미있는 꿈의 제목을 만들어줘"},
+            {"role": "system", "content": "夢の内容を理解し、あなたが面白い夢のタイトルを作ってください"},
+            {"role": "system", "content": "日本語で書くだけ"},
             {"role": "user", "content": message}
         ]
         dreamName = await send_gpt_request(messages_prompt)
@@ -66,10 +63,7 @@ async def generate_text(text: str, userId: int, db: get_db()) -> str:
 
     return dream_text_id, dream_name, dream, dream_image_url
 
-async def generate_resolution(text: str) -> str:
-    dream_resolution = await send_bard_request(text)
-    return dream_resolution
-
-async def generate_resolution_mvp(text: str) -> str:
-    dream_resolution = await send_bard_request(text)
+async def generate_resolution_linechatbot(text: str) -> str:
+    prompt = f"夢を見ましたが、この夢を短く解釈してください。人間のように話し、最初の文章は'この夢は'と始まってください。length=150、段落の変更なしで解釈内容だけを返してください。夢の内容：{text}"
+    dream_resolution = await send_bard_request(prompt)
     return dream_resolution

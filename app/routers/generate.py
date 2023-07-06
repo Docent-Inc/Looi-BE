@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
-from app.feature.gptapi.generate import generate_text, generate_resolution
-from app.schemas.response.gpt import BasicResponse, ImageResponse, CheckListResponse, ResolutionResponse
+from app.feature.generate_kr import generate_text, generate_resolution
+from app.schemas.response.gpt import BasicResponse, ImageResponse, ResolutionResponse
 from app.schemas.request.generate import Generate, Image, Resolution
 from app.schemas.common import ApiResponse
 from app.feature.gptapi.generateImg import additional_generate_image
