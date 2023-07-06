@@ -100,8 +100,6 @@ async def handle_message(event):
                 TextSendMessage(text="1日3回までです。"))
             return
 
-        await line_bot_api.send_user_action(user_id, 'typing')
-
         # 꿈 생성
         id, dream_name, dream, dream_image_url = await generate_text(dream_text, 3, db)
         # 해몽 생성
