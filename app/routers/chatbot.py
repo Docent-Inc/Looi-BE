@@ -10,8 +10,8 @@ import os
 
 load_dotenv()
 
-line_bot_api = LineBotApi(json.loads(os.getenv("LINE_ACCESS_TOKEN"))["key"])
-handler = WebhookHandler(json.loads(os.getenv("LINE_SECRET"))["key"])
+line_bot_api = LineBotApi(os.getenv("LINE_ACCESS_TOKEN"))
+handler = WebhookHandler(os.getenv("LINE_SECRET"))
 
 class LineEvent(BaseModel):
     replyToken: str
@@ -37,6 +37,7 @@ async def callback(request: Request, body: Optional[LineWebhookBody] = None):
         print("Signature is missing.")
         raise HTTPException(status_code=400, detail="Bad Request: Signature is missing.")
     try:
+        print(body.json())
         handler.handle(body.json(), signature)
     except InvalidSignatureError:
         print("Invalid signature. Check your channel access token/channel secret.")
