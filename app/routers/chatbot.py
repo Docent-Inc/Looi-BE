@@ -70,7 +70,8 @@ async def callback(request: Request):
 @handler.add(MessageEvent, message=TextMessage)
 async def handle_message(event):
     dream_text = event.message.text
-    db = get_SessionLocal()
+    SessionLocal = get_SessionLocal()
+    db = SessionLocal()  # 실제 데이터베이스 세션을 얻는다.
     try:
         # 글자 수 제한
         if len(dream_text) < 10 or len(dream_text) > 200:
