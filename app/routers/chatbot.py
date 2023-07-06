@@ -1,4 +1,3 @@
-import aiohttp
 from aiohttp import ClientTimeout
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage, ImageSendMessage, ImageMessage
@@ -8,14 +7,15 @@ from typing import List
 from dotenv import load_dotenv
 import os
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-
 from app.db.database import get_SessionLocal
 from app.feature.diary import createDiary
 from app.feature.generate_jp import generate_text, generate_resolution_linechatbot
 from app.schemas.request.crud import Create
 from linebotx import LineBotApiAsync, WebhookHandlerAsync
-# Initialize the scheduler
-scheduler = AsyncIOScheduler()
+from linebotx.http_client import AioHttpClient
+from pytz import timezone
+
+scheduler = AsyncIOScheduler(timezone="Asia/Tokyo")
 user_requests = {}
 MAX_REQUESTS_PER_DAY = 3  # This can be any number you want
 # Define the function to reset the counter
@@ -29,7 +29,7 @@ scheduler.start()
 
 load_dotenv()
 
-from linebotx.http_client import AioHttpClient
+
 
 class CustomAioHttpClient(AioHttpClient):
     def __init__(self):
@@ -38,8 +38,7 @@ class CustomAioHttpClient(AioHttpClient):
 
     async def post(self, url, headers=None, data=None, timeout=None):
         timeout = timeout or self.timeout
-        async with self.session.post(url, headers=headers, data=data, timeout=timeout) as response:
-            return await response.text()
+        return await self.session.post(url, headers=headers, data=data, timeout=timeout)
 
     async def put(self, url, headers=None, data=None, timeout=None):
         async with self.session.put(url, headers=headers, data=data, timeout=timeout) as response:
@@ -100,6 +99,8 @@ async def handle_message(event):
                 event.reply_token,
                 TextSendMessage(text="1日3回までです。"))
             return
+
+        await line_bot_api.send_user_action(user_id, 'typing')
 
         # 꿈 생성
         id, dream_name, dream, dream_image_url = await generate_text(dream_text, 3, db)
