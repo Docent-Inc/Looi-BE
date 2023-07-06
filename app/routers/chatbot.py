@@ -92,7 +92,7 @@ def handle_message(event):
         checklist="checklist",
         is_public=True,
     )
-    await createDiary(create, 3, db)
+    createDiary(create, 3, db)
     generated_text = f"【{dream_name}】\n{dream}\n\n【夢占い】\n{dream_resolution}"
 
     line_bot_api.reply_message(
