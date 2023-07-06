@@ -1,4 +1,3 @@
-from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage, ImageSendMessage, ImageMessage
 from fastapi import APIRouter, Request, HTTPException, BackgroundTasks
@@ -7,12 +6,11 @@ from typing import List
 from dotenv import load_dotenv
 import os
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-import asyncio
 from app import db
 from app.feature.diary import createDiary
 from app.feature.generate_jp import generate_text, generate_resolution_linechatbot
 from app.schemas.request.crud import Create
-
+from linebotx import LineBotApiAsync, WebhookHandlerAsync
 # Initialize the scheduler
 scheduler = AsyncIOScheduler()
 user_requests = {}
@@ -28,8 +26,16 @@ scheduler.start()
 
 load_dotenv()
 
-line_bot_api = LineBotApi(os.getenv("LINE_ACCESS_TOKEN"))
-handler = WebhookHandler(os.getenv("LINE_SECRET"))
+from linebotx.http_client import AioHttpClient
+
+class CustomAioHttpClient(AioHttpClient):
+    async def put(self, url, headers=None, data=None, timeout=None):
+        async with self.session.put(url, headers=headers, data=data, timeout=timeout) as response:
+            return await response.text()
+
+# Use the custom http client
+line_bot_api = LineBotApiAsync(os.getenv("LINE_ACCESS_TOKEN"), http_client=CustomAioHttpClient())
+handler = WebhookHandlerAsync(os.getenv("LINE_SECRET"))
 
 class LineEvent(BaseModel):
     replyToken: str
@@ -53,7 +59,7 @@ async def callback(request: Request, background_tasks: BackgroundTasks):
         print("Signature is missing.")
         raise HTTPException(status_code=400, detail="Bad Request: Signature is missing.")
     try:
-        background_tasks.add_task(handler.handle, body.decode(), signature)
+        await handler.handle(body.decode(), signature)
     except InvalidSignatureError:
         print("Invalid signature. Check your channel access token/channel secret.")
         raise HTTPException(status_code=400, detail="Invalid signature. Check your channel access token/channel secret.")
@@ -66,7 +72,7 @@ async def handle_message(event):
 
     # 글자 수 제한
     if len(dream_text) < 10 or len(dream_text) > 200:
-        line_bot_api.reply_message(
+        await line_bot_api.reply_message(
             event.reply_token,
             TextSendMessage(text="10文字以上200文字以下で入力してください。"))  # Echo message
         return
@@ -76,7 +82,7 @@ async def handle_message(event):
     if user_id not in user_requests:
         user_requests[user_id] = 0
     if user_requests[user_id] > MAX_REQUESTS_PER_DAY:
-        line_bot_api.reply_message(
+        await line_bot_api.reply_message(
             event.reply_token,
             TextSendMessage(text="1日3回までです。"))
         return
@@ -97,7 +103,7 @@ async def handle_message(event):
     await createDiary(create, 3, db)
     generated_text = f"【{dream_name}】\n{dream}\n\n【夢占い】\n{dream_resolution}"
 
-    line_bot_api.reply_message(
+    await line_bot_api.reply_message(
         event.reply_token,
         ImageSendMessage(original_content_url=dream_image_url, preview_image_url=dream_image_url),
         TextSendMessage(text=generated_text)
