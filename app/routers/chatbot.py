@@ -61,7 +61,7 @@ async def callback(request: Request):
 
 
 @handler.add(MessageEvent, message=TextMessage)
-async def handle_message(event):
+def handle_message(event):
     dream_text = event.message.text
 
     # 글자 수 제한
@@ -82,7 +82,7 @@ async def handle_message(event):
         return
 
     # 꿈 생성
-    id, dream_name, dream, dream_image_url = await generate_text(dream_text, 3, db)
+    id, dream_name, dream, dream_image_url = generate_text(dream_text, 3, db)
     # 해몽 생성
     dream_resolution = generate_resolution_linechatbot(dream_text)
 
@@ -94,7 +94,7 @@ async def handle_message(event):
         checklist="checklist",
         is_public=True,
     )
-    await createDiary(create, 3, db)
+    createDiary(create, 3, db)
     generated_text = f"【{dream_name}】\n{dream}\n\n【夢占い】\n{dream_resolution}"
 
     line_bot_api.reply_message(
