@@ -1,4 +1,5 @@
 import aiohttp
+from aiohttp import ClientTimeout
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage, ImageSendMessage, ImageMessage
 from fastapi import APIRouter, Request, HTTPException, BackgroundTasks, Depends
@@ -13,17 +14,7 @@ from app.db.database import get_db, get_SessionLocal
 from app.feature.diary import createDiary
 from app.feature.generate_jp import generate_text, generate_resolution_linechatbot
 from app.schemas.request.crud import Create
-from linebotx import LineBotApiAsync, WebhookHandlerAsync, AioHttpClient
-from aiohttp import ClientTimeout
-
-class CustomAioHttpClient(AioHttpClient):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.session = aiohttp.ClientSession(timeout=ClientTimeout(total=120))  # 60 seconds timeout
-
-    async def put(self, url, headers=None, data=None, timeout=None):
-        async with self.session.put(url, headers=headers, data=data, timeout=timeout) as response:
-            return await response.text()
+from linebotx import LineBotApiAsync, WebhookHandlerAsync
 # Initialize the scheduler
 scheduler = AsyncIOScheduler()
 user_requests = {}
@@ -42,6 +33,14 @@ load_dotenv()
 from linebotx.http_client import AioHttpClient
 
 class CustomAioHttpClient(AioHttpClient):
+    def __init__(self):
+        super().__init__()
+        self.timeout = ClientTimeout(total=120)
+
+    async def post(self, url, headers=None, data=None, timeout=None):
+        timeout = timeout or self.timeout
+        async with self.session.post(url, headers=headers, data=data, timeout=timeout) as response:
+            return await response.text()
     async def put(self, url, headers=None, data=None, timeout=None):
         async with self.session.put(url, headers=headers, data=data, timeout=timeout) as response:
             return await response.text()
