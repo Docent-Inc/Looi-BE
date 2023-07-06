@@ -12,7 +12,7 @@ from app.feature.diary import createDiary
 from app.feature.generate_jp import generate_text, generate_resolution_linechatbot
 from app.schemas.request.crud import Create
 from linebotx import LineBotApiAsync, WebhookHandlerAsync
-from linebotx.http_client import AioHttpClient
+from linebotx.http_client import AioHttpClient, AioHttpResponse
 from pytz import timezone
 
 scheduler = AsyncIOScheduler(timezone="Asia/Tokyo")
@@ -38,11 +38,13 @@ class CustomAioHttpClient(AioHttpClient):
 
     async def post(self, url, headers=None, data=None, timeout=None):
         timeout = timeout or self.timeout
-        return await self.session.post(url, headers=headers, data=data, timeout=timeout)
+        async with self.session.post(url, headers=headers, data=data, timeout=timeout) as response:
+            return AioHttpResponse(response)
 
     async def put(self, url, headers=None, data=None, timeout=None):
         async with self.session.put(url, headers=headers, data=data, timeout=timeout) as response:
-            return await response.text()
+            return AioHttpResponse(response)
+
 
 
 # Use the custom http client
