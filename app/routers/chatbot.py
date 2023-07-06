@@ -1,3 +1,4 @@
+import json
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
@@ -9,8 +10,8 @@ import os
 
 load_dotenv()
 
-line_bot_api = LineBotApi(os.getenv("LINE_ACCESS_TOKEN"))
-handler = WebhookHandler(os.getenv("LINE_SECRET"))
+line_bot_api = LineBotApi(json.loads(os.getenv("LINE_ACCESS_TOKEN"))["key"])
+handler = WebhookHandler(json.loads(os.getenv("LINE_SECRET"))["key"])
 
 class LineEvent(BaseModel):
     replyToken: str
