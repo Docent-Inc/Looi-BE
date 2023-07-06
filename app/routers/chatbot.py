@@ -2,15 +2,14 @@ import aiohttp
 from aiohttp import ClientTimeout
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage, ImageSendMessage, ImageMessage
-from fastapi import APIRouter, Request, HTTPException, BackgroundTasks, Depends
+from fastapi import APIRouter, Request, HTTPException
 from pydantic import BaseModel
 from typing import List
 from dotenv import load_dotenv
 import os
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from sqlalchemy.orm import Session
 
-from app.db.database import get_db, get_SessionLocal
+from app.db.database import get_SessionLocal
 from app.feature.diary import createDiary
 from app.feature.generate_jp import generate_text, generate_resolution_linechatbot
 from app.schemas.request.crud import Create

@@ -42,8 +42,19 @@ async def createDiary(create: Create, userId: int, db: Session):
             db.commit()
             db.refresh(diary_content)
 
-        if user.language_id == 2:
+        elif user.language_id == 2:
             diary_content = Diary_en(
+                Diary_id=diary.id,
+                dream_name=create.dream_name,
+                dream=create.dream,
+                resolution=create.resolution,
+            )
+            db.add(diary_content)
+            db.commit()
+            db.refresh(diary_content)
+
+        elif user.language_id == 3:
+            diary_content = Diary_jp(
                 Diary_id=diary.id,
                 dream_name=create.dream_name,
                 dream=create.dream,
