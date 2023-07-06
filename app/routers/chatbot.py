@@ -1,9 +1,8 @@
 from linebot import LineBotApi, WebhookHandler
-from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
-from fastapi import APIRouter, Request, BackgroundTasks, HTTPException
+from fastapi import APIRouter, Request, HTTPException
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 from dotenv import load_dotenv
 import os
 
@@ -27,12 +26,9 @@ class LineWebhookBody(BaseModel):
 router = APIRouter(prefix="/chatbot")
 
 @router.post("/callback")
-async def callback(body: LineWebhookBody, request: Request, background_tasks: BackgroundTasks):
+async def callback(request: Request, body: Optional[LineWebhookBody] = None):
     signature = request.headers['X-Line-Signature']
-    try:
-        handler.handle(body.json(), signature)
-    except InvalidSignatureError:
-        raise HTTPException(status_code=400, detail="Invalid signature. Check your channel access token/channel secret.")
+    handler.handle(body.json(), signature)
     return 'OK'
 
 @handler.add(MessageEvent, message=TextMessage)
