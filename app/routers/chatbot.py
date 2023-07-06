@@ -73,6 +73,8 @@ def handle_message(event):
 
     # 꿈 생성 제한 3회
     user_id = event.source.user_id
+    if user_id not in user_requests:
+        user_requests[user_id] = 0
     if user_requests[user_id] > MAX_REQUESTS_PER_DAY:
         line_bot_api.reply_message(
             event.reply_token,
@@ -100,8 +102,5 @@ def handle_message(event):
         ImageSendMessage(original_content_url=dream_image_url, preview_image_url=dream_image_url),
         TextSendMessage(text=generated_text)
     )
-
-    if user_id not in user_requests:
-        user_requests[user_id] = 0
     user_requests[user_id] += 1
     return
