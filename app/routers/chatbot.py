@@ -7,7 +7,7 @@ from typing import List
 from dotenv import load_dotenv
 import os
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-
+import asyncio
 from app import db
 from app.feature.diary import createDiary
 from app.feature.generate_jp import generate_text, generate_resolution_linechatbot
@@ -82,9 +82,9 @@ def handle_message(event):
         return
 
     # 꿈 생성
-    id, dream_name, dream, dream_image_url = generate_text(dream_text, 3, db)
+    id, dream_name, dream, dream_image_url = asyncio.run(generate_text(dream_text, 3, db))
     # 해몽 생성
-    dream_resolution = generate_resolution_linechatbot(dream_text)
+    dream_resolution = asyncio.run(generate_resolution_linechatbot(dream_text))
 
     create = Create(
         dream_name=dream_name,
@@ -94,7 +94,7 @@ def handle_message(event):
         checklist="checklist",
         is_public=True,
     )
-    createDiary(create, 3, db)
+    asyncio.run(createDiary(create, 3, db))
     generated_text = f"【{dream_name}】\n{dream}\n\n【夢占い】\n{dream_resolution}"
 
     line_bot_api.reply_message(

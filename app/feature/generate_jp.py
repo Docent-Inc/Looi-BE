@@ -62,7 +62,6 @@ async def generate_text(text: str, userId: int, db: get_db()) -> str:
     dream_text_id = dream_text.id
 
     return dream_text_id, dream_name, dream, dream_image_url
-
 async def generate_resolution_linechatbot(text: str) -> str:
     prompt = f"夢を見ましたが、この夢を短く解釈してください。人間のように話し、最初の文章は'この夢は'と始まってください。length=150、段落の変更なしで解釈内容だけを返してください。夢の内容：{text}"
     dream_resolution = await send_bard_request(prompt)
