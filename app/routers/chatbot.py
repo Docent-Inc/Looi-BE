@@ -45,4 +45,63 @@ class LineWebhookBody(BaseModel):
 
 router = APIRouter(prefix="/chatbot")
 
+@router.post("/callback")
+async def callback(request: Request):
+    body = await request.body()
+    signature = request.headers.get('X-Line-Signature')
+    if not signature:
+        print("Signature is missing.")
+        raise HTTPException(status_code=400, detail="Bad Request: Signature is missing.")
+    try:
+        handler.handle(body.decode(), signature)
+    except InvalidSignatureError:
+        print("Invalid signature. Check your channel access token/channel secret.")
+        raise HTTPException(status_code=400, detail="Invalid signature. Check your channel access token/channel secret.")
+    return 'OK'
 
+
+@handler.add(MessageEvent, message=TextMessage)
+def handle_message(event):
+    dream_text = event.message.text
+
+    # 글자 수 제한
+    if len(dream_text) < 10 or len(dream_text) > 200:
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text="10文字以上200文字以下で入力してください。"))  # Echo message
+        return
+
+    # 꿈 생성 제한 3회
+    user_id = event.source.user_id
+    if user_requests[user_id] > MAX_REQUESTS_PER_DAY:
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text="1日3回までです。"))
+        return
+
+    # 꿈 생성
+    id, dream_name, dream, dream_image_url = generate_text(dream_text, 3, db)
+    # 해몽 생성
+    dream_resolution = generate_resolution_linechatbot(dream_text)
+
+    create = Create(
+        dream_name=dream_name,
+        dream=dream,
+        image_url=dream_image_url,
+        resolution=dream_resolution,
+        checklist="checklist",
+        is_public=True,
+    )
+    createDiary(create, 3, db)
+    generated_text = f"【{dream_name}】\n{dream}\n\n【夢占い】\n{dream_resolution}"
+
+    line_bot_api.reply_message(
+        event.reply_token,
+        ImageSendMessage(original_content_url=dream_image_url, preview_image_url=dream_image_url),
+        TextSendMessage(text=generated_text)
+    )
+
+    if user_id not in user_requests:
+        user_requests[user_id] = 0
+    user_requests[user_id] += 1
+    return
