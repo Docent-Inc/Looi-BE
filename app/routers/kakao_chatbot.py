@@ -111,7 +111,7 @@ async def create_callback_request_kakao(prompt: str, url: str, db: Session) -> d
         # 해몽
         print(1)
         task1, task2 = await asyncio.gather(
-            generate_text(prompt),
+            generate_text(prompt, 2, db),
             generate_resolution(prompt)
         )
         print(2)
