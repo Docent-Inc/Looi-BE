@@ -145,12 +145,17 @@ async def create_callback_request_kakao(prompt: str, url: str, db: Session) -> d
         )
         await createDiary(create, 2, db)
 
+        outputs = []
+        if dream_image_url is not None:
+            outputs.append(Output(simpleImage=SimpleImage(imageUrl=dream_image_url)))
+        if dream_name is not None and dream is not None and dream_resolution is not None:
+            outputs.append(
+                Output(simpleText=SimpleText(text=f"꿈 이름: {dream_name}\n꿈 내용: {dream}\n해몽: {dream_resolution}")))
+
         request_body = KakaoChatbotResponse(
             version="2.0",
-            template=Template(outputs=[
-                Output(simpleImage=SimpleImage(imageUrl=dream_image_url)),
-                Output(simpleText=SimpleText(text=f"꿈 이름: {dream_name}\n꿈 내용: {dream}\n해몽: {dream_resolution}"))
-            ])).dict(exclude_none=True)
+            template=Template(outputs=outputs)
+        ).dict()
 
         if request_body.status_code == 200:
             return {"status": "success"}
