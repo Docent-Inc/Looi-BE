@@ -144,10 +144,12 @@ async def create_callback_request_kakao(prompt: str, url: str, db: Session) -> d
             template=Template(outputs=outputs)
         ).dict()
 
-        if request_body.status_code == 200:
-            return {"status": "success"}
+        response = requests.post(url, json=request_body)
 
-        return {"status": "fail"}
+        if response.status_code == 200:
+            print("success")
+        else:
+            print("fail")
 
     except Exception as e:
         print(e)
