@@ -104,7 +104,7 @@ async def handle_message(event):
             return
 
         # 꿈 생성
-        id, dream_name, dream, dreCam_image_url = await generate_text(dream_text, 3, db)
+        id, dream_name, dream, dream_image_url = await generate_text(dream_text, 3, db)
         # 해몽 생성
         dream_resolution = await generate_resolution_linechatbot(dream_text)
 
