@@ -105,6 +105,15 @@ class KakaoAIChatbotRequest(BaseModel):
     userRequest: Optional[UserRequest] = None
     contexts: Optional[List] = None
 
+
+class SimpleImage(BaseModel):
+    imageUrl: str
+
+class Output(BaseModel):
+    simpleImage: Optional[SimpleImage] = None
+    simpleText: Optional[SimpleText] = None
+
+
 async def create_callback_request_kakao(prompt: str, url: str, db: Session) -> dict:
     try:
         # 꿈 그리기
@@ -129,19 +138,13 @@ async def create_callback_request_kakao(prompt: str, url: str, db: Session) -> d
         )
         await createDiary(create, 2, db)
 
-        print(3)
-        template = {
-            "outputs": [
-                {"simpleText": {"text": f"꿈 이름: {dream_name}\n꿈 내용: {dream}\n해몽: {dream_resolution}"}},
-                {"simpleImage": {"imageUrl": dream_image_url}}
-            ]
-        }
-
         request_body = KakaoChatbotResponse(
-            version="2.0", template=template).dict()
-        res = requests.post(url, json=request_body)
+            version="2.0", template=Template(outputs=[
+                Output(simpleImage=SimpleImage(imageUrl=dream_image_url)),
+                Output(simpleText=SimpleText(text=f"꿈 이름: {dream_name}\n꿈 내용: {dream}\n해몽: {dream_resolution}"))
+            ])).dict()
 
-        if res.status_code == 200:
+        if request_body.status_code == 200:
             return {"status": "success"}
 
         return {"status": "fail"}
