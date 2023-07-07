@@ -48,7 +48,8 @@ class Template(BaseModel):
 
 class KakaoChatbotResponseCallback(BaseModel):
     version: str
-    useCallback: bool
+    useCallback: Optional[bool] = None
+    template: Optional[Template] = None
 
 class Bot(BaseModel):
     id: str
@@ -179,7 +180,7 @@ async def make_chatgpt_async_callback_request_to_openai_from_kakao(
     if user_id not in user_requests:
         user_requests[user_id] = 0
     if user_requests[user_id] > MAX_REQUESTS_PER_DAY:
-        return KakaoChatbotResponse(version="2.0", template={"outputs": [{"simpleText": {"text": "꿈 분석은 하루에 3번만 가능해요ㅠㅠ 내일 다시 시도해주세요"}}]})
+        return KakaoChatbotResponseCallback(version="2.0", template=Template(outputs=[{"simpleText": {"text": "꿈 분석은 하루에 3번만 가능해요ㅠㅠ 내일 다시 시도해주세요"}}]))
 
 
     background_tasks.add_task(create_callback_request_kakao,
