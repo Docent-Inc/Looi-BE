@@ -1,5 +1,4 @@
 import asyncio
-import logging
 from typing import Optional, List, Dict, Any
 
 import requests
@@ -148,16 +147,15 @@ async def create_callback_request_kakao(prompt: str, url: str, db: Session) -> d
             ]
         }
 
-        return template
+        request_body = KakaoChatbotResponse(
+            version="2.0", template=template).dict()
+        res = requests.post(url, json=request_body)
 
-        # request_body = KakaoChatbotResponse(
-        #     version="2.0", template=template).dict()
-        # res = requests.post(url, json=request_body)
-        #
-        # if not res.ok:
-        #     logging.error(f"[ERROR] Kakao POST {url} failed.")
-        #
-        # print(f"sent request to kakao POST {url}, Code: {res.status_code}")
+        if res.status_code == 200:
+            return {"status": "success"}
+
+        return {"status": "fail"}
+
     except Exception as e:
         return {"error": e}
 
@@ -165,9 +163,10 @@ async def create_callback_request_kakao(prompt: str, url: str, db: Session) -> d
 @router.post("/api/chat/callback", tags=["kakao"], response_model=KakaoChatbotResponseCallback)
 async def make_chatgpt_async_callback_request_to_openai_from_kakao(
         kakao_ai_request: KakaoAIChatbotRequest,
+        background_tasks: BackgroundTasks,
         db: Session = Depends(get_db),
 ):
-    # background_tasks.add_task(create_callback_request_kakao,
-    #                           prompt=kakao_ai_request.userRequest.utterance, url=kakao_ai_request.userRequest.callbackUrl, db=db)
-    template = await create_callback_request_kakao(kakao_ai_request.userRequest.utterance, kakao_ai_request.userRequest.callbackUrl, db)
-    return KakaoChatbotResponseCallback(version="2.0", template=template)
+
+    background_tasks.add_task(create_callback_request_kakao,
+                              prompt=kakao_ai_request.userRequest.utterance, url=kakao_ai_request.userRequest.callbackUrl, db=db)
+    return KakaoChatbotResponseCallback(version="2.0", useCallback=True)
