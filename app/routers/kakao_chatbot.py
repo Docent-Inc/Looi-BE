@@ -132,15 +132,16 @@ async def create_callback_request_kakao(prompt: str, url: str, db: Session) -> d
             is_public=True,
         )
         await createDiary(create, 2, db)
-        print(f"꿈 이름: {dream_name}\n꿈 내용: {dream}\n해몽: {dream_resolution}\n이미지: {dream_image_url}")
 
+        outputs = [
+            Output(simpleImage=SimpleImage(imageUrl=dream_image_url)),
+            Output(simpleText=SimpleText(text=f"꿈 이름: {dream_name}\n꿈 내용: {dream}\n해몽: {dream_resolution}"))
+        ]
 
         request_body = KakaoChatbotResponse(
             version="2.0",
-            template=Template(outputs=[
-                Output(simpleImage=SimpleImage(imageUrl=dream_image_url)),
-                Output(simpleText=SimpleText(text=f"꿈 이름: {dream_name}\n꿈 내용: {dream}\n해몽: {dream_resolution}"))
-            ])).dict(exclude_none=True)
+            template=Template(outputs=outputs)
+        ).dict()
 
         if request_body.status_code == 200:
             return {"status": "success"}
