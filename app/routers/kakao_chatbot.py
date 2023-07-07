@@ -14,19 +14,6 @@ from app.schemas.request.crud import Create
 
 router = APIRouter(prefix="/kakao-chatbot")
 
-# @router.post("/api/chat", tags=["kakao"], response_model=KakaoChatbotResponse)
-# async def make_chatgpt_request_to_openai_from_kakao(completion_request: KakaoChatbotRequest):
-#     completion = await create_completion_request(prompt=completion_request.userRequest.utterance)
-#     # erase newline
-#     completion = completion.strip()
-#     template = {
-#         "outputs": [
-#             {"simpleText": {"text": completion}}
-#         ]
-#     }
-#     return KakaoChatbotResponse(version="2.0", template=template)
-
-
 class SimpleText(BaseModel):
     text: str
 
@@ -122,10 +109,12 @@ async def create_callback_request_kakao(prompt: str, url: str, db: Session) -> d
     try:
         # 꿈 그리기
         # 해몽
+        print(1)
         task1, task2 = await asyncio.gather(
             generate_text(prompt),
             generate_resolution(prompt)
         )
+        print(2)
 
         id, dream_name, dream, dream_image_url = task1
         dream_resolution = task2
@@ -140,6 +129,7 @@ async def create_callback_request_kakao(prompt: str, url: str, db: Session) -> d
         )
         await createDiary(create, 2, db)
 
+        print(3)
         template = {
             "outputs": [
                 {"simpleText": {"text": f"꿈 이름: {dream_name}\n꿈 내용: {dream}\n해몽: {dream_resolution}"}},
@@ -157,7 +147,9 @@ async def create_callback_request_kakao(prompt: str, url: str, db: Session) -> d
         return {"status": "fail"}
 
     except Exception as e:
+        print(e)
         return {"error": e}
+
 
 
 @router.post("/api/chat/callback", tags=["kakao"], response_model=KakaoChatbotResponseCallback)
