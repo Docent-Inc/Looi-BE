@@ -3,7 +3,7 @@ from typing import Optional, List, Dict, Any
 
 import requests
 from fastapi import APIRouter, Depends
-from pydantic import BaseModel
+from pydantic import BaseModel, root_validator, ValidationError
 from sqlalchemy.orm import Session
 from starlette.background import BackgroundTasks
 
@@ -112,6 +112,13 @@ class SimpleImage(BaseModel):
 class Output(BaseModel):
     simpleImage: Optional[SimpleImage] = None
     simpleText: Optional[SimpleText] = None
+
+    @root_validator
+    def check_fields(cls, values):
+        simpleImage, simpleText = values.get('simpleImage'), values.get('simpleText')
+        if simpleImage is None and simpleText is None:
+            raise ValidationError('Either simpleImage or simpleText field must be set')
+        return values
 
 
 async def create_callback_request_kakao(prompt: str, url: str, db: Session) -> dict:
