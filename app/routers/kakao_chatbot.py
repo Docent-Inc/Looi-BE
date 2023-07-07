@@ -24,8 +24,9 @@ class SimpleText(BaseModel):
 
 
 class Output(BaseModel):
-    simpleText: SimpleText
-    simpleImage: SimpleImage
+    simpleImage: Optional[SimpleImage] = None
+    simpleText: Optional[SimpleText] = None
+
 
 
 class Template(BaseModel):
