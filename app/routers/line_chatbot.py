@@ -104,7 +104,7 @@ async def handle_message(event):
             return
 
         # 꿈 생성
-        id, dream_name, dream, dream_image_url = await generate_text(dream_text, 3, db)
+        id, dream_name, dream, dreCam_image_url = await generate_text(dream_text, 3, db)
         # 해몽 생성
         dream_resolution = await generate_resolution_linechatbot(dream_text)
 
@@ -116,6 +116,7 @@ async def handle_message(event):
             checklist="checklist",
             is_public=True,
         )
+
         await createDiary(create, 3, db)
         generated_text = f"【{dream_name}】\n{dream}\n\n【夢占い】\n{dream_resolution}"
         user_requests[user_id] += 1
