@@ -175,7 +175,7 @@ async def make_chatgpt_async_callback_request_to_openai_from_kakao(
     # 총 3회까지 가능함
     # 코드 만들어줘
     # 꿈 생성 제한 3회
-    user_id = kakao_ai_request.user.id
+    user_id = kakao_ai_request.userRequest.user.id
     if user_id not in user_requests:
         user_requests[user_id] = 0
     if user_requests[user_id] > MAX_REQUESTS_PER_DAY:
