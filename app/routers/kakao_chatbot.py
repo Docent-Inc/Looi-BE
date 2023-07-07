@@ -26,9 +26,7 @@ class Template(BaseModel):
     outputs: list[Output]
 
 
-class KakaoChatbotResponse(BaseModel):
-    version: str
-    template: Template
+
 
 
 class KakaoChatbotResponseCallback(BaseModel):
@@ -120,7 +118,9 @@ class Output(BaseModel):
             raise ValidationError('Either simpleImage or simpleText field must be set')
         return values
 
-
+class KakaoChatbotResponse(BaseModel):
+    version: str
+    template: Template
 async def create_callback_request_kakao(prompt: str, url: str, db: Session) -> dict:
     try:
         # 꿈 그리기
@@ -144,18 +144,15 @@ async def create_callback_request_kakao(prompt: str, url: str, db: Session) -> d
             is_public=True,
         )
         await createDiary(create, 2, db)
+        print(f"꿈 이름: {dream_name}\n꿈 내용: {dream}\n해몽: {dream_resolution}\n이미지: {dream_image_url}")
 
-        outputs = []
-        if dream_image_url is not None:
-            outputs.append(Output(simpleImage=SimpleImage(imageUrl=dream_image_url)))
-        if dream_name is not None and dream is not None and dream_resolution is not None:
-            outputs.append(
-                Output(simpleText=SimpleText(text=f"꿈 이름: {dream_name}\n꿈 내용: {dream}\n해몽: {dream_resolution}")))
 
         request_body = KakaoChatbotResponse(
             version="2.0",
-            template=Template(outputs=outputs)
-        ).dict()
+            template=Template(outputs=[
+                Output(simpleImage=SimpleImage(imageUrl=dream_image_url)),
+                Output(simpleText=SimpleText(text=f"꿈 이름: {dream_name}\n꿈 내용: {dream}\n해몽: {dream_resolution}"))
+            ])).dict(exclude_none=True)
 
         if request_body.status_code == 200:
             return {"status": "success"}
