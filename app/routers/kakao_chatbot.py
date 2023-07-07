@@ -149,7 +149,8 @@ async def create_callback_request_kakao(prompt: str, url: str, db: Session) -> d
         if response.status_code == 200:
             print("success")
         else:
-            print("fail")
+            print(response.status_code)
+            print(response.text)
 
     except Exception as e:
         print(e)
