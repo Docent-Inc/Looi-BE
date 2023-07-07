@@ -14,27 +14,27 @@ from app.schemas.request.crud import Create
 
 router = APIRouter(prefix="/kakao-chatbot")
 
+
+class SimpleImage(BaseModel):
+    imageUrl: str
+
+
 class SimpleText(BaseModel):
     text: str
 
 
 class Output(BaseModel):
     simpleText: SimpleText
+    simpleImage: SimpleImage
 
 
 class Template(BaseModel):
     outputs: list[Output]
 
 
-
-
-
 class KakaoChatbotResponseCallback(BaseModel):
     version: str
     useCallback: bool
-
-
-
 
 class Bot(BaseModel):
     id: str
@@ -104,19 +104,7 @@ class KakaoAIChatbotRequest(BaseModel):
     contexts: Optional[List] = None
 
 
-class SimpleImage(BaseModel):
-    imageUrl: str
 
-class Output(BaseModel):
-    simpleImage: Optional[SimpleImage] = None
-    simpleText: Optional[SimpleText] = None
-
-    @root_validator
-    def check_fields(cls, values):
-        simpleImage, simpleText = values.get('simpleImage'), values.get('simpleText')
-        if simpleImage is None and simpleText is None:
-            raise ValidationError('Either simpleImage or simpleText field must be set')
-        return values
 
 class KakaoChatbotResponse(BaseModel):
     version: str
