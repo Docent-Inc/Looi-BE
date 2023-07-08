@@ -1,3 +1,5 @@
+import json
+import logging
 import time
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
@@ -11,3 +13,13 @@ class TimingMiddleware(BaseHTTPMiddleware):
         process_time = int(process_time)
         response.headers["X-Process-Time"] = str(process_time) + " ms"
         return response # 응답시간을 반환하는 미들웨어
+
+class LogRequestBodyMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        body = await request.body()
+        try:
+            logging.info(json.loads(body))
+        except json.JSONDecodeError:
+            logging.info(body)
+        response = await call_next(request)
+        return response
