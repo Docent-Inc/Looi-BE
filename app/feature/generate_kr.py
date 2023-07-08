@@ -1,9 +1,9 @@
 import asyncio
 from app.core.current_time import get_current_time
-from app.feature.gptapi.generateImg import generate_img
+from app.feature.generateImg import generate_img
 from app.db.models.dream import DreamText, DreamImage
 from app.db.database import get_db
-from app.feature.gptapi.gptRequset import send_gpt_request, send_bard_request
+from app.feature.aiRequset import send_gpt_request, send_bard_request
 
 
 async def generate_text(text: str, userId: int, db: get_db()) -> str:

@@ -2,7 +2,7 @@ import asyncio
 from sqlalchemy.orm import Session
 
 from app.db.models.diary_jp import Diary_jp
-from app.feature.gptapi.gptRequset import send_gpt_request
+from app.feature.aiRequset import send_gpt_request
 from app.db.models.diary_en import Diary_en
 from app.db.models.diary_ko import Diary_ko
 

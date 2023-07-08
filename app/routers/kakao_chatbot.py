@@ -1,18 +1,16 @@
 import asyncio
 import logging
 from typing import Dict, Any
-
 import requests
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from fastapi import APIRouter, Depends, Body
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from starlette.background import BackgroundTasks
 from app.db.database import get_db
 from app.feature.diary import createDiary
 from app.feature.generate_kr import generate_text, generate_resolution
 from app.schemas.kakao_chatbot import Output, SimpleImage, SimpleText, KakaoChatbotResponse, Template, \
-    KakaoChatbotResponseCallback, KakaoAIChatbotRequest
+    KakaoChatbotResponseCallback
 from app.schemas.request.crud import Create
 
 '''
@@ -21,16 +19,16 @@ from app.schemas.request.crud import Create
 
 router = APIRouter(prefix="/kakao-chatbot")
 
-# # 매일 0시에 카운터 초기화
-# scheduler = AsyncIOScheduler(timezone="Asia/Seoul")
+# 매일 0시에 카운터 초기화
+scheduler = AsyncIOScheduler(timezone="Asia/Seoul")
 user_requests = {}
 MAX_REQUESTS_PER_DAY = 3
-# def reset_counter():
-#     global user_requests
-#     user_requests = {}
-#
-# scheduler.add_job(reset_counter, 'cron', hour=0)
-# scheduler.start()
+def reset_counter():
+    global user_requests
+    user_requests = {}
+
+scheduler.add_job(reset_counter, 'cron', hour=0)
+scheduler.start()
 
 # 카카오 챗봇 callback API
 async def create_callback_request_kakao(prompt: str, url: str, db: Session) -> dict:
