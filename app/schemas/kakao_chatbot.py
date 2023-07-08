@@ -23,12 +23,6 @@ class KakaoChatbotResponseCallback(BaseModel):
     useCallback: Optional[bool] = None
     template: Optional[Template] = None
 
-class KakaoAIChatbotRequest(BaseModel):
-    bot: Optional[Dict[str, Any]] = None
-    intent: Optional[Dict[str, Any]] = None
-    action: Optional[Dict[str, Any]] = None
-    userRequest: Optional[Dict[str, Any]] = None
-    contexts: Optional[List[Any]] = None
 class KakaoChatbotResponse(BaseModel):
     version: str
     template: Template
