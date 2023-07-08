@@ -88,12 +88,12 @@ async def make_chatgpt_async_callback_request_to_openai_from_kakao(
 
     # 3회 이상 요청했으면 에러 메시지 출력
     if user_requests[user_id] >= MAX_REQUESTS_PER_DAY:
-        return {"version": "2.0", "template": {"outputs": [{"text": "꿈 분석은 하루에 3번만 가능해요ㅠㅠ 내일 다시 시도해주세요"}]}}
+        return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "꿈 분석은 하루에 3번만 가능해요ㅠㅠ 내일 다시 시도해주세요"}}]}}
 
     # 텍스트의 길이가 10자 이상 200자 이하인지 확인
     kakao_ai_request['userRequest']['utterance'] = kakao_ai_request['userRequest']['utterance'][3:] # "꿈에서 " 제거
     if len(kakao_ai_request['userRequest']['utterance']) < 10 or len(kakao_ai_request['userRequest']['utterance']) > 200:
-        return {"version": "2.0", "template": {"outputs": [{"text": "꿈은 10자 이상 200자 이하로 입력해주세요"}]}}
+        return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "꿈은 10자 이상 200자 이하로 입력해주세요"}}]}}
 
     # 백그라운드로 카카오 챗봇에게 응답을 보냄
     background_tasks.add_task(create_callback_request_kakao,
