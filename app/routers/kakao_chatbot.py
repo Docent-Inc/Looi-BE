@@ -81,8 +81,6 @@ async def make_chatgpt_async_callback_request_to_openai_from_kakao(
 ):
     # Userid로 카운트를 해서 한국시간 기준 12시에 초기화
     # 총 3회까지 가능함
-
-    print(kakao_ai_request)
     user_id = kakao_ai_request['userRequest']['user']['id']
     # user_requests에 user_id가 없으면 0으로 초기화
     if user_id not in user_requests:
