@@ -29,6 +29,38 @@ def reset_counter():
 scheduler.add_job(reset_counter, 'cron', hour=0)
 scheduler.start()
 
+@router.post("/api/chat/callback", tags=["kakao"], response_model=KakaoChatbotResponseCallback)
+async def make_chatgpt_async_callback_request_to_openai_from_kakao(
+        kakao_ai_request: KakaoAIChatbotRequest,
+        background_tasks: BackgroundTasks,
+        db: Session = Depends(get_db),
+):
+    # Userid로 카운트를 해서 한국시간 기준 12시에 초기화
+    # 총 3회까지 가능함
+    print(kakao_ai_request.userRequest.user.id)
+    user_id = kakao_ai_request.userRequest.user.id
+    # user_requests에 user_id가 없으면 0으로 초기화
+    if user_id not in user_requests:
+        user_requests[user_id] = 0
+
+    # 3회 이상 요청했으면 에러 메시지 출력
+    if user_requests[user_id] >= MAX_REQUESTS_PER_DAY:
+        return KakaoChatbotResponseCallback(version="2.0", template=Template(outputs=[{"simpleText": {"text": "꿈 분석은 하루에 3번만 가능해요ㅠㅠ 내일 다시 시도해주세요"}}]))
+
+    print(kakao_ai_request.userRequest.utterance)
+    # 텍스트의 길이가 10자 이상 200자 이하인지 확인
+    kakao_ai_request.userRequest.utterance = kakao_ai_request.userRequest.utterance[3:] # "꿈에서 " 제거
+    if len(kakao_ai_request.userRequest.utterance) < 10 or len(kakao_ai_request.userRequest.utterance) > 200:
+        return KakaoChatbotResponseCallback(version="2.0", template=Template(outputs=[{"simpleText": {"text": "꿈은 10자 이상 200자 이하로 입력해주세요"}}]))
+
+
+    # 백그라운드로 카카오 챗봇에게 응답을 보냄
+    background_tasks.add_task(create_callback_request_kakao,
+                              prompt=kakao_ai_request.userRequest.utterance, url=kakao_ai_request.userRequest.callbackUrl, db=db)
+
+    user_requests[user_id] += 1
+    return KakaoChatbotResponseCallback(version="2.0", useCallback=True)
+
 
 # 카카오 챗봇 callback API
 async def create_callback_request_kakao(prompt: str, url: str, db: Session) -> dict:
@@ -72,37 +104,3 @@ async def create_callback_request_kakao(prompt: str, url: str, db: Session) -> d
 
     except Exception as e:
         logging.error(e)
-
-
-
-@router.post("/api/chat/callback", tags=["kakao"], response_model=KakaoChatbotResponseCallback)
-async def make_chatgpt_async_callback_request_to_openai_from_kakao(
-        kakao_ai_request: KakaoAIChatbotRequest,
-        background_tasks: BackgroundTasks,
-        db: Session = Depends(get_db),
-):
-    # Userid로 카운트를 해서 한국시간 기준 12시에 초기화
-    # 총 3회까지 가능함
-    print(kakao_ai_request.userRequest.user.id)
-    user_id = kakao_ai_request.userRequest.user.id
-    # user_requests에 user_id가 없으면 0으로 초기화
-    if user_id not in user_requests:
-        user_requests[user_id] = 0
-
-    # 3회 이상 요청했으면 에러 메시지 출력
-    if user_requests[user_id] >= MAX_REQUESTS_PER_DAY:
-        return KakaoChatbotResponseCallback(version="2.0", template=Template(outputs=[{"simpleText": {"text": "꿈 분석은 하루에 3번만 가능해요ㅠㅠ 내일 다시 시도해주세요"}}]))
-
-    print(kakao_ai_request.userRequest.utterance)
-    # 텍스트의 길이가 10자 이상 200자 이하인지 확인
-    kakao_ai_request.userRequest.utterance = kakao_ai_request.userRequest.utterance[3:] # "꿈에서 " 제거
-    if len(kakao_ai_request.userRequest.utterance) < 10 or len(kakao_ai_request.userRequest.utterance) > 200:
-        return KakaoChatbotResponseCallback(version="2.0", template=Template(outputs=[{"simpleText": {"text": "꿈은 10자 이상 200자 이하로 입력해주세요"}}]))
-
-
-    # 백그라운드로 카카오 챗봇에게 응답을 보냄
-    background_tasks.add_task(create_callback_request_kakao,
-                              prompt=kakao_ai_request.userRequest.utterance, url=kakao_ai_request.userRequest.callbackUrl, db=db)
-
-    user_requests[user_id] += 1
-    return KakaoChatbotResponseCallback(version="2.0", useCallback=True)
