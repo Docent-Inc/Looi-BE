@@ -65,6 +65,7 @@ class User(BaseModel):
 class Params(BaseModel):
     surface: str
 
+
 class UserRequest(BaseModel):
     block: Block
     user: User
