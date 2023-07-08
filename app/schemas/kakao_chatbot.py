@@ -87,14 +87,12 @@ class UserRequest(BaseModel):
     lang: str
     timezone: str
 
-
 class KakaoAIChatbotRequest(BaseModel):
     bot: Optional[Bot] = None
     intent: Optional[Intent] = None
     action: Optional[Action] = None
     userRequest: Optional[UserRequest] = None
     contexts: Optional[List] = None
-
 
 class KakaoChatbotResponse(BaseModel):
     version: str
