@@ -66,12 +66,12 @@ async def create_callback_request_kakao(prompt: str, url: str, db: Session) -> d
 
         # 카카오 챗봇 응답 확인
         if response.status_code == 200:
-            logging.info("카카오 챗봇 응답 성공")
+            print("카카오 챗봇 응답 성공")
         else:
-            logging.error(response.status_code)
+            print(response.status_code)
 
     except Exception as e:
-        logging.error(e)
+        print(e)
 
 @router.post("/callback", tags=["kakao"])
 async def make_chatgpt_async_callback_request_to_openai_from_kakao(
