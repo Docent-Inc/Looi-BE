@@ -76,12 +76,11 @@ class UserRequest(BaseModel):
     timezone: str
 
 class KakaoAIChatbotRequest(BaseModel):
-    bot: Optional[Bot] = None
-    intent: Optional[Intent] = None
-    action: Optional[Action] = None
-    userRequest: Optional[UserRequest] = None
-    contexts: Optional[List] = None
-
+    bot: Optional[Dict[str, Any]] = None
+    intent: Optional[Dict[str, Any]] = None
+    action: Optional[Dict[str, Any]] = None
+    userRequest: Optional[Dict[str, Any]] = None
+    contexts: Optional[List[Any]] = None
 class KakaoChatbotResponse(BaseModel):
     version: str
     template: Template
