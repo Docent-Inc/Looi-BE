@@ -73,7 +73,7 @@ async def create_callback_request_kakao(prompt: str, url: str, db: Session) -> d
     except Exception as e:
         logging.error(e)
 
-@router.post("/callback", tags=["kakao"], response_model=KakaoChatbotResponseCallback)
+@router.post("/callback", tags=["kakao"])
 async def make_chatgpt_async_callback_request_to_openai_from_kakao(
         kakao_ai_request: Dict[str, Any],
         background_tasks: BackgroundTasks,
@@ -91,7 +91,6 @@ async def make_chatgpt_async_callback_request_to_openai_from_kakao(
         return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "꿈 분석은 하루에 3번만 가능해요ㅠㅠ 내일 다시 시도해주세요"}}]}}
 
     # 텍스트의 길이가 10자 이상 200자 이하인지 확인
-    kakao_ai_request['userRequest']['utterance'] = kakao_ai_request['userRequest']['utterance'][3:] # "꿈에서 " 제거
     if len(kakao_ai_request['userRequest']['utterance']) < 10 or len(kakao_ai_request['userRequest']['utterance']) > 200:
         return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "꿈은 10자 이상 200자 이하로 입력해주세요"}}]}}
 
