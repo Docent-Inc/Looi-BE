@@ -1,4 +1,4 @@
-from typing import Optional, Dict, Any, List
+from typing import Optional, List, Dict, Any
 from pydantic import BaseModel
 
 '''
@@ -8,20 +8,15 @@ from pydantic import BaseModel
 class SimpleImage(BaseModel):
     imageUrl: str
 
-
 class SimpleText(BaseModel):
     text: str
-
 
 class Output(BaseModel):
     simpleImage: Optional[SimpleImage] = None
     simpleText: Optional[SimpleText] = None
 
-
-
 class Template(BaseModel):
     outputs: list[Output]
-
 
 class KakaoChatbotResponseCallback(BaseModel):
     version: str
@@ -32,21 +27,17 @@ class Bot(BaseModel):
     id: str
     name: str
 
-
 class Reason(BaseModel):
     code: int
     message: str
 
-
 class Extra(BaseModel):
     reason: Reason
-
 
 class Intent(BaseModel):
     id: str
     name: str
     extra: Extra
-
 
 class Action(BaseModel):
     id: str
@@ -55,11 +46,9 @@ class Action(BaseModel):
     detailParams: Dict[str, Any]
     clientExtra: Dict[str, Any]
 
-
 class Block(BaseModel):
     id: str
     name: str
-
 
 class Properties(BaseModel):
     botUserKey: str
@@ -73,10 +62,8 @@ class User(BaseModel):
     type: str
     properties: Properties
 
-
 class Params(BaseModel):
     surface: str
-
 
 class UserRequest(BaseModel):
     block: Block
