@@ -23,58 +23,6 @@ class KakaoChatbotResponseCallback(BaseModel):
     useCallback: Optional[bool] = None
     template: Optional[Template] = None
 
-class Bot(BaseModel):
-    id: str
-    name: str
-
-class Reason(BaseModel):
-    code: int
-    message: str
-
-class Extra(BaseModel):
-    reason: Reason
-
-class Intent(BaseModel):
-    id: str
-    name: str
-    extra: Extra
-
-class Action(BaseModel):
-    id: str
-    name: str
-    params: Dict[str, Any]
-    detailParams: Dict[str, Any]
-    clientExtra: Dict[str, Any]
-
-class Block(BaseModel):
-    id: str
-    name: str
-
-class Properties(BaseModel):
-    botUserKey: str
-    plusfriendUserKey: str
-    bot_user_key: str
-    plusfriend_user_key: str
-
-
-class User(BaseModel):
-    id: str
-    type: str
-    properties: Properties
-
-class Params(BaseModel):
-    surface: str
-
-
-class UserRequest(BaseModel):
-    block: Block
-    user: User
-    utterance: str
-    params: Params
-    callbackUrl: str
-    lang: str
-    timezone: str
-
 class KakaoAIChatbotRequest(BaseModel):
     bot: Optional[Dict[str, Any]] = None
     intent: Optional[Dict[str, Any]] = None

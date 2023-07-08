@@ -75,7 +75,7 @@ async def create_callback_request_kakao(prompt: str, url: str, db: Session) -> d
     except Exception as e:
         logging.error(e)
 
-@app.post("/callback", tags=["kakao"], response_model=KakaoChatbotResponseCallback)
+@router.post("/callback", tags=["kakao"], response_model=KakaoChatbotResponseCallback)
 async def make_chatgpt_async_callback_request_to_openai_from_kakao(
         kakao_ai_request: Dict[str, Any],
         background_tasks: BackgroundTasks,
