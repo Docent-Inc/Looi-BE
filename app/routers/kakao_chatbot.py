@@ -66,7 +66,7 @@ async def create_callback_request_kakao(prompt: str, url: str, db: Session) -> d
 
         # 카카오 챗봇 응답 확인
         if response.status_code == 200:
-            print("success")
+            logging.info("카카오 챗봇 응답 성공")
         else:
             logging.error(response.status_code)
 
