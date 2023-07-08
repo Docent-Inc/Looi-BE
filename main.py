@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse
 from app.routers import auth, generate, diary, search, mvp, line_chatbot, kakao_chatbot
 from app.schemas.common import ApiResponse
-from app.core.timing_middleware import TimingMiddleware
+from app.core.middleware import TimingMiddleware, LogRequestBodyMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
@@ -15,6 +15,7 @@ app.include_router(mvp.router)
 app.include_router(line_chatbot.router)
 app.include_router(kakao_chatbot.router)
 app.add_middleware(TimingMiddleware)
+app.add_middleware(LogRequestBodyMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
