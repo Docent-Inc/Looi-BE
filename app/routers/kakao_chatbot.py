@@ -105,13 +105,3 @@ async def make_chatgpt_async_callback_request_to_openai_from_kakao(
 
     user_requests[user_id] += 1
     return KakaoChatbotResponseCallback(version="2.0", useCallback=True)
-
-# 카카오 챗봇 test API
-# 어떤 json 형식으로 요청이 오는지 확인하기 위한 API
-
-class Item(BaseModel):
-    data: Dict[str, Any] = None
-
-@router.post("/test", tags=["kakao"], response_model=KakaoChatbotResponse)
-async def test_endpoint(item: Item = Body(...)):
-    return item
