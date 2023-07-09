@@ -17,10 +17,10 @@ from starlette import status
 
 from app.db.models import User
 from app.db.models.dream import DreamText, DreamImage
+from app.feature.aiRequset import send_stable_deffusion_request
 
 load_dotenv()
 openai.api_key = os.getenv("GPT_API_KEY")
-stable_diffusion_api_key = os.getenv("STABLE_DIFFUSION")
 SERVICE_ACCOUNT_INFO = json.loads(os.getenv('GOOGLE_APPLICATION_CREDENTIALS_JSON'))
 
 async def generate_img(prompt: str, userId: int, db: Session):
@@ -52,35 +52,7 @@ async def generate_img(prompt: str, userId: int, db: Session):
         return response['data'][0]['url']
 
     async def get_Stable_Diffusion_url(prompt):
-        url = "https://stablediffusionapi.com/api/v3/text2img"
-
-        data = {
-            "key": stable_diffusion_api_key,
-            "prompt": prompt,
-            "negative_prompt": None,
-            "width": "512",
-            "height": "512",
-            "samples": "1",
-            "num_inference_steps": "20",
-            "safety_checker": "yes",
-            "enhance_prompt": "yes",
-            "seed": None,
-            "guidance_scale": 7.5,
-            "webhook": None,
-            "track_id": None
-        }
-
-        headers = {"Content-Type": "application/json"}
-
-        async with ClientSession() as session:
-            async with session.post(url, headers=headers, json=data) as response:
-                if response.status != 200:
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail="Stable Diffusion API request failed"
-                    )
-                result = await response.json()
-                return result["output"][0]
+        return await send_stable_deffusion_request(prompt)
     async def download_image(url):
         response = await asyncio.to_thread(requests.get, url)
         img = Image.open(BytesIO(response.content))
