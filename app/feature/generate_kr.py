@@ -25,7 +25,7 @@ async def generate_text(text: str, userId: int, db: get_db()) -> str:
         ]
         prompt = await send_gpt_request(messages_prompt)
 
-        dream_image_url = await generate_img(prompt, userId)
+        dream_image_url = await generate_img(prompt, userId, db)
         return dream_image_url, prompt
 
     dream_name, L = await asyncio.gather(
