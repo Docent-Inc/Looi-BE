@@ -61,7 +61,7 @@ async def generate_img(prompt: str, userId: int, db: Session):
         return buffer.getvalue()
 
     user = db.query(User).filter(User.id == userId).first()
-    if user.subscription_status == False:
+    if user.subscription_status == True:
         dream_image_url = await get_Stable_Diffusion_url(prompt)
     else:
         dream_image_url = await get_image_url(prompt)
