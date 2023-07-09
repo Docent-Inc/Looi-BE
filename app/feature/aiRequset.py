@@ -60,7 +60,6 @@ async def send_stable_deffusion_request(messages_prompt, retries=3):
             async with ClientSession() as session:
                 async with session.post(url, headers=headers, json=data) as response:
                     result = await response.json()
-                    print(result)
                     return result["output"][0]
         except:
             print("Stable Diffusion API Error")
