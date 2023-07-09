@@ -97,7 +97,7 @@ async def handle_message(event):
         user_id = event.source.user_id
         if user_id not in user_requests:
             user_requests[user_id] = 0
-        if user_requests[user_id] > MAX_REQUESTS_PER_DAY:
+        if user_requests[user_id] >= MAX_REQUESTS_PER_DAY:
             await line_bot_api.reply_message(
                 event.reply_token,
                 TextSendMessage(text="1日3回までです。"))
