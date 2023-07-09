@@ -53,25 +53,35 @@ async def generate_img(prompt: str, userId: int, db: Session):
 
     async def get_Stable_Diffusion_url(prompt):
         url = "https://stablediffusionapi.com/api/v3/text2img"
-        data = {
-            "key": stable_diffusion_api_key,
+
+        data = json.dumps({
+            "key": str(stable_diffusion_api_key),
             "prompt": prompt,
+            "negative_prompt": None,
             "width": "512",
             "height": "512",
             "samples": "1",
             "num_inference_steps": "20",
+            "safety_checker": "no",
+            "enhance_prompt": "yes",
+            "seed": None,
             "guidance_scale": 7.5,
-        }
+            "webhook": None,
+            "track_id": None
+        })
+
+        headers = {"Content-Type": "application/json"}
 
         async with ClientSession() as session:
-            async with session.post(url, json=data) as response:
+            async with session.post(url, headers=headers, json=data) as response:
                 if response.status != 200:
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
                         detail="Stable Diffusion API request failed"
                     )
                 result = await response.json()
-                return result["output_url"]
+                print(result)
+                return result["output"]
     async def download_image(url):
         response = await asyncio.to_thread(requests.get, url)
         img = Image.open(BytesIO(response.content))
