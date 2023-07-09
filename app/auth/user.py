@@ -116,6 +116,7 @@ def user_kakao(kakao_data: dict, db: Session) -> Optional[User]:
             hashed_password=get_password_hash(kakao_id),
             gender=str(gender),
             age_range=str(age_range),
+            language_id=1,
         )
         try:
             db.add(user)
