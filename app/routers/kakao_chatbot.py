@@ -3,7 +3,7 @@ import logging
 from typing import Dict, Any
 import requests
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from starlette.background import BackgroundTasks
 from app.db.database import get_db
@@ -66,12 +66,12 @@ async def create_callback_request_kakao(prompt: str, url: str, db: Session) -> d
 
         # 카카오 챗봇 응답 확인
         if response.status_code == 200:
-            print("카카오 챗봇 응답 성공")
+            print("kakao chatbot callback request success")
         else:
-            print(response.status_code)
+            raise HTTPException(status_code=500, detail=response.text)
 
     except Exception as e:
-        print(e)
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/callback", tags=["kakao"])
 async def make_chatgpt_async_callback_request_to_openai_from_kakao(
