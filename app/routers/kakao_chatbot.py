@@ -68,7 +68,7 @@ async def create_callback_request_kakao(prompt: str, url: str, db: Session) -> d
         if response.status_code == 200:
             print("kakao chatbot callback request success")
         else:
-            raise HTTPException(status_code=500, detail=response.text)
+            print("kakao chatbot callback request failed")
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
