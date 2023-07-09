@@ -20,7 +20,7 @@ from app.db.models.dream import DreamText, DreamImage
 
 load_dotenv()
 openai.api_key = os.getenv("GPT_API_KEY")
-stable_diffusion_api_key = os.getenv("STABLE_DIFFUSION_API_KEY")
+stable_diffusion_api_key = os.getenv("STABLE_DIFFUSION")
 SERVICE_ACCOUNT_INFO = json.loads(os.getenv('GOOGLE_APPLICATION_CREDENTIALS_JSON'))
 
 async def generate_img(prompt: str, userId: int, db: Session):
@@ -54,7 +54,7 @@ async def generate_img(prompt: str, userId: int, db: Session):
     async def get_Stable_Diffusion_url(prompt):
         url = "https://stablediffusionapi.com/api/v3/text2img"
 
-        data = json.dumps({
+        data = {
             "key": stable_diffusion_api_key,
             "prompt": prompt,
             "negative_prompt": None,
@@ -68,7 +68,7 @@ async def generate_img(prompt: str, userId: int, db: Session):
             "guidance_scale": 7.5,
             "webhook": None,
             "track_id": None
-        })
+        }
 
         headers = {"Content-Type": "application/json"}
 
@@ -80,7 +80,7 @@ async def generate_img(prompt: str, userId: int, db: Session):
                         detail="Stable Diffusion API request failed"
                     )
                 result = await response.json()
-                return result["output"]
+                return result["output"][0]
     async def download_image(url):
         response = await asyncio.to_thread(requests.get, url)
         img = Image.open(BytesIO(response.content))
