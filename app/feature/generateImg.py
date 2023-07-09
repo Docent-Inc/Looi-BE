@@ -62,7 +62,7 @@ async def generate_img(prompt: str, userId: int, db: Session):
             "height": "512",
             "samples": "1",
             "num_inference_steps": "20",
-            "safety_checker": "no",
+            "safety_checker": "yes",
             "enhance_prompt": "yes",
             "seed": None,
             "guidance_scale": 7.5,
@@ -80,21 +80,6 @@ async def generate_img(prompt: str, userId: int, db: Session):
                         detail="Stable Diffusion API request failed"
                     )
                 result = await response.json()
-                if result["status"] == "error":
-                    print("Stable Diffusion API request failed, retrying...1")
-                    async with session.post(url, headers=headers, json=data) as response:
-                        if response.status != 200:
-                            raise HTTPException(
-                                status_code=status.HTTP_400_BAD_REQUEST,
-                                detail="Stable Diffusion API request failed"
-                            )
-                        result = await response.json()
-                        if result["status"] == "error":
-                            print("Stable Diffusion API request failed, retrying...2")
-                            raise HTTPException(
-                                status_code=status.HTTP_400_BAD_REQUEST,
-                                detail="Stable Diffusion API request failed"
-                            )
                 return result["output"][0]
     async def download_image(url):
         response = await asyncio.to_thread(requests.get, url)
