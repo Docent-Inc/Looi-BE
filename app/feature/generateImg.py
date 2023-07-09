@@ -55,7 +55,7 @@ async def generate_img(prompt: str, userId: int, db: Session):
         url = "https://stablediffusionapi.com/api/v3/text2img"
 
         data = json.dumps({
-            "key": str(stable_diffusion_api_key),
+            "key": stable_diffusion_api_key,
             "prompt": prompt,
             "negative_prompt": None,
             "width": "512",
