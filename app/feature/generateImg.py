@@ -80,6 +80,7 @@ async def generate_img(prompt: str, userId: int, db: Session):
                         detail="Stable Diffusion API request failed"
                     )
                 result = await response.json()
+                print(result)
                 return result["output"][0]
     async def download_image(url):
         response = await asyncio.to_thread(requests.get, url)
