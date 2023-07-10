@@ -80,14 +80,20 @@ async def readDiary(diaryId: int, userId: int, db: Session, background_tasks: Ba
 
     if user.language_id == 1: # 한국어
         diary_content = db.query(Diary_ko).filter(Diary_ko.Diary_id == diaryId).first()
+        if diary_content is None:
+            raise HTTPException(status_code=404, detail="Diary content not found")
         if diary_content.resolution != "ERROR":
             background_tasks.add_task(translate_ko_to_en, diary_content, diary.id, db)
     elif user.language_id == 2: # 영어
         diary_content = db.query(Diary_ko).filter(Diary_ko.Diary_id == diaryId).first()
+        if diary_content is None:
+            raise HTTPException(status_code=404, detail="Diary content not found")
         if diary_content.resolution != "ERROR":
             background_tasks.add_task(translate_en_to_ko, diary_content, diary.id, db)
     elif user.language_id == 3: # 일본어
         diary_content = db.query(Diary_jp).filter(Diary_jp.Diary_id == diaryId).first()
+        if diary_content is None:
+            raise HTTPException(status_code=404, detail="Diary content not found")
         if diary_content.resolution != "ERROR":
             background_tasks.add_task(translate_jp_to_ko, diary_content, diary.id, db)
 
