@@ -1,5 +1,4 @@
-import time
-
+import asyncio
 from fastapi import APIRouter
 from starlette.background import BackgroundTasks
 from threads import Threads
@@ -15,8 +14,8 @@ def read_root(background_tasks: BackgroundTasks):
     background_tasks.add_task(follow_back)
     return {"message": "Follow Back Bot is running."}
 async def follow_back():
+    # Get the list of followers
     while True:
-        # Get the list of followers
         followers = threads.private_api.get_user_followers(id=int(my_id))
         print(f"Checking {len(followers['users'])} followers...")
 
@@ -37,5 +36,4 @@ async def follow_back():
 
 
         print(f"Followed {new_follows} new users this round.")
-        # Wait for 5 minutes
-        time.sleep(300)
+        await asyncio.sleep(300)
