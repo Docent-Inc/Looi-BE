@@ -36,4 +36,4 @@ async def follow_back():
 
 
         print(f"Followed {new_follows} new users this round.")
-        await asyncio.sleep(120)
+        await asyncio.sleep(600)
