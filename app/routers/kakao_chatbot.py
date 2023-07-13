@@ -1,5 +1,4 @@
 import asyncio
-import logging
 from typing import Dict, Any
 import requests
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -9,8 +8,7 @@ from starlette.background import BackgroundTasks
 from app.db.database import get_db
 from app.feature.diary import createDiary
 from app.feature.generate_kr import generate_text, generate_resolution
-from app.schemas.kakao_chatbot import Output, SimpleImage, SimpleText, KakaoChatbotResponse, Template, \
-    KakaoChatbotResponseCallback
+from app.schemas.response.kakao_chatbot import Output, SimpleImage, SimpleText, KakaoChatbotResponse, Template
 from app.schemas.request.crud import Create
 
 '''
