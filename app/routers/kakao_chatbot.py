@@ -31,9 +31,16 @@ scheduler.add_job(reset_counter, 'cron', hour=0)
 scheduler.start()
 
 # 카카오 챗봇 callback API
-async def create_callback_request_kakao(prompt: str, url: str, db: Session) -> dict:
-    try:
+async def create_callback_request_kakao(prompt: str, url: str, db: Session):
+    '''
+    카카오 챗봇 callback 함수
 
+    :param prompt: 유저가 작성한 꿈의 내용을 담은 변수입니다.
+    :param url: 카카오 챗봇에게 응답을 보낼 url입니다.
+    :param db: database session을 의존성 주입합니다.
+    :return: None
+    '''
+    try:
         # 꿈 생성
         task1, task2 = await asyncio.gather(
             generate_text(prompt, 2, db),
@@ -73,30 +80,44 @@ async def create_callback_request_kakao(prompt: str, url: str, db: Session) -> d
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.post("/callback", tags=["kakao"])
 async def make_chatgpt_async_callback_request_to_openai_from_kakao(
         kakao_ai_request: Dict[str, Any],
         background_tasks: BackgroundTasks,
         db: Session = Depends(get_db),
 ):
-    # Userid로 카운트를 해서 한국시간 기준 12시에 초기화
-    # 총 3회까지 가능함
+    '''
+    카카오 챗봇 callback API
+
+    :param kakao_ai_request: 카카오 챗봇에서 보낸 요청을 담은 변수입니다.
+    :param background_tasks: 백그라운드로 카카오 챗봇에게 응답을 보내기 위한 변수입니다.
+    :param db: database session을 의존성 주입합니다.
+    :return: 카카오 챗봇에게 보낼 응답을 반환합니다.
+    '''
+    # user_id는 카카오 챗봇 사용자의 고유 식별자입니다.
     user_id = kakao_ai_request['userRequest']['user']['id']
-    # user_requests에 user_id가 없으면 0으로 초기화
+    # user_requests는 각 사용자의 요청 횟수를 추적하기 위해 사용됩니다.
+    # user_id가 user_requests에 없으면 0으로 초기화합니다.
     if user_id not in user_requests:
         user_requests[user_id] = 0
 
-    # 3회 이상 요청했으면 에러 메시지 출력
+    # 요청이 하루에 3회를 초과하면 에러 메시지를 반환합니다.
     if user_requests[user_id] >= MAX_REQUESTS_PER_DAY:
-        return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "꿈 분석은 하루에 3번만 가능해요ㅠㅠ 내일 다시 시도해주세요"}}]}}
+        return {"version": "2.0",
+                "template": {"outputs": [{"simpleText": {"text": "꿈 분석은 하루에 3번만 가능해요ㅠㅠ 내일 다시 시도해주세요"}}]}}
 
-    # 텍스트의 길이가 10자 이상 200자 이하인지 확인
-    if len(kakao_ai_request['userRequest']['utterance']) < 10 or len(kakao_ai_request['userRequest']['utterance']) > 200:
+    # 텍스트의 길이가 10자 이상 200자 이하인지 확인합니다. 만약 그렇지 않으면 에러 메시지를 반환합니다.
+    if len(kakao_ai_request['userRequest']['utterance']) < 10 or len(
+            kakao_ai_request['userRequest']['utterance']) > 200:
         return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "꿈은 10자 이상 200자 이하로 입력해주세요"}}]}}
 
-    # 백그라운드로 카카오 챗봇에게 응답을 보냄
+    # 백그라운드에서 create_callback_request_kakao 함수를 실행하여 카카오 챗봇에게 응답을 보냅니다.
     background_tasks.add_task(create_callback_request_kakao,
-                              prompt=kakao_ai_request['userRequest']['utterance'], url=kakao_ai_request['userRequest']['callbackUrl'], db=db)
+                              prompt=kakao_ai_request['userRequest']['utterance'],
+                              url=kakao_ai_request['userRequest']['callbackUrl'], db=db)
 
+    # 요청 횟수를 1회 증가시킵니다.
     user_requests[user_id] += 1
+    # 카카오 챗봇에게 보낼 응답을 반환합니다.
     return {"version": "2.0", "useCallback": True}
