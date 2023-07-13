@@ -16,6 +16,14 @@ async def create_diary(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    '''
+    게시물 생성 API
+
+    :param create: 생성할 게시물의 정보를 담은 Create 모델 클래스입니다.
+    :param db: database session을 의존성 주입합니다.
+    :param current_user: 현재 로그인한 유저를 의존성 주입합니다.
+    :return: id와 message를 담은 ApiResponse 모델 클래스를 반환합니다.
+    '''
     diary_id = await createDiary(create, current_user.id, db)
     return ApiResponse(
         success=True,
