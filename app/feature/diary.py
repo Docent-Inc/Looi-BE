@@ -4,8 +4,9 @@ from fastapi import BackgroundTasks
 from app.core.current_time import get_current_time
 from app.db.models import User
 from app.db.models.diary_en import Diary_en
+from app.db.models.diary_jp import Diary_jp
 from app.db.models.diary_ko import Diary_ko
-from app.feature.gptapi.translate import translate_ko_to_en, translate_en_to_ko
+from app.feature.translate import translate_ko_to_en, translate_en_to_ko, translate_jp_to_ko
 from app.feature.search import maintain_hot_table_limit
 from app.db.models.comment import Comment
 from app.db.models.diary import Diary
@@ -41,8 +42,19 @@ async def createDiary(create: Create, userId: int, db: Session):
             db.commit()
             db.refresh(diary_content)
 
-        if user.language_id == 2:
+        elif user.language_id == 2:
             diary_content = Diary_en(
+                Diary_id=diary.id,
+                dream_name=create.dream_name,
+                dream=create.dream,
+                resolution=create.resolution,
+            )
+            db.add(diary_content)
+            db.commit()
+            db.refresh(diary_content)
+
+        elif user.language_id == 3:
+            diary_content = Diary_jp(
                 Diary_id=diary.id,
                 dream_name=create.dream_name,
                 dream=create.dream,
@@ -68,12 +80,23 @@ async def readDiary(diaryId: int, userId: int, db: Session, background_tasks: Ba
 
     if user.language_id == 1: # 한국어
         diary_content = db.query(Diary_ko).filter(Diary_ko.Diary_id == diaryId).first()
+        if diary_content is None:
+            raise HTTPException(status_code=404, detail="Diary content not found")
         if diary_content.resolution != "ERROR":
             background_tasks.add_task(translate_ko_to_en, diary_content, diary.id, db)
     elif user.language_id == 2: # 영어
         diary_content = db.query(Diary_ko).filter(Diary_ko.Diary_id == diaryId).first()
+        if diary_content is None:
+            raise HTTPException(status_code=404, detail="Diary content not found")
         if diary_content.resolution != "ERROR":
             background_tasks.add_task(translate_en_to_ko, diary_content, diary.id, db)
+    elif user.language_id == 3: # 일본어
+        diary_content = db.query(Diary_jp).filter(Diary_jp.Diary_id == diaryId).first()
+        if diary_content is None:
+            raise HTTPException(status_code=404, detail="Diary content not found")
+        if diary_content.resolution != "ERROR":
+            background_tasks.add_task(translate_jp_to_ko, diary_content, diary.id, db)
+
 
     try:
         diary.view_count += 1

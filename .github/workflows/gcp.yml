@@ -26,49 +26,29 @@ jobs:
           key: ${{ secrets.DMZ_GCP_KEY }}
           envs: GITHUB_SHA
           script: |
-            # Load the current service version (blue or green)
-            echo "🔍 Checking current_service.txt"
-            CURRENT_SERVICE=$(cat current_service.txt || echo "blue")
-            echo "Current service: ${CURRENT_SERVICE}"
-
-            # Determine the new service version
-            if [ "$CURRENT_SERVICE" = "blue" ]; then
-              NEW_SERVICE="green"
-            else
-              NEW_SERVICE="blue"
-            fi
-            echo "New service: ${NEW_SERVICE}"
+            # Set the service name and port
+            SERVICE="blue"
+            PORT="8001"
 
             # Pull the new image
             sudo docker pull taewan2002/docent:${GITHUB_SHA::7}
-            
-            # Determine the new port
-            if [ "$NEW_SERVICE" = "blue" ]; then
-              NEW_PORT="8001"
-            else
-              NEW_PORT="8003"
+
+            # Stop the existing service if it's running
+            if sudo docker ps -a --filter "name=^/${SERVICE}$" --format '{{.Names}}' | grep -qw "${SERVICE}"; then
+              sudo docker stop ${SERVICE}
             fi
 
             # Run the new service
-            sudo docker run -d --rm --name ${NEW_SERVICE} -p ${NEW_PORT}:8000 taewan2002/docent:${GITHUB_SHA::7}
+            sudo docker run -d --rm --name ${SERVICE} -p ${PORT}:8000 taewan2002/docent:${GITHUB_SHA::7}
 
             # Update the NGINX configuration
-            sudo sed -i "s/server localhost:800[1-3];/server localhost:${NEW_PORT};/g" /etc/nginx/nginx.conf
+            sudo sed -i "s/server localhost:800[1-3];/server localhost:${PORT};/g" /etc/nginx/nginx.conf
 
             # Update the service-url.inc file
-            echo "set \$service_url http://127.0.0.1:${NEW_PORT};" | sudo tee /etc/nginx/conf.d/service-url.inc
+            echo "set \$service_url http://127.0.0.1:${PORT};" | sudo tee /etc/nginx/conf.d/service-url.inc
 
             # Reload the NGINX service
             sudo systemctl reload nginx
-
-            # Stop the previous service
-            if sudo docker ps -a --filter "name=^/${CURRENT_SERVICE}$" --format '{{.Names}}' | grep -qw "${CURRENT_SERVICE}"; then
-              sudo docker stop ${CURRENT_SERVICE}
-            fi
-
-            # Save the new service version
-            echo "📝 Saving new service version to current_service.txt"
-            echo "${NEW_SERVICE}" > current_service.txt
 
             # Cleanup old images
             echo "🧹 Cleaning up old Docker images"

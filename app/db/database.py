@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
-from app.db.models.diary_en import get_Diary_enBase
+from app.db.models.diary_jp import get_Diary_jpBase
 
 PUBLIC_IP_ADDRESS = '34.64.33.205' # gcp sql database
 DB_USER = 'docent'
@@ -17,7 +17,7 @@ DB_NAME = 'docent'
 DB_URL = f'mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{PUBLIC_IP_ADDRESS}/{DB_NAME}'
 engine = create_engine(DB_URL, pool_recycle=150)
 
-Base = get_Diary_enBase()
+Base = get_Diary_jpBase()
 def get_Base():
     return Base
 
@@ -25,6 +25,9 @@ def get_Base():
 Base.metadata.create_all(bind=engine)  # 테이블 생성
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+def get_SessionLocal():
+    return SessionLocal
 
 def get_db() -> Session: # db 세션 생성
     db = SessionLocal()
