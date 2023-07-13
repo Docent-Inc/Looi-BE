@@ -1,13 +1,9 @@
 import asyncio
-
-from fastapi import HTTPException
-from starlette import status
-
 from app.core.current_time import get_current_time
-from app.feature.gptapi.generateImg import generate_img, get_text_data
+from app.feature.generateImg import generate_img
 from app.db.models.dream import DreamText, DreamImage
 from app.db.database import get_db
-from app.feature.gptapi.gptRequset import send_gpt_request, send_bard_request
+from app.feature.aiRequset import send_gpt_request, send_bard_request
 
 
 async def generate_text(text: str, userId: int, db: get_db()) -> str:
@@ -21,7 +17,7 @@ async def generate_text(text: str, userId: int, db: get_db()) -> str:
 
     async def DALLE2(message: str):
         messages_prompt = [
-            {"role": "system", "content": "Understand this dream and make just one scene a prompt for DALLE2"},
+            {"role": "system", "content": "make just one scene a prompt for DALLE2 about this dream"},
             {"role": "system", "content": "include the word illustration and 7 world about Subject, Medium, Environment, Lighting, Color, Mood, Compoition"},
             {"role": "system", "content": "make just prompt only engilsh"},
             {"role": "system", "content": "max_length=100"},
@@ -29,7 +25,7 @@ async def generate_text(text: str, userId: int, db: get_db()) -> str:
         ]
         prompt = await send_gpt_request(messages_prompt)
 
-        dream_image_url = await generate_img(prompt, userId)
+        dream_image_url = await generate_img(prompt, userId, db)
         return dream_image_url, prompt
 
     dream_name, L = await asyncio.gather(
@@ -67,9 +63,11 @@ async def generate_text(text: str, userId: int, db: get_db()) -> str:
     return dream_text_id, dream_name, dream, dream_image_url
 
 async def generate_resolution(text: str) -> str:
-    dream_resolution = await send_bard_request(text)
+    prompt = f"꿈 꿨는데 이 꿈을 짧게 해몽 해줘. 내용을 사람처럼 말해주고 첫 문장은 '이 꿈은' 으로 시작해줘. langth=150, 문단 변경없이 해몽 내용만 반환해줘. 꿈 내용 : {text}"
+    dream_resolution = await send_bard_request(prompt)
     return dream_resolution
 
 async def generate_resolution_mvp(text: str) -> str:
-    dream_resolution = await send_bard_request(text)
+    prompt = f"꿈 꿨는데 이 꿈을 짧게 해몽 해줘. 내용을 사람처럼 말해주고 첫 문장은 '이 꿈은' 으로 시작해줘. langth=150, 문단 변경없이 해몽 내용만 반환해줘. 꿈 내용 : {text}"
+    dream_resolution = await send_bard_request(prompt)
     return dream_resolution

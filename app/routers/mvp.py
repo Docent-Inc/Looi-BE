@@ -2,14 +2,13 @@ from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from app.auth.user import readUserCount
 from app.db.database import get_db
-from app.db.models.diary import Diary
 from app.feature.diary import readDiary, createDiary, randomDiary, readDiaryCount, listDiaryByUser
-from app.feature.gptapi.generate import generate_text, generate_resolution_mvp
-from app.feature.gptapi.generateImg import additional_generate_image
+from app.feature.generate_kr import generate_text, generate_resolution_mvp
+from app.feature.generateImg import additional_generate_image
 from app.schemas.common import ApiResponse
 from app.schemas.request.crud import Create
 from app.schemas.response.diary import DiaryResponse, DiaryListResponse
-from app.schemas.response.gpt import BasicResponse, ImageResponse, ResolutionResponse, CheckListResponse
+from app.schemas.response.gpt import BasicResponse, ImageResponse, ResolutionResponse
 
 router = APIRouter(prefix="/mvp")
 @router.post("/dream", response_model=ApiResponse, tags=["MVP"])

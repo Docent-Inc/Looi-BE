@@ -2,6 +2,7 @@ from io import BytesIO
 import asyncio
 import requests
 from PIL import Image
+from aiohttp import ClientSession
 from fastapi import HTTPException
 from google.cloud import storage
 from google.oauth2 import service_account
@@ -13,13 +14,16 @@ from datetime import datetime
 import json
 from sqlalchemy.orm import Session
 from starlette import status
+
+from app.db.models import User
 from app.db.models.dream import DreamText, DreamImage
+from app.feature.aiRequset import send_stable_deffusion_request
 
 load_dotenv()
 openai.api_key = os.getenv("GPT_API_KEY")
 SERVICE_ACCOUNT_INFO = json.loads(os.getenv('GOOGLE_APPLICATION_CREDENTIALS_JSON'))
 
-async def generate_img(prompt: str, userId: int):
+async def generate_img(prompt: str, userId: int, db: Session):
     async def upload_image_to_gcp(client, bucket_name, image_file, destination_blob_name):
         bucket = client.get_bucket(bucket_name)
         blob = bucket.blob(destination_blob_name)
@@ -47,6 +51,8 @@ async def generate_img(prompt: str, userId: int):
             )
         return response['data'][0]['url']
 
+    async def get_Stable_Diffusion_url(prompt):
+        return await send_stable_deffusion_request(prompt)
     async def download_image(url):
         response = await asyncio.to_thread(requests.get, url)
         img = Image.open(BytesIO(response.content))
@@ -54,7 +60,11 @@ async def generate_img(prompt: str, userId: int):
         img.save(buffer, format="PNG")
         return buffer.getvalue()
 
-    dream_image_url = await get_image_url(prompt)
+    user = db.query(User).filter(User.id == userId).first()
+    if user.subscription_status == True:
+        dream_image_url = await get_Stable_Diffusion_url(prompt)
+    else:
+        dream_image_url = await get_image_url(prompt)
     dream_image_data = await download_image(dream_image_url)
 
     korea_timezone = pytz.timezone("Asia/Seoul")
@@ -90,7 +100,7 @@ async def additional_generate_image(textId, user_id, db):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="생성된 꿈이 없습니다.")
     prompt = text_data.DALLE2  # 생성된 DALLE2 프롬프트 정보 불러오기
     # 새로운 꿈 이미지 생성
-    dream_image_url = await generate_img(prompt, user_id)
+    dream_image_url = await generate_img(prompt, user_id, db)
     # 데이터베이스에 dream_image_url 저장
     dream_image = DreamImage(
         Text_id=textId,
