@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from app.feature.generate_kr import generate_text, generate_resolution
+from app.feature.generate_kr import generate_text, generate_resolution, generate_resolution_clova
 from app.schemas.response.gpt import BasicResponse, ImageResponse, ResolutionResponse
 from app.schemas.request.generate import Generate, Image, Resolution
 from app.schemas.common import ApiResponse
@@ -24,7 +24,7 @@ async def generate_basic(
     :param current_user: 로그인한 사용자의 정보를 가져오는 의존성 주입
     :return: 꿈 텍스트 생성 결과
     '''
-    id, dream_name, dream, dream_image_url = await generate_text(generte.text, current_user.id, db)
+    id, dream_name, dream, dream_image_url = await generate_text(generte.image_model, generte.text, current_user.id, db)
     return ApiResponse(
         success=True,
         data=BasicResponse(
@@ -37,7 +37,7 @@ async def generate_basic(
 
 @router.post("/image", response_model=ApiResponse, tags=["Generate"])
 async def generate_image(
-    textId: Image, # 생성된 꿈 텍스트의 id
+    req: Image, # 생성된 꿈 텍스트의 id
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> ImageResponse:
@@ -49,7 +49,7 @@ async def generate_image(
     :param db: 데이터베이스 세션을 가져오는 의존성 주입
     :return: 꿈 이미지 생성 결과
     '''
-    dream_image_url = await additional_generate_image(textId.textId, current_user.id, db)
+    dream_image_url = await additional_generate_image(req.image_model, req.textId, current_user.id, db)
     return ApiResponse(
         success=True,
         data=ImageResponse(
@@ -69,7 +69,7 @@ async def resolution(
     :param current_user: 로그인한 사용자의 정보를 가져오는 의존성 주입
     :return: 꿈 해몽 생성 결과
     '''
-    dream_resolution = await generate_resolution(text.text)
+    dream_resolution = await generate_resolution_clova(text.text)
     return ApiResponse(
         success=True,
         data=ResolutionResponse(

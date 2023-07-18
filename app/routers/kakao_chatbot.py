@@ -41,7 +41,7 @@ async def create_callback_request_kakao(prompt: str, url: str, db: Session):
     try:
         # 꿈 생성
         task1, task2 = await asyncio.gather(
-            generate_text(prompt, 2, db),
+            generate_text(1, prompt, 2, db),
             generate_resolution(prompt)
         )
         id, dream_name, dream, dream_image_url = task1

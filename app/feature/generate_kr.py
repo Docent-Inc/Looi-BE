@@ -6,7 +6,7 @@ from app.db.database import get_db
 from app.feature.aiRequset import send_gpt_request, send_bard_request, send_hyperclova_request
 
 
-async def generate_text(text: str, userId: int, db: get_db()) -> str:
+async def generate_text(image_model: int, text: str, userId: int, db: get_db()) -> str:
     async def get_dreamName(message: str) -> str:
         messages_prompt = [
             {"role": "system", "content": "꿈의 내용을 이해하고 너가 재미있는 꿈의 제목을 만들어줘"},
@@ -15,7 +15,7 @@ async def generate_text(text: str, userId: int, db: get_db()) -> str:
         dreamName = await send_gpt_request(messages_prompt)
         return dreamName
 
-    async def DALLE2(message: str):
+    async def DALLE2(image_model: int, message: str):
         messages_prompt = [
             {"role": "system", "content": "make just one scene a prompt for DALLE2 about this dream"},
             {"role": "system", "content": "include the word illustration and 7 world about Subject, Medium, Environment, Lighting, Color, Mood, Compoition"},
@@ -25,12 +25,12 @@ async def generate_text(text: str, userId: int, db: get_db()) -> str:
         ]
         prompt = await send_gpt_request(messages_prompt)
 
-        dream_image_url = await generate_img(prompt, userId, db)
+        dream_image_url = await generate_img(image_model, prompt, userId, db)
         return dream_image_url, prompt
 
     dream_name, L = await asyncio.gather(
         get_dreamName(text),
-        DALLE2(text)
+        DALLE2(image_model, text)
     )
     dream = text
     dream_image_url, dream_image_prompt = L
