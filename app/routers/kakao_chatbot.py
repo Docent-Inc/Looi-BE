@@ -52,7 +52,7 @@ async def create_callback_request_kakao(prompt: str, url: str, db: Session):
         # 꿈 생성
         task1, task2 = await asyncio.gather(
             generate_text(1, dream_prompt, 2, db),
-            generate_resolution_clova(prompt)
+            generate_resolution_clova(prompt, db)
         )
         id, dream_name, dream, dream_image_url = task1
         dream_resolution = task2
