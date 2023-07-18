@@ -10,6 +10,7 @@ stable_diffusion_api_key = os.getenv("STABLE_DIFFUSION")
 hyperclova_api_key = os.getenv("HYPER_CLOVA_KEY")
 hyperclova_api_gateway = os.getenv("HYPER_CLOVA_GATEWAY")
 hyperclova_request_id = os.getenv("HYPER_CLOVA_REQUEST_ID")
+kakao_api_key = os.getenv("KAKAO_API_KEY")
 bard = Bard(timeout=30)
 
 async def send_gpt_request(messages_prompt, retries=3):
@@ -133,6 +134,43 @@ async def send_stable_deffusion_request(messages_prompt, retries=3):
                     return result["output"][0]
         except Exception as e:
             print(f"Stable Diffusion API Error{e}")
+            if i < retries - 1:
+                print(f"Retrying {i + 1} of {retries}...")
+            else:
+                print("Failed to get response after maximum retries")
+                return "ERROR"
+
+async def send_karlo_request(messages_prompt, retries=3):
+    '''
+    주어진 프롬프트로 Karlo API에 요청을 보내고, 실패할 경우 3번까지 재시도합니다.
+
+    :param messages_prompt: karlo API에 보낼 문자열로 이루어진 프롬프트입니다.
+    :param retries: API 호출 실패시 요청을 재시도하는 횟수입니다.
+    :return: 성공적이라면 karlo API로 만들어진 이미지 url, 실패라면 "ERROR"를 반환합니다.
+    '''
+    for i in range(retries):
+        try:
+            url = "https://api.kakaobrain.com/v2/inference/karlo/t2i"
+
+            data = {
+                'prompt': messages_prompt[:200],
+                'image_quality': 100,
+                'width': '512',
+                'height': '512',
+                'nsfw_checker': True,
+            }
+
+            headers = {
+                'Authorization': f'KakaoAK {kakao_api_key}',
+                'Content-Type': 'application/json'
+            }
+
+            async with ClientSession() as session:
+                async with session.post(url, headers=headers, json=data) as response:
+                    result = await response.json()
+                    return result['images'][0]['image']
+        except Exception as e:
+            print(f"Karlo API Error{e}")
             if i < retries - 1:
                 print(f"Retrying {i + 1} of {retries}...")
             else:
