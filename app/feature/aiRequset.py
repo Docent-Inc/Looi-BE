@@ -62,7 +62,7 @@ async def send_hyperclova_request(messages_prompt, retries=3):
     '''
     for i in range(retries):
         try:
-            url = "https://clovastudio.apigw.ntruss.com/testapp/v1/completions/LK-D2"
+            url = "https://clovastudio.apigw.ntruss.com/testapp/v1/tasks/czfa057b/completions/LK-D2"
 
             request_data = {
                 'text': messages_prompt,
@@ -72,8 +72,8 @@ async def send_hyperclova_request(messages_prompt, retries=3):
                 'topP': 0.8,
                 'repeatPenalty': 5.0,
                 'start': '###해몽:',
-                'restart': '###꿈 내용:',
-                'stopBefore': [],
+                'restart': '',
+                'stopBefore': ['###꿈 내용:'],
                 'includeTokens': True,
                 'includeAiFilters': True,
                 'includeProbs': False
@@ -82,8 +82,7 @@ async def send_hyperclova_request(messages_prompt, retries=3):
             headers = {
                 'Content-Type': 'application/json; charset=utf-8',
                 "X-NCP-CLOVASTUDIO-API-KEY": hyperclova_api_key,
-                "X-NCP-APIGW-API-KEY" : hyperclova_api_gateway,
-                "X-NCP-CLOVASTUDIO-REQUEST-ID" : hyperclova_request_id,
+                "X-NCP-APIGW-API-KEY": hyperclova_api_gateway,
             }
 
             async with ClientSession() as session:
