@@ -421,11 +421,14 @@ async def updateDiaryIsPublic(diaryId: int, userId: int, isPublic: bool, db: Ses
 
 async def randomDiary(db: Session):
     try:
-        # 랜덤 다이어리를 불러옵니다
-        diary = db.query(Diary).filter(Diary.is_deleted == False).order_by(func.random()).first()
+        while True:
+            diary = db.query(Diary).filter(Diary.is_deleted == False).order_by(func.random()).first()
+            if diary:
+                break
         return diary.id
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 async def readDiaryCount(db: Session):
     try:

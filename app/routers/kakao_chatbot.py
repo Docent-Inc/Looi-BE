@@ -28,6 +28,11 @@ def reset_counter():
 scheduler.add_job(reset_counter, 'cron', hour=0)
 scheduler.start()
 
+mbti_list = [
+    "ISTJ", "ISFJ", "INFJ", "INTJ", "ISTP", "ISFP", "INFP", "INTP", "ESTP", "ESFP", "ENFP", "ENTP", "ESTJ", "ESFJ", "ENFJ", "ENTJ"
+    "istj, isfj, infj, intj, istp, isfp, infp, intp, estp, esfp, enfp, entp, estj, esfj, enfj, entj",
+    "Istj, Isfj, Infj, Intj, Istp, Isfp, Infp, Intp, Estp, Esfp, Enfp, Entp, Estj, Esfj, Enfj, Entj"]
+
 # 카카오 챗봇 callback API
 async def create_callback_request_kakao(prompt: str, url: str, db: Session):
     '''
@@ -39,6 +44,8 @@ async def create_callback_request_kakao(prompt: str, url: str, db: Session):
     :return: None
     '''
     try:
+        if prompt[0:4] in mbti_list:
+            prompt = prompt[6:]
         # 꿈 생성
         task1, task2 = await asyncio.gather(
             generate_text(1, prompt, 2, db),
