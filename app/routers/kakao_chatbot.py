@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from starlette.background import BackgroundTasks
 from app.db.database import get_db
 from app.feature.diary import createDiary
-from app.feature.generate_kr import generate_text, generate_resolution
+from app.feature.generate_kr import generate_text, generate_resolution, generate_resolution_clova
 from app.schemas.response.kakao_chatbot import Output, SimpleImage, SimpleText, KakaoChatbotResponse, Template
 from app.schemas.request.crud import Create
 
@@ -42,7 +42,7 @@ async def create_callback_request_kakao(prompt: str, url: str, db: Session):
         # 꿈 생성
         task1, task2 = await asyncio.gather(
             generate_text(1, prompt, 2, db),
-            generate_resolution(prompt)
+            generate_resolution_clova(prompt)
         )
         id, dream_name, dream, dream_image_url = task1
         dream_resolution = task2
