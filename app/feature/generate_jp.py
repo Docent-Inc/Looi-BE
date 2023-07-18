@@ -18,7 +18,7 @@ async def generate_text(text: str, userId: int, db: get_db()) -> str:
 
     async def DALLE2(message: str):
         messages_prompt = [
-            {"role": "system", "content": "Understand this dream and make just one scene a prompt for DALLE2"},
+            {"role": "system", "content": "make just one scene a prompt for DALLE2 about this dream"},
             {"role": "system", "content": "include the word illustration and 7 world about Subject, Medium, Environment, Lighting, Color, Mood, Compoition"},
             {"role": "system", "content": "make just prompt only engilsh"},
             {"role": "system", "content": "max_length=100"},
@@ -26,7 +26,7 @@ async def generate_text(text: str, userId: int, db: get_db()) -> str:
         ]
         prompt = await send_gpt_request(messages_prompt)
 
-        dream_image_url = await generate_img(prompt, userId, db)
+        dream_image_url = await generate_img(1, prompt, userId, db)
         return dream_image_url, prompt
 
     dream_name, L = await asyncio.gather(
