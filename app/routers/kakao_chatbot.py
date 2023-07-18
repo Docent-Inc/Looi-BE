@@ -45,10 +45,10 @@ async def create_callback_request_kakao(prompt: str, url: str, db: Session):
     '''
     try:
         if prompt[0:4] in mbti_list:
-            prompt = prompt[6:]
+            dream_prompt = prompt[6:]
         # 꿈 생성
         task1, task2 = await asyncio.gather(
-            generate_text(1, prompt, 2, db),
+            generate_text(1, dream_prompt, 2, db),
             generate_resolution_clova(prompt)
         )
         id, dream_name, dream, dream_image_url = task1
