@@ -61,6 +61,7 @@ async def generate_image(
 async def resolution(
     text: Resolution,
     current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ) -> ResolutionResponse:
     '''
     꿈 해몽 생성 API, 사용자가 입력한 텍스트를 기반으로 꿈 해몽을 생성합니다.
@@ -69,7 +70,7 @@ async def resolution(
     :param current_user: 로그인한 사용자의 정보를 가져오는 의존성 주입
     :return: 꿈 해몽 생성 결과
     '''
-    dream_resolution = await generate_resolution_clova(text.text)
+    dream_resolution = await generate_resolution_clova(text.text, db)
     return ApiResponse(
         success=True,
         data=ResolutionResponse(
