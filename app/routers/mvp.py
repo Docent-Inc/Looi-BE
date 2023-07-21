@@ -185,3 +185,24 @@ async def user_count(
         data=diary_list_response
     )
 
+@router.get("/slicingtest", response_model=ApiResponse, tags=["MVP"])
+async def slicingtest(
+        prompt: str,
+):
+    mbti_list = [
+        "ISTJ", "ISFJ", "INFJ", "INTJ", "ISTP", "ISFP", "INFP", "INTP", "ESTP", "ESFP", "ENFP", "ENTP", "ESTJ", "ESFJ",
+        "ENFJ", "ENTJ", "istj", "isfj", "infj", "intj", "istp", "isfp", "infp", "intp", "estp", "esfp", "enfp", "entp", "estj",
+        "esfj", "enfj", "entj", "Istj", "Isfj", "Infj", "Intj", "Istp", "Isfp", "Infp", "Intp", "Estp", "Esfp", "Enfp", "Entp",
+        "Estj", "Esfj", "Enfj", "Entj"
+    ]
+
+
+    if prompt[0:4] in mbti_list:
+        dream_prompt = prompt[6:]
+    else:
+        dream_prompt = prompt
+
+    return ApiResponse(
+        success=True,
+        data=dream_prompt
+    )

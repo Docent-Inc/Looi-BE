@@ -1,12 +1,26 @@
 import asyncio
 from app.core.current_time import get_current_time
+from app.db.models.mbti_data import Mbti_data
 from app.feature.generateImg import generate_img
 from app.db.models.dream import DreamText, DreamImage
 from app.db.database import get_db
-from app.feature.aiRequset import send_gpt_request, send_bard_request
+from app.feature.aiRequset import send_gpt_request, send_bard_request, send_hyperclova_request
 
+mbti_list = [
+        "ISTJ", "ISFJ", "INFJ", "INTJ", "ISTP", "ISFP", "INFP", "INTP", "ESTP", "ESFP", "ENFP", "ENTP", "ESTJ", "ESFJ",
+        "ENFJ", "ENTJ",
+        "istj", "isfj", "infj", "intj", "istp", "isfp", "infp", "intp", "estp", "esfp", "enfp", "entp", "estj", "esfj",
+        "enfj", "entj",
+        "Istj", "Isfj", "Infj", "Intj", "Istp", "Isfp", "Infp", "Intp", "Estp", "Esfp", "Enfp", "Entp", "Estj", "Esfj",
+        "Enfj", "Entj",
+    ]
 
-async def generate_text(text: str, userId: int, db: get_db()) -> str:
+async def generate_text(image_model: int, text: str, userId: int, db: get_db()) -> str:
+    if text[0:4] in mbti_list:
+        message = text[6:]
+    else:
+        message = text
+
     async def get_dreamName(message: str) -> str:
         messages_prompt = [
             {"role": "system", "content": "꿈의 내용을 이해하고 너가 재미있는 꿈의 제목을 만들어줘"},
@@ -15,7 +29,7 @@ async def generate_text(text: str, userId: int, db: get_db()) -> str:
         dreamName = await send_gpt_request(messages_prompt)
         return dreamName
 
-    async def DALLE2(message: str):
+    async def DALLE2(image_model: int, message: str):
         messages_prompt = [
             {"role": "system", "content": "make just one scene a prompt for DALLE2 about this dream"},
             {"role": "system", "content": "include the word illustration and 7 world about Subject, Medium, Environment, Lighting, Color, Mood, Compoition"},
@@ -25,14 +39,14 @@ async def generate_text(text: str, userId: int, db: get_db()) -> str:
         ]
         prompt = await send_gpt_request(messages_prompt)
 
-        dream_image_url = await generate_img(prompt, userId, db)
+        dream_image_url = await generate_img(image_model, prompt, userId, db)
         return dream_image_url, prompt
 
     dream_name, L = await asyncio.gather(
-        get_dreamName(text),
-        DALLE2(text)
+        get_dreamName(message),
+        DALLE2(image_model, message)
     )
-    dream = text
+    dream = message
     dream_image_url, dream_image_prompt = L
 
     # 데이터베이스에 DreamText 저장하기
@@ -70,4 +84,22 @@ async def generate_resolution(text: str) -> str:
 async def generate_resolution_mvp(text: str) -> str:
     prompt = f"꿈 꿨는데 이 꿈을 짧게 해몽 해줘. 내용을 사람처럼 말해주고 첫 문장은 '이 꿈은' 으로 시작해줘. langth=150, 문단 변경없이 해몽 내용만 반환해줘. 꿈 내용 : {text}"
     dream_resolution = await send_bard_request(prompt)
+    return dream_resolution
+
+async def generate_resolution_clova(text: str, db: get_db()) -> str:
+    prompt = f"꿈을 요소별로 자세하게, mbti맞춤 해몽 해줘. mbti가 입력되지 않았으면 일반적인 꿈 해몽 해줘." \
+             f"###꿈 내용: {text}"
+
+    dream_resolution = await send_hyperclova_request(prompt)
+
+    dream_resolution = dream_resolution.replace("###해몽:", "").lstrip()
+
+    mbti_data = Mbti_data(
+        user_text=text,
+        mbti_resolution=dream_resolution,
+    )
+    db.add(mbti_data)
+    db.commit()
+    db.refresh(mbti_data)
+
     return dream_resolution
