@@ -17,13 +17,13 @@ from starlette import status
 
 from app.db.models import User
 from app.db.models.dream import DreamText, DreamImage
-from app.feature.aiRequset import send_stable_deffusion_request
+from app.feature.aiRequset import send_stable_deffusion_request, send_karlo_request
 
 load_dotenv()
 openai.api_key = os.getenv("GPT_API_KEY")
 SERVICE_ACCOUNT_INFO = json.loads(os.getenv('GOOGLE_APPLICATION_CREDENTIALS_JSON'))
 
-async def generate_img(prompt: str, userId: int, db: Session):
+async def generate_img(image_model: int, prompt: str, userId: int, db: Session):
     async def upload_image_to_gcp(client, bucket_name, image_file, destination_blob_name):
         bucket = client.get_bucket(bucket_name)
         blob = bucket.blob(destination_blob_name)
@@ -51,8 +51,6 @@ async def generate_img(prompt: str, userId: int, db: Session):
             )
         return response['data'][0]['url']
 
-    async def get_Stable_Diffusion_url(prompt):
-        return await send_stable_deffusion_request(prompt)
     async def download_image(url):
         response = await asyncio.to_thread(requests.get, url)
         img = Image.open(BytesIO(response.content))
@@ -60,11 +58,13 @@ async def generate_img(prompt: str, userId: int, db: Session):
         img.save(buffer, format="PNG")
         return buffer.getvalue()
 
-    user = db.query(User).filter(User.id == userId).first()
-    if user.subscription_status == True:
-        dream_image_url = await get_Stable_Diffusion_url(prompt)
-    else:
+    if image_model == 1:
         dream_image_url = await get_image_url(prompt)
+    elif image_model == 2:
+        dream_image_url = await send_stable_deffusion_request(prompt)
+    elif image_model == 3:
+        dream_image_url = await send_karlo_request(prompt)
+
     dream_image_data = await download_image(dream_image_url)
 
     korea_timezone = pytz.timezone("Asia/Seoul")
@@ -90,7 +90,7 @@ async def get_image_count(imageId: int, db: Session):
     image_count = db.query(DreamImage).filter(DreamImage.Text_id == imageId).count()
     # 쿼리를 실행한 후, 해당하는 데이터가 없으면 0을 반환하고, 데이터가 있으면 해당 데이터의 갯수를 반환합니다.
     return image_count
-async def additional_generate_image(textId, user_id, db):
+async def additional_generate_image(image_model, textId, user_id, db):
     # 생성된 이미지의 갯수가 3개가 넘는지 확인합니다.
     if await get_image_count(textId, db) >= 3:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="이미지 생성 횟수 초과")
@@ -100,7 +100,7 @@ async def additional_generate_image(textId, user_id, db):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="생성된 꿈이 없습니다.")
     prompt = text_data.DALLE2  # 생성된 DALLE2 프롬프트 정보 불러오기
     # 새로운 꿈 이미지 생성
-    dream_image_url = await generate_img(prompt, user_id, db)
+    dream_image_url = await generate_img(image_model, prompt, user_id, db)
     # 데이터베이스에 dream_image_url 저장
     dream_image = DreamImage(
         Text_id=textId,
