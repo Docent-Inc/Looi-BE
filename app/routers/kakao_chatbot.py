@@ -105,7 +105,8 @@ async def make_chatgpt_async_callback_request_to_openai_from_kakao(
     '''
     # user_id는 카카오 챗봇 사용자의 고유 식별자입니다.
     user_id = kakao_ai_request['userRequest']['user']['id']
-    print(user_id)
+    print("user_id : ", user_id)
+    print("user_properties_id : ", kakao_ai_request['userRequest']['user']['properties']['botUserKey'])
     # user_requests는 각 사용자의 요청 횟수를 추적하기 위해 사용됩니다.
     # user_id가 user_requests에 없으면 0으로 초기화합니다.
     if user_id not in user_requests:
