@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
-from app.db.models.mbti_data import get_MBTIBase
+from app.db.models.kakao_chatbot_dream import get_kakao_chatbot_dreamBase
 
 PUBLIC_IP_ADDRESS = 'db-h50qv-kr.vpc-pub-cdb.ntruss.com' # ncp sql database
 DB_USER = 'docent'
@@ -12,7 +12,7 @@ DB_NAME = 'docent'
 DB_URL = f'mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{PUBLIC_IP_ADDRESS}/{DB_NAME}'
 engine = create_engine(DB_URL, pool_recycle=150)
 
-Base = get_MBTIBase()
+Base = get_kakao_chatbot_dreamBase()
 def get_Base():
     return Base
 
