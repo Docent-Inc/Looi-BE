@@ -74,12 +74,13 @@ async def create_callback_request_kakao(prompt: str, url: str, user_id: int, db:
             checklist="checklist",
             is_public=True,
         )
-        diary = await createDiary(create, 2, db)
+        diary_id = await createDiary(create, 2, db)
+
 
         # kakao_user_dream 생성
         dream = kakao_chatbot_dream(
             user_id=user_id,
-            diary_id=diary.id,
+            diary_id=diary_id,
         )
         db.add(dream)
         db.commit()
@@ -151,7 +152,7 @@ async def make_chatgpt_async_callback_request_to_openai_from_kakao(
 
     # 도움말 보여주기
     elif kakao_ai_request['userRequest']['utterance'] == "도움말":
-        return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "mbti를 설정하면 mbti별 꿈 해몽을 해드려요!\n\n mbti를 설정하려면 mbti를 입력해주세요!\n\n 꿈은 10자 이상 200자 이하로 입력해주세요"}}]}}
+        return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "mbti를 설정하면 mbti별 꿈 해몽을 해드려요!\n\nmbti를 설정하려면 mbti를 입력해주세요!\n\n꿈은 10자 이상 200자 이하로 입력해주세요"}}]}}
 
     # 내 정보 보여주기
     elif kakao_ai_request['userRequest']['utterance'] == "내 정보":
