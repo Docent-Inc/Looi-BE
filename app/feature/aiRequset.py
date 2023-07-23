@@ -152,7 +152,7 @@ async def send_karlo_request(messages_prompt, retries=3):
             url = "https://api.kakaobrain.com/v2/inference/karlo/t2i"
 
             data = {
-                'prompt': messages_prompt[:256],
+                'prompt': messages_prompt[:255],
                 'prior_guidance_scale': 5,
                 'width': '512',
                 'height': '512',
