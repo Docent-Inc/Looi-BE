@@ -76,12 +76,10 @@ async def create_callback_request_kakao(prompt: str, url: str, user_id: int, db:
         )
         diary = await createDiary(create, 2, db)
 
-
-
         # kakao_user_dream 생성
         dream = kakao_chatbot_dream(
-            kakao_user_id=user_id,
-            dream_id=diary.id,
+            user_id=user_id,
+            diary_id=diary.id,
         )
         db.add(dream)
         db.commit()
@@ -152,11 +150,11 @@ async def make_chatgpt_async_callback_request_to_openai_from_kakao(
         return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "mbti를 " + user.mbti + "로 설정했어요!"}}]}}
 
     # 도움말 보여주기
-    elif len(kakao_ai_request['userRequest']['utterance']) == "도움말":
+    elif kakao_ai_request['userRequest']['utterance'] == "도움말":
         return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "mbti를 설정하면 mbti별 꿈 해몽을 해드려요!\n\n mbti를 설정하려면 mbti를 입력해주세요!\n\n 꿈은 10자 이상 200자 이하로 입력해주세요"}}]}}
 
     # 내 정보 보여주기
-    elif len(kakao_ai_request['userRequest']['utterance']) == "내 정보":
+    elif kakao_ai_request['userRequest']['utterance'] == "내 정보":
         return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "내 mbti: " + user.mbti + "\n오늘 남은 요청 횟수: " + str(MAX_REQUESTS_PER_DAY - user.day_count) + "번\n총 생성한 꿈의 수: " + str(user.total_generated_dream) + "개"}}]}}
 
     # 꿈 해몽하기
@@ -165,7 +163,7 @@ async def make_chatgpt_async_callback_request_to_openai_from_kakao(
         return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "꿈은 10자 이상 200자 이하로 입력해주세요"}}]}}
 
     # 무의식 분석
-    elif len(kakao_ai_request['userRequest']['utterance']) == "무의식 분석":
+    elif kakao_ai_request['userRequest']['utterance'] == "무의식 분석":
         return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "무의식 분석은 기능은 준비 중입니다"}}]}}
 
     # 백그라운드에서 create_callback_request_kakao 함수를 실행하여 카카오 챗봇에게 응답을 보냅니다.
