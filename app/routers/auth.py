@@ -161,6 +161,7 @@ async def kakao_callback(
     data = await get_user_kakao(code)
     user = user_kakao(data, db)
     access_token, refresh_token = await create_token(user.email)
+    print(str(data.get("id")))
     return ApiResponse(
         success=True,
         data=TokenData(
