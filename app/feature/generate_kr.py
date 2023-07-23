@@ -81,25 +81,22 @@ async def generate_resolution(text: str) -> str:
     dream_resolution = await send_bard_request(prompt)
     return dream_resolution
 
-async def generate_resolution_mvp(text: str) -> str:
-    prompt = f"꿈 꿨는데 이 꿈을 짧게 해몽 해줘. 내용을 사람처럼 말해주고 첫 문장은 '이 꿈은' 으로 시작해줘. langth=150, 문단 변경없이 해몽 내용만 반환해줘. 꿈 내용 : {text}"
-    dream_resolution = await send_bard_request(prompt)
-    return dream_resolution
-
 async def generate_resolution_clova(text: str, db: get_db()) -> str:
     prompt = f"꿈을 요소별로 자세하게, mbti맞춤 해몽 해줘. mbti가 입력되지 않았으면 일반적인 꿈 해몽 해줘." \
              f"###꿈 내용: {text}"
 
+    # HyperClova를 호출하여 해몽 결과물을 받아옴
     dream_resolution = await send_hyperclova_request(prompt)
-
     dream_resolution = dream_resolution.replace("###해몽:", "").lstrip()
 
-    mbti_data = Mbti_data(
-        user_text=text,
-        mbti_resolution=dream_resolution,
-    )
-    db.add(mbti_data)
-    db.commit()
-    db.refresh(mbti_data)
+    # MBTI 맞춤 해몽이라면 데이터베이스에 저장함
+    if text[0:4] in mbti_list:
+        mbti_data = Mbti_data(
+            user_text=text,
+            mbti_resolution=dream_resolution,
+        )
+        db.add(mbti_data)
+        db.commit()
+        db.refresh(mbti_data)
 
     return dream_resolution

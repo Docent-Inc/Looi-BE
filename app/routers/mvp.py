@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from app.auth.user import readUserCount
 from app.db.database import get_db
+from app.feature.aiRequset import send_karlo_request
 from app.feature.diary import readDiary, createDiary, randomDiary, readDiaryCount, listDiaryByUser
 from app.feature.generate_kr import generate_text, generate_resolution_mvp
 from app.feature.generateImg import additional_generate_image
@@ -185,24 +186,13 @@ async def user_count(
         data=diary_list_response
     )
 
-@router.get("/slicingtest", response_model=ApiResponse, tags=["MVP"])
+@router.get("/prompt", response_model=ApiResponse, tags=["MVP"])
 async def slicingtest(
         prompt: str,
 ):
-    mbti_list = [
-        "ISTJ", "ISFJ", "INFJ", "INTJ", "ISTP", "ISFP", "INFP", "INTP", "ESTP", "ESFP", "ENFP", "ENTP", "ESTJ", "ESFJ",
-        "ENFJ", "ENTJ", "istj", "isfj", "infj", "intj", "istp", "isfp", "infp", "intp", "estp", "esfp", "enfp", "entp", "estj",
-        "esfj", "enfj", "entj", "Istj", "Isfj", "Infj", "Intj", "Istp", "Isfp", "Infp", "Intp", "Estp", "Esfp", "Enfp", "Entp",
-        "Estj", "Esfj", "Enfj", "Entj"
-    ]
-
-
-    if prompt[0:4] in mbti_list:
-        dream_prompt = prompt[6:]
-    else:
-        dream_prompt = prompt
+    img_url = await send_karlo_request(prompt)
 
     return ApiResponse(
         success=True,
-        data=dream_prompt
+        data=img_url
     )
