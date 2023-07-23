@@ -134,11 +134,6 @@ async def make_chatgpt_async_callback_request_to_openai_from_kakao(
         db.add(user)
         db.commit()
 
-    if user.mbti is None:
-        user_mbti = ""
-    else:
-        user_mbti = user.mbti
-
     # mbti 설정하기
     if kakao_ai_request['userRequest']['utterance'].lower() in mbti_list:
         user.mbti = kakao_ai_request['userRequest']['utterance'].lower()
@@ -172,8 +167,13 @@ async def make_chatgpt_async_callback_request_to_openai_from_kakao(
                 "template": {"outputs": [{"simpleText": {"text": "꿈 분석은 하루에 3번만 가능해요ㅠㅠ 내일 다시 시도해주세요"}}]}}
 
     # 백그라운드에서 create_callback_request_kakao 함수를 실행하여 카카오 챗봇에게 응답을 보냅니다.
-    background_tasks.add_task(create_callback_request_kakao,
-                              prompt=user_mbti + ", " + kakao_ai_request['userRequest']['utterance'],
+    if user.mbti is None:
+        background_tasks.add_task(create_callback_request_kakao,
+                                  prompt=kakao_ai_request['userRequest']['utterance'],
+                                  url=kakao_ai_request['userRequest']['callbackUrl'], user_id=user.id, db=db)
+    else:
+        background_tasks.add_task(create_callback_request_kakao,
+                              prompt=user.mbti + ", " + kakao_ai_request['userRequest']['utterance'],
                               url=kakao_ai_request['userRequest']['callbackUrl'], user_id=user.id, db=db)
 
     # 카카오 챗봇에게 보낼 응답을 반환합니다.
