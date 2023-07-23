@@ -43,7 +43,7 @@ mbti_list = [
 ]
 
 # 카카오 챗봇 callback API
-async def create_callback_request_kakao(prompt: str, url: str, user_id: str, db: Session):
+async def create_callback_request_kakao(prompt: str, url: str, user_id: int, db: Session):
     '''
     카카오 챗봇 callback 함수
 
@@ -76,6 +76,8 @@ async def create_callback_request_kakao(prompt: str, url: str, user_id: str, db:
         )
         diary = await createDiary(create, 2, db)
 
+
+
         # kakao_user_dream 생성
         dream = kakao_chatbot_dream(
             kakao_user_id=user_id,
@@ -95,7 +97,7 @@ async def create_callback_request_kakao(prompt: str, url: str, user_id: str, db:
         ).dict()
         response = requests.post(url, json=request_body)
 
-        user = db.query(kakao_chatbot_user).filter(kakao_chatbot_user.kakao_user_id == user_id).first()
+        user = db.query(kakao_chatbot_user).filter(kakao_chatbot_user.id == user_id).first()
         user.day_count += 1
         user.total_generated_dream += 1
         db.commit()
@@ -169,7 +171,7 @@ async def make_chatgpt_async_callback_request_to_openai_from_kakao(
     # 백그라운드에서 create_callback_request_kakao 함수를 실행하여 카카오 챗봇에게 응답을 보냅니다.
     background_tasks.add_task(create_callback_request_kakao,
                               prompt=user.mbti + ", " + kakao_ai_request['userRequest']['utterance'],
-                              url=kakao_ai_request['userRequest']['callbackUrl'], user_id=user_id, db=db)
+                              url=kakao_ai_request['userRequest']['callbackUrl'], user_id=user.id, db=db)
 
     # 카카오 챗봇에게 보낼 응답을 반환합니다.
     return {"version": "2.0", "useCallback": True}
