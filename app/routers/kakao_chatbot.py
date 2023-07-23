@@ -78,11 +78,11 @@ async def create_callback_request_kakao(prompt: str, url: str, user_id: int, db:
 
 
         # kakao_user_dream 생성
-        dream = kakao_chatbot_dream(
+        kakao_user_dream = kakao_chatbot_dream(
             user_id=user_id,
             diary_id=diary_id,
         )
-        db.add(dream)
+        db.add(kakao_user_dream)
         db.commit()
 
         # 카카오 챗봇 응답
@@ -139,11 +139,6 @@ async def make_chatgpt_async_callback_request_to_openai_from_kakao(
         db.add(user)
         db.commit()
 
-    # 요청이 하루에 3회를 초과하면 에러 메시지를 반환합니다.
-    if user.day_count >= MAX_REQUESTS_PER_DAY:
-        return {"version": "2.0",
-                "template": {"outputs": [{"simpleText": {"text": "꿈 분석은 하루에 3번만 가능해요ㅠㅠ 내일 다시 시도해주세요"}}]}}
-
     # mbti 설정하기
     if kakao_ai_request['userRequest']['utterance'].lower() in mbti_list:
         user.mbti = kakao_ai_request['userRequest']['utterance'].lower()
@@ -152,20 +147,29 @@ async def make_chatgpt_async_callback_request_to_openai_from_kakao(
 
     # 도움말 보여주기
     elif kakao_ai_request['userRequest']['utterance'] == "도움말":
-        return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "mbti를 설정하면 mbti별 꿈 해몽을 해드려요!\n\nmbti를 설정하려면 mbti를 입력해주세요!\n\n꿈은 10자 이상 200자 이하로 입력해주세요"}}]}}
+        return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "도슨트AI는 mbti를 설정하면 mbti별 꿈 해몽을 해드려요!\n\nmbti를 설정하려면 mbti를 입력해주세요!\n\n꿈은 10자 이상 200자 이하로 입력해주세요"}}]}}
+
+    # 도슨트 소개 보여주기
+    elif kakao_ai_request['userRequest']['utterance'] == "도슨트":
+        return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "꿈 기록을 쉽고 재밌게, 도슨트는 개인화된 꿈 해몽을 제공하고 있습니다. 꿈을 통해 자신의 내면에 더 가까워지고, 건강한 미래를 창조할 수 있습니다."}}]}}
 
     # 내 정보 보여주기
     elif kakao_ai_request['userRequest']['utterance'] == "내 정보":
         return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "내 mbti: " + user.mbti + "\n오늘 남은 요청 횟수: " + str(MAX_REQUESTS_PER_DAY - user.day_count) + "번\n총 생성한 꿈의 수: " + str(user.total_generated_dream) + "개"}}]}}
+
+    # 무의식 분석
+    elif kakao_ai_request['userRequest']['utterance'] == "무의식 분석":
+        return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "무의식 분석은 기능은 준비 중입니다"}}]}}
 
     # 꿈 해몽하기
     elif len(kakao_ai_request['userRequest']['utterance']) < 10 or len(
             kakao_ai_request['userRequest']['utterance']) > 200:
         return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "꿈은 10자 이상 200자 이하로 입력해주세요"}}]}}
 
-    # 무의식 분석
-    elif kakao_ai_request['userRequest']['utterance'] == "무의식 분석":
-        return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "무의식 분석은 기능은 준비 중입니다"}}]}}
+    # 요청이 하루에 3회를 초과하면 에러 메시지를 반환합니다.
+    elif user.day_count >= MAX_REQUESTS_PER_DAY:
+        return {"version": "2.0",
+                "template": {"outputs": [{"simpleText": {"text": "꿈 분석은 하루에 3번만 가능해요ㅠㅠ 내일 다시 시도해주세요"}}]}}
 
     # 백그라운드에서 create_callback_request_kakao 함수를 실행하여 카카오 챗봇에게 응답을 보냅니다.
     background_tasks.add_task(create_callback_request_kakao,
