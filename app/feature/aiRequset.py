@@ -23,7 +23,7 @@ async def send_gpt_request(messages_prompt, retries=3):
     '''
     for i in range(retries):
         try:
-            chat = openai.ChatCompletion.create(model="gpt-4", messages=messages_prompt)
+            chat = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages_prompt)
             return chat.choices[0].message.content
         except Exception as e:
             print(f"GPT API Error {e}")
@@ -63,6 +63,7 @@ async def send_hyperclova_request(messages_prompt, retries=3):
     for i in range(retries):
         try:
             url = "https://clovastudio.apigw.ntruss.com/testapp/v1/tasks/czfa057b/completions/LK-D2"
+            url = "https://clovastudio.apigw.ntruss.com/testapp/v1/tasks/x56n5fyu/completions/LK-D2"
 
             request_data = {
                 'text': messages_prompt,
@@ -71,7 +72,7 @@ async def send_hyperclova_request(messages_prompt, retries=3):
                 'topK': 0,
                 'topP': 0.8,
                 'repeatPenalty': 5.0,
-                'start': '###해몽:',
+                'start': '###클로바:',
                 'restart': '',
                 'stopBefore': ['###꿈 내용:'],
                 'includeTokens': True,
@@ -96,7 +97,6 @@ async def send_hyperclova_request(messages_prompt, retries=3):
             else:
                 print("Failed to get response after maximum retries")
                 return "ERROR"
-
 async def send_stable_deffusion_request(messages_prompt, retries=3):
     '''
     주어진 프롬프트로 Stable Diffusion API에 요청을 보내고, 실패할 경우 3번까지 재시도합니다.

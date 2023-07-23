@@ -1,7 +1,8 @@
 import asyncio
 from typing import Dict, Any
+import aiocron
 import requests
-from apscheduler.schedulers.background import BackgroundScheduler
+import pytz
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from starlette.background import BackgroundTasks
@@ -27,14 +28,8 @@ async def reset_day_count(db: Session = Depends(get_db)):
         user.day_count = 0
     db.commit()
 
-# Instantiate the scheduler
-scheduler = BackgroundScheduler()
-
-# Add a job to run at 12:00 AM every day
-scheduler.add_job(reset_day_count, 'cron', hour=0)
-
-# Start the scheduler
-scheduler.start()
+# Schedule the reset_day_count function to run at 0:00 every day (KST)
+cron_task = aiocron.crontab('0 0 * * *', func=reset_day_count, tz=pytz.timezone('Asia/Seoul'))
 
 mbti_list = [
     "ISTJ", "ISFJ", "INFJ", "INTJ", "ISTP", "ISFP", "INFP", "INTP", "ESTP", "ESFP", "ENFP", "ENTP", "ESTJ", "ESFJ", "ENFJ", "ENTJ",
@@ -154,7 +149,7 @@ async def make_chatgpt_async_callback_request_to_openai_from_kakao(
         return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "꿈 기록을 쉽고 재밌게, 도슨트는 개인화된 꿈 해몽을 제공하고 있습니다. 꿈을 통해 자신의 내면에 더 가까워지고, 건강한 미래를 창조할 수 있습니다."}}]}}
 
     # 내 정보 보여주기
-    elif kakao_ai_request['userRequest']['utterance'] == "내 정보":
+    elif kakao_ai_request['userRequest']['utterance'] == "내 정보" or kakao_ai_request['userRequest']['utterance'] == "내정보":
         return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "내 mbti: " + user.mbti + "\n오늘 남은 요청 횟수: " + str(MAX_REQUESTS_PER_DAY - user.day_count) + "번\n총 생성한 꿈의 수: " + str(user.total_generated_dream) + "개"}}]}}
 
     # 무의식 분석
