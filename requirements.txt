@@ -22,3 +22,4 @@ bardapi==0.1.18
 line-bot-sdk==3.1.0
 apscheduler==3.10.1
 line-bot-sdk-extra==0.1.2
+aiocron==1.8

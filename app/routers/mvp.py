@@ -4,7 +4,7 @@ from app.auth.user import readUserCount
 from app.db.database import get_db
 from app.feature.aiRequset import send_karlo_request
 from app.feature.diary import readDiary, createDiary, randomDiary, readDiaryCount, listDiaryByUser
-from app.feature.generate_kr import generate_text
+from app.feature.generate_kr import generate_text, generate_resolution_clova
 from app.feature.generateImg import additional_generate_image
 from app.schemas.common import ApiResponse
 from app.schemas.request.crud import Create
@@ -23,7 +23,7 @@ async def generate_basic(
             detail="10자 이상 200자 이하로 입력해주세요."
         )
 
-    id, dream_name, dream, dream_image_url = await generate_text(text, 1, db)
+    id, dream_name, dream, dream_image_url = await generate_text(1, text, 1, db)
     return ApiResponse(
         success=True,
         data=BasicResponse(
@@ -50,6 +50,7 @@ async def generate_image(
 @router.post("/resolution", response_model=ApiResponse, tags=["MVP"])
 async def resolution(
     text: str, # 생성된 꿈 텍스트의 id
+    db: Session = Depends(get_db),
 ) -> ResolutionResponse:
     if len(text) < 10 or len(text) > 200:
         raise HTTPException(
@@ -57,7 +58,7 @@ async def resolution(
             detail="10자 이상 200자 이하로 입력해주세요."
         )
 
-    dream_resolution = await generate_resolution_mvp(text)
+    dream_resolution = await generate_resolution_clova(text, db)
     return ApiResponse(
         success=True,
         data=ResolutionResponse(
