@@ -155,6 +155,26 @@ async def make_chatgpt_async_callback_request_to_openai_from_kakao(
         else:
             return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "내 mbti: " + user.mbti + "\n오늘 남은 요청 횟수: " + str(MAX_REQUESTS_PER_DAY - user.day_count) + "번\n총 생성한 꿈의 수: " + str(user.total_generated_dream) + "개"}}]}}
 
+    # 곽서준 정보
+    elif kakao_ai_request['userRequest']['utterance'] == "곽서준":
+        return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "도슨트의 CEO입니다. 도슨트를 만든 이유는 꿈을 통해 자신의 내면에 더 가까워지고, 건강한 미래를 창조할 수 있기 때문입니다."}}]}}
+
+    # 조태완 정보
+    elif kakao_ai_request['userRequest']['utterance'] == "조태완":
+        return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "도슨트의 CTO입니다. 도슨트를 만든 이유는 사용자들이 첨단 기술을 조금 더 손쉽게 사용할 수 있도록 하기 위해서입니다."}}]}}
+
+    # 이예람 정보
+    elif kakao_ai_request['userRequest']['utterance'] == "이예람":
+        return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "도슨트의 CMO입니다. 도슨트를 만든 이유는 사용자들이 꿈을 기록하는 것을 쉽고 재밌게 할 수 있도록 하기 위해서입니다."}}]}}
+
+    # total_users 정보
+    elif kakao_ai_request['userRequest']['utterance'] == "total_users":
+        return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "총 사용자 수: " + str(db.query(kakao_chatbot_user).count()) + "명"}}]}}
+
+    # total_dreams 정보
+    elif kakao_ai_request['userRequest']['utterance'] == "total_dreams":
+        return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "총 꿈의 수: " + str(db.query(kakao_chatbot_dream).count()) + "개"}}]}}
+
     # 무의식 분석
     elif kakao_ai_request['userRequest']['utterance'] == "무의식 분석":
         return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "무의식 분석은 기능은 준비 중입니다"}}]}}
