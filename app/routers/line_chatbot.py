@@ -1,17 +1,21 @@
+import aiocron
+import pytz
 from aiohttp import ClientTimeout
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage, ImageSendMessage, ImageMessage
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, Request, HTTPException, Depends
 from pydantic import BaseModel
 from typing import List
 from dotenv import load_dotenv
 import os
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from app.db.database import get_SessionLocal
+from sqlalchemy.orm import Session
+
+from app.db.database import get_SessionLocal, get_db
 from app.db.models.line_chatbot_dream import line_chatbot_dream
 from app.db.models.line_chatbot_user import line_chatbot_user
 from app.feature.diary import createDiary
-from app.feature.generate_jp import generate_text, generate_resolution_linechatbot, generate_resolution_clova
+from app.feature.generate_jp import generate_text, generate_resolution_clova
 from app.schemas.common import ApiResponse
 from app.schemas.request.crud import Create
 from linebotx import LineBotApiAsync, WebhookHandlerAsync
@@ -19,17 +23,17 @@ from linebotx.http_client import AioHttpClient, AioHttpResponse
 from pytz import timezone
 
 scheduler = AsyncIOScheduler(timezone="Asia/Tokyo")
-user_requests = {}
-MAX_REQUESTS_PER_DAY = 3  # This can be any number you want
-# Define the function to reset the counter
-def reset_counter():
-    global user_requests
-    user_requests = {}
+# 매일 0시에 모든 user 의 day_count 를 0으로 초기화
+MAX_REQUESTS_PER_DAY = 3
+async def reset_day_count(db: Session = Depends(get_db)):
+    users = db.query(line_chatbot_user).all()
+    for user in users:
+        user.day_count = 0
+    db.commit()
 
-# Schedule the function to run every day at midnight
-scheduler.add_job(reset_counter, 'cron', hour=0)
-scheduler.start()
-load_dotenv()
+# Schedule the reset_day_count function to run at 0:00 every day (KST)
+cron_task = aiocron.crontab('0 0 * * *', func=reset_day_count, tz=pytz.timezone('Asia/Tokyo'))
+
 
 mbti_list = [
         "ISTJ", "ISFJ", "INFJ", "INTJ", "ISTP", "ISFP", "INFP", "INTP", "ESTP", "ESFP", "ENFP", "ENTP", "ESTJ", "ESFJ",
@@ -130,6 +134,17 @@ async def handle_message(event):
                 TextSendMessage(text="「夢」を入力すると夢を作成します。"))
             return
         # 내 정보
+        elif dream_text == "じこ":
+            if user.mbti is None:
+                await line_bot_api.reply_message(
+                    event.reply_token,
+                    TextSendMessage(text="まだMBTIが設定されていません。" + "\n" + "MBTIを設定すると夢の解釈ができます。" + "\n" + "今日生成可能な夢の数:" + str( MAX_REQUESTS_PER_DAY - user.day_count) + "回" + "\n" + "総生成した夢の数: " + str(user.total_generated_dream) + "回"))
+                return
+            else:
+                await line_bot_api.reply_message(
+                    event.reply_token,
+                    TextSendMessage(text="MBTI: " + user.mbti + "\n" + "今日生成可能な夢の数:" + str( MAX_REQUESTS_PER_DAY - user.day_count) + "回" + "\n" + "総生成した夢の数: " + str(user.total_generated_dream) + "回"))
+                return
 
         # 글자 수 제한
         elif len(dream_text) < 10 or len(dream_text) > 200:
