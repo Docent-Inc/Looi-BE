@@ -121,13 +121,10 @@ async def create_today_luck(url: str, user_id: int, db: Session):
     dream = db.query(kakao_chatbot_dream).filter(kakao_chatbot_dream.user_id == user_id).order_by(kakao_chatbot_dream.id.desc()).first()
     if dream is None:
         raise HTTPException(status_code=404, detail="dream not found")
-    print(dream.diary_id)
 
     dream_text = db.query(Diary_ko).filter(Diary_ko.Diary_id == dream.diary_id).first()
     if dream_text is None:
         raise HTTPException(status_code=404, detail="dream not found")
-    print(dream_text.dream)
-
 
     # 오늘의 운세 생성
     prompt = f"꿈의 내용을 보고 오늘의 운세를 만들어줘, 꿈의 내용은 참고만 하고 내용에 녹아들어가게 해주고, 사자성어로 운세 총운을 만들어줘" \

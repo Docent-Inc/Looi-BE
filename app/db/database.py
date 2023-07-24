@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
-from app.db.models.mbti_data_JP import get_Base
+from app.db.models.today_luck import get_Base
 
 PUBLIC_IP_ADDRESS = 'db-h50qv-kr.vpc-pub-cdb.ntruss.com' # ncp sql database
 DB_USER = 'docent'
