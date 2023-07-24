@@ -4,7 +4,7 @@ from app.feature.generateImg import generate_img
 from app.db.models.dream import DreamText, DreamImage
 from app.db.database import get_db
 from app.feature.aiRequset import send_gpt_request, send_bard_request, send_hyperclova_request
-
+from translate import Translator
 
 async def generate_text(text: str, userId: int, db: get_db()) -> str:
     async def get_dreamName(message: str) -> str:
@@ -21,9 +21,9 @@ async def generate_text(text: str, userId: int, db: get_db()) -> str:
             {"role": "system", "content": "make just one scene a prompt for DALLE2 about this dream"},
             {"role": "system", "content": "include the word illustration and 7 world about Subject, Medium, Environment, Lighting, Color, Mood, Compoition"},
             {"role": "system", "content": "make just prompt only engilsh"},
-            {"role": "system", "content": "max_length=250"},
+            {"role": "system", "content": "max_length=200"},
             {"role": "user", "content": "運転中に事故が発生しましたが、痛すぎました。"},
-            {"role": "system", "content": "Digital art illustration of a disoriented driver in the chaotic aftermath of a car crash. Flashes of red and blue from emergency lights illuminate the scene, highlighting the protagonist's pain and shock. Pieces of shattered glass reflect the confusion and fear."},
+            {"role": "system", "content": "A digital art illustration vividly depicting a car accident on a bustling city street, bathed in harsh daylight that intensifies the vibrant and contrasting colors, the intense and painful mood is centralized on the moment of collision."},
             {"role": "user", "content": "運転中に事故が発生しましたが、痛すぎました。"},
             {"role": "system", "content": "A terrifying digital illustration of a dark, foreboding scene where an unseen antagonist's hands are tightly wrapped around the dreamer's throat, a stark contrast of vivid red blood against the dreamer's pallid skin, symbolizing imminent death."},
             {"role": "user", "content": message}
@@ -72,9 +72,14 @@ async def generate_resolution_linechatbot(text: str) -> str:
     return dream_resolution
 
 async def generate_resolution_clova(text: str, db: get_db()) -> str:
-    prompt = f"꿈을 요소별로 자세하게, 일본어로 mbti맞춤 해몽 해줘. mbti가 입력되지 않았으면 자세하게 꿈의 요소별 일반적인 꿈 해몽 해줘." \
+    prompt = f"꿈을 요소별로 자세하게, mbti맞춤 해몽 해줘. mbti가 입력되지 않았으면 자세하게 꿈의 요소별 일반적인 꿈 해몽 해줘." \
              f"###꿈 내용: {text}"
     # HyperClova를 호출하여 해몽 결과물을 받아옴
     dream_resolution = await send_hyperclova_request(prompt)
     dream_resolution = dream_resolution.replace("###클로바:", "").lstrip()
+
+    # 한국어를 일본어로 번역
+    translator = Translator(to_lang="ja")
+    dream_resolution = translator.translate(dream_resolution)
+
     return dream_resolution
