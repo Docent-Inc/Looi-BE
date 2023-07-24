@@ -3,7 +3,7 @@ from app.db.models.line_chatbot_user import get_Base
 
 Base = get_Base()
 
-class kakao_chatbot_dream(Base):
+class line_chatbot_dream(Base):
     __tablename__ = "line_chatbot_dream"
 
     id = Column(Integer, primary_key=True)

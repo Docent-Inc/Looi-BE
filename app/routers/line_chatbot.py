@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 import os
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from app.db.database import get_SessionLocal
+from app.db.models.line_chatbot_dream import line_chatbot_dream
 from app.db.models.line_chatbot_user import line_chatbot_user
 from app.feature.diary import createDiary
 from app.feature.generate_jp import generate_text, generate_resolution_linechatbot, generate_resolution_clova
@@ -128,6 +129,7 @@ async def handle_message(event):
                 event.reply_token,
                 TextSendMessage(text="「夢」を入力すると夢を作成します。"))
             return
+        # 내 정보
 
         # 글자 수 제한
         elif len(dream_text) < 10 or len(dream_text) > 200:
@@ -137,10 +139,7 @@ async def handle_message(event):
             return
 
         # 꿈 생성 제한 3회
-        user_id = event.source.user_id
-        if user_id not in user_requests:
-            user_requests[user_id] = 0
-        if user_requests[user_id] >= MAX_REQUESTS_PER_DAY:
+        if user.day_count >= MAX_REQUESTS_PER_DAY:
             await line_bot_api.reply_message(
                 event.reply_token,
                 TextSendMessage(text="1日3回までです。"))
@@ -163,14 +162,26 @@ async def handle_message(event):
             is_public=True,
         )
 
-        await createDiary(create, 3, db)
-        generated_text = f"【{dream_name}】\n{dream}\n\n【夢占い】\n{dream_resolution}"
-        user_requests[user_id] += 1
+        diary_id = await createDiary(create, 3, db)
+        generated_text = f"{dream_name}\n\n{dream}\n\n夢占い: {dream_resolution}"
         await line_bot_api.reply_message(
             event.reply_token,
             [ImageSendMessage(original_content_url=dream_image_url, preview_image_url=dream_image_url),
              TextSendMessage(text=generated_text)]
         )
+
+        user_id = user.id
+        line_user_dream = line_chatbot_dream(
+            user_id=user_id,
+            diary_id=diary_id,
+        )
+        db.add(line_user_dream)
+        db.commit()
+
+        user = db.query(line_chatbot_user).filter(line_chatbot_user.id == user_id).first()
+        user.day_count += 1
+        user.total_generated_dream += 1
+        db.commit()
 
         return
     finally:
