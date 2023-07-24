@@ -10,5 +10,5 @@ class kakao_chatbot_dream(Base):
     user_id = Column(Integer, ForeignKey('kakao_chatbot_user.id'), nullable=False)
     diary_id = Column(Integer, ForeignKey('Diary.id'), nullable=False)
 
-def get_kakao_chatbot_dreamBase():
+def get_Base():
     return Base
