@@ -26,6 +26,8 @@ async def generate_text(text: str, userId: int, db: get_db()) -> str:
             {"role": "system", "content": "A digital art illustration vividly depicting a car accident on a bustling city street, bathed in harsh daylight that intensifies the vibrant and contrasting colors, the intense and painful mood is centralized on the moment of collision."},
             {"role": "user", "content": "運転中に事故が発生しましたが、痛すぎました。"},
             {"role": "system", "content": "A terrifying digital illustration of a dark, foreboding scene where an unseen antagonist's hands are tightly wrapped around the dreamer's throat, a stark contrast of vivid red blood against the dreamer's pallid skin, symbolizing imminent death."},
+            {"role": "user", "content": "적에게 계속 도망치면서 세상을 구할 목표를 향해 팀원들과 향해 나아간다. 모험중에서 새로운 사람도 만나며 나아가지만 결국 나 혼자서 해내야 하는 상황에 마주친다. 하지만 목표를 향한 문제 풀이 과정에서 답도 모르지만 안풀리는 상황에 놓이고 적에게 붙잡히지는 않았지만 따라잡히게 된다."},
+            {"role": "system", "content": "Hero's journey, digital art, illustration, Adventure to save world, Dramatic adventure lighting, Vivid fantasy colors, Determination and anxiety, Spotlight on the lone struggle and pursuit."},
             {"role": "user", "content": message}
         ]
         prompt = await send_gpt_request(messages_prompt)
@@ -78,8 +80,9 @@ async def generate_resolution_clova(text: str, db: get_db()) -> str:
     dream_resolution = await send_hyperclova_request(prompt)
     dream_resolution = dream_resolution.replace("###클로바:", "").lstrip()
 
+    print(dream_resolution)
     # 한국어를 일본어로 번역
     translator = Translator(to_lang="ja")
-    dream_resolution = translator.translate(dream_resolution)
+    dream_resolution_jp = translator.translate(dream_resolution)
 
-    return dream_resolution
+    return dream_resolution_jp
