@@ -150,7 +150,10 @@ async def make_chatgpt_async_callback_request_to_openai_from_kakao(
 
     # 내 정보 보여주기
     elif kakao_ai_request['userRequest']['utterance'] == "내 정보" or kakao_ai_request['userRequest']['utterance'] == "내정보":
-        return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "내 mbti: " + user.mbti + "\n오늘 남은 요청 횟수: " + str(MAX_REQUESTS_PER_DAY - user.day_count) + "번\n총 생성한 꿈의 수: " + str(user.total_generated_dream) + "개"}}]}}
+        if user.mbti is None:
+            return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "mbti가 아직 설정 되지 않았어요!\nmbti를 설정하려면 mbti를 입력해주세요!\n오늘 남은 요청 횟수 : " + str(MAX_REQUESTS_PER_DAY - user.day_count) + "번\n총 생성한 꿈의 수: " + str(user.total_generated_dream) + "개"}}]}}
+        else:
+            return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "내 mbti: " + user.mbti + "\n오늘 남은 요청 횟수: " + str(MAX_REQUESTS_PER_DAY - user.day_count) + "번\n총 생성한 꿈의 수: " + str(user.total_generated_dream) + "개"}}]}}
 
     # 무의식 분석
     elif kakao_ai_request['userRequest']['utterance'] == "무의식 분석":
