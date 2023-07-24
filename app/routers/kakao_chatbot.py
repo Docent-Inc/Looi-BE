@@ -10,6 +10,7 @@ from app.db.database import get_db
 from app.db.models.diary_ko import Diary_ko
 from app.db.models.kakao_chatbot_dream import kakao_chatbot_dream
 from app.db.models.kakao_chatbot_user import kakao_chatbot_user
+from app.db.models.today_luck import today_luck
 from app.feature.aiRequset import send_hyperclova_request
 from app.feature.diary import createDiary
 from app.feature.generate_kr import generate_text, generate_resolution_clova
@@ -129,9 +130,11 @@ async def create_today_luck(url: str, user_id: int, db: Session):
 
 
     # 오늘의 운세 생성
-    prompt = f"꿈의 내용을 보고 오늘의 운세를 만들어줘" \
-             f"###꿈 내용: 나랑 친한친구들이 다같이 모여서 놀다가 갑자기 한명씩 사라져서 마지막엔 나만 남았다. 그래서 혼자 울다가 깼다." \
+    prompt = f"꿈의 내용을 보고 오늘의 운세를 만들어줘, 꿈의 내용은 참고만 하고 내용에 녹아들어가게 해주고, 사자성어로 운세 총운을 만들어줘" \
+             f"###꿈 내용: 나랑 친한 친구들이 다같이 모여서 놀다가 갑자기 한명씩 사라져서 마지막엔 나만 남았다. 그래서 혼자 울다가 깼다." \
              f"###클로바: 오늘의 운세 총운은 “여어득수” 입니다. 기대치 않았던 곳에서 큰 지원을 받게 되니 일을 더욱 잘 풀리고 몸과 마음 또한 더없이 기쁘고 편할 수 있을 것입니다. 당신에게 스트레스로 작용했던 일이 있다면 당신의 노력이 바탕이 되어 해결할 수 있는 기회도 잡을 수 있습니다. 또한 주변사람들로부터 도움이나 조언을 통해서 자신의 방향을 잡을 수도 있습니다. 그러나 자신의 의지를 잃지 않는 것도 중요한 부분입니다. 당신에게 닥친 이 기회를 잘 활용한다면 충분히 많은 성과와 발전이 있을 것이지요. 조금 더 분발하세요." \
+             f"###꿈 내용: 제가 좋아하는 연예인이랑 사귀는 꿈 꿨어요! 완전 행복했어요ᄒᄒ" \
+             f"###클로바: 오늘의 운세 총운은 “이럴수가” 입니다. 마음이 다소 들떠 있는 날이니 추스르되 긴장은 푸시기 바랍니다. 너무 무리하는 것은 오히려 당신에게 이로울 수 없는 것입니다. 또한 당신이 원하는 만큼의 목표에 가까워왔다고 하여 마음을 놓아버리거나 쉽게 생각하는 태도로 좋지 않습니다. 끝까지 마무리할 수 있도록 최선을 노력을 다하는 것이 좋고 마음을 좀 더 여유롭게 가지고 행동하는 것이 필요하겠습니다. 또한 그저 평소에 해왔던 것과 같이 행동하면 어려울 것이 없는 날이니 눈앞에 놓인 것에 충실해 보시기 바랍니다." \
              f"###꿈 내용: {dream_text.dream}"
     # HyperClova를 호출하여 해몽 결과물을 받아옴
 
@@ -147,6 +150,14 @@ async def create_today_luck(url: str, user_id: int, db: Session):
         template=Template(outputs=outputs)
     ).dict()
     response = requests.post(url, json=request_body)
+
+    luck = today_luck(
+        user_text=dream_text.dream,
+        today_luck=dream_resolution,
+    )
+    db.add(luck)
+    db.commit()
+    db.refresh(luck)
 
     # 카카오 챗봇 응답 확인
     if response.status_code == 200:
@@ -220,7 +231,6 @@ async def make_chatgpt_async_callback_request_to_openai_from_kakao(
         if user.day_count == 0:
             return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "도슨트는 오늘 꾼 꿈을 분석해 운세를 제공해드려요!\n\n오늘 꾼 꿈을 입력해주세요!"}}]}}
         else:
-            print(user.id)
             background_tasks.add_task(create_today_luck, url=kakao_ai_request['userRequest']['callbackUrl'], user_id=user.id, db=db)
 
     # total_users 정보
@@ -258,11 +268,3 @@ async def make_chatgpt_async_callback_request_to_openai_from_kakao(
 
     # 카카오 챗봇에게 보낼 응답을 반환합니다.
     return {"version": "2.0", "useCallback": True}
-
-@router.post("/text")
-async def test(
-        user_id: int,
-        background_tasks: BackgroundTasks,
-        db: Session = Depends(get_db),
-):
-    background_tasks.add_task(create_today_luck, "qwer", user_id, db)
