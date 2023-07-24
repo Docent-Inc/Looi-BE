@@ -149,7 +149,10 @@ async def handle_message(event):
         # 꿈 생성
         id, dream_name, dream, dream_image_url = await generate_text(dream_text, 3, db)
         # 해몽 생성
-        dream_resolution = await generate_resolution_clova(dream_text)
+        if user.mbti is None:
+            dream_resolution = await generate_resolution_clova(dream_text, db)
+        else:
+            dream_resolution = await generate_resolution_clova(user.mbti + ", " + dream_text, db)
 
         create = Create(
             dream_name=dream_name,
