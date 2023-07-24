@@ -6,7 +6,7 @@ import pytz
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from starlette.background import BackgroundTasks
-from app.db.database import get_db
+from app.db.database import get_db, get_SessionLocal
 from app.db.models.diary_ko import Diary_ko
 from app.db.models.kakao_chatbot_dream import kakao_chatbot_dream
 from app.db.models.kakao_chatbot_user import kakao_chatbot_user
@@ -25,11 +25,17 @@ router = APIRouter(prefix="/kakao-chatbot")
 
 # 매일 0시에 모든 user 의 day_count 를 0으로 초기화
 MAX_REQUESTS_PER_DAY = 3
-async def reset_day_count(db: Session = Depends(get_db)):
-    users = db.query(kakao_chatbot_user).all()
-    for user in users:
-        user.day_count = 0
-    db.commit()
+async def reset_day_count():
+    SessionLocal = get_SessionLocal()
+    db = SessionLocal()
+    try:
+        users = db.query(kakao_chatbot_user).all()
+        for user in users:
+            user.day_count = 0
+        db.commit()
+    finally:
+        db.close()
+
 
 # Schedule the reset_day_count function to run at 0:00 every day (KST)
 cron_task = aiocron.crontab('0 0 * * *', func=reset_day_count, tz=pytz.timezone('Asia/Seoul'))

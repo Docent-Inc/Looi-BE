@@ -3,15 +3,11 @@ import pytz
 from aiohttp import ClientTimeout
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage, ImageSendMessage, ImageMessage
-from fastapi import APIRouter, Request, HTTPException, Depends
+from fastapi import APIRouter, Request, HTTPException
 from pydantic import BaseModel
 from typing import List
-from dotenv import load_dotenv
 import os
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from sqlalchemy.orm import Session
-
-from app.db.database import get_SessionLocal, get_db
+from app.db.database import get_SessionLocal
 from app.db.models.line_chatbot_dream import line_chatbot_dream
 from app.db.models.line_chatbot_user import line_chatbot_user
 from app.feature.diary import createDiary
@@ -21,15 +17,18 @@ from app.schemas.request.crud import Create
 from linebotx import LineBotApiAsync, WebhookHandlerAsync
 from linebotx.http_client import AioHttpClient, AioHttpResponse
 from pytz import timezone
-
-scheduler = AsyncIOScheduler(timezone="Asia/Tokyo")
 # 매일 0시에 모든 user 의 day_count 를 0으로 초기화
 MAX_REQUESTS_PER_DAY = 3
-async def reset_day_count(db: Session = Depends(get_db)):
-    users = db.query(line_chatbot_user).all()
-    for user in users:
-        user.day_count = 0
-    db.commit()
+async def reset_day_count():
+    SessionLocal = get_SessionLocal()
+    db = SessionLocal()
+    try:
+        users = db.query(line_chatbot_user).all()
+        for user in users:
+            user.day_count = 0
+        db.commit()
+    finally:
+        db.close()
 
 # Schedule the reset_day_count function to run at 0:00 every day (KST)
 cron_task = aiocron.crontab('0 0 * * *', func=reset_day_count, tz=pytz.timezone('Asia/Tokyo'))
