@@ -117,9 +117,11 @@ async def create_today_luck(user_day_count: int, user_id: int, db: Session):
     '''
     # kakao_chatbot_dream에서 마지막으로 생성된 꿈 가져오기, user_day_count갯수만큼
     user_dream = db.query(kakao_chatbot_dream).filter(kakao_chatbot_dream.user_id == user_id).order_by(kakao_chatbot_dream.id.desc()).limit(user_day_count).all()
+    print(user_dream)
     dream_list = []
     for dream in user_dream:
         dream_list.append(dream.diary_id)
+    print(dream_list)
     # dream_list를 이용해 Diary_KR 테이블에서 꿈 가져오기
     dream = db.query(Diary_ko).filter(Diary_ko.id.in_(dream_list)).all()
 
