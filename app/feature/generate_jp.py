@@ -3,7 +3,7 @@ from app.core.current_time import get_current_time
 from app.feature.generateImg import generate_img
 from app.db.models.dream import DreamText, DreamImage
 from app.db.database import get_db
-from app.feature.aiRequset import send_gpt_request, send_bard_request
+from app.feature.aiRequset import send_gpt_request, send_bard_request, send_hyperclova_request
 
 
 async def generate_text(text: str, userId: int, db: get_db()) -> str:
@@ -65,4 +65,14 @@ async def generate_text(text: str, userId: int, db: get_db()) -> str:
 async def generate_resolution_linechatbot(text: str) -> str:
     prompt = f"夢を見ましたが、この夢を短く解釈してください。人間のように話し、最初の文章は'この夢は'と始まってください。length=150、段落の変更なしで解釈内容だけを返してください。夢の内容：{text}"
     dream_resolution = await send_bard_request(prompt)
+    return dream_resolution
+
+async def generate_resolution_clova(text: str, db: get_db()) -> str:
+    prompt = f"꿈을 요소별로 자세하게, mbti맞춤 해몽 해줘. mbti가 입력되지 않았으면 자세하게 꿈의 요소별 일반적인 꿈 해몽 해줘." \
+             f"일본어로만 해몽해줘." \
+             f"###꿈 내용: {text}"
+    # HyperClova를 호출하여 해몽 결과물을 받아옴
+
+    dream_resolution = await send_hyperclova_request(prompt)
+    dream_resolution = dream_resolution.replace("###클로바:", "").lstrip()
     return dream_resolution

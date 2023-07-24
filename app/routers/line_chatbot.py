@@ -10,7 +10,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from app.db.database import get_SessionLocal
 from app.db.models.line_chatbot_user import line_chatbot_user
 from app.feature.diary import createDiary
-from app.feature.generate_jp import generate_text, generate_resolution_linechatbot
+from app.feature.generate_jp import generate_text, generate_resolution_linechatbot, generate_resolution_clova
 from app.schemas.common import ApiResponse
 from app.schemas.request.crud import Create
 from linebotx import LineBotApiAsync, WebhookHandlerAsync
@@ -30,7 +30,14 @@ scheduler.add_job(reset_counter, 'cron', hour=0)
 scheduler.start()
 load_dotenv()
 
-
+mbti_list = [
+        "ISTJ", "ISFJ", "INFJ", "INTJ", "ISTP", "ISFP", "INFP", "INTP", "ESTP", "ESFP", "ENFP", "ENTP", "ESTJ", "ESFJ",
+        "ENFJ", "ENTJ",
+        "istj", "isfj", "infj", "intj", "istp", "isfp", "infp", "intp", "estp", "esfp", "enfp", "entp", "estj", "esfj",
+        "enfj", "entj",
+        "Istj", "Isfj", "Infj", "Intj", "Istp", "Isfp", "Infp", "Intp", "Estp", "Esfp", "Enfp", "Entp", "Estj", "Esfj",
+        "Enfj", "Entj",
+    ]
 
 class CustomAioHttpClient(AioHttpClient):
     def __init__(self):
@@ -107,8 +114,23 @@ async def handle_message(event):
             db.add(user)
             db.commit()
 
+        # mbti설정
+        if dream_text in mbti_list:
+            user.mbti = dream_text
+            db.commit()
+            await line_bot_api.reply_message(
+                event.reply_token,
+                TextSendMessage(text="MBTIが設定されました。"))
+            return
+        # 도움말
+        elif dream_text == "おしえて":
+            await line_bot_api.reply_message(
+                event.reply_token,
+                TextSendMessage(text="「夢」を入力すると夢を作成します。"))
+            return
+
         # 글자 수 제한
-        if len(dream_text) < 10 or len(dream_text) > 200:
+        elif len(dream_text) < 10 or len(dream_text) > 200:
             await line_bot_api.reply_message(
                 event.reply_token,
                 TextSendMessage(text="10文字以上200文字以下で入力してください。"))  # Echo message
@@ -127,7 +149,7 @@ async def handle_message(event):
         # 꿈 생성
         id, dream_name, dream, dream_image_url = await generate_text(dream_text, 3, db)
         # 해몽 생성
-        dream_resolution = await generate_resolution_linechatbot(dream_text)
+        dream_resolution = await generate_resolution_clova(dream_text)
 
         create = Create(
             dream_name=dream_name,
