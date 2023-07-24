@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 import os
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from app.db.database import get_SessionLocal
+from app.db.models.line_chatbot_user import line_chatbot_user
 from app.feature.diary import createDiary
 from app.feature.generate_jp import generate_text, generate_resolution_linechatbot
 from app.schemas.common import ApiResponse
@@ -72,6 +73,7 @@ async def callback(request: Request):
         print("Signature is missing.")
         raise HTTPException(status_code=400, detail="Bad Request: Signature is missing.")
     try:
+        print(body.decode().source.userId)
         await handler.handle(body.decode(), signature)
     except InvalidSignatureError:
         print("Invalid signature. Check your channel access token/channel secret.")
@@ -82,10 +84,30 @@ async def callback(request: Request):
 
 @handler.add(MessageEvent, message=TextMessage)
 async def handle_message(event):
+    '''
+    Line 챗봇 메시지 핸들러
+
+    :param event: 라인에서 보내주는 사용자 정보 body
+    :return:
+    '''
     dream_text = event.message.text
     SessionLocal = get_SessionLocal()
     db = SessionLocal()  # 실제 데이터베이스 세션을 얻는다.
     try:
+        # user_id는 라인 챗봇 사용자의 고유 식별자입니다.
+        user_id = event.source.userId
+
+        # database에 저장된 사용자의 정보를 가져옵니다.
+        user = db.query(line_chatbot_user).filter(line_chatbot_user.line_user_id == user_id).first()
+        if user is None:
+            user = line_chatbot_user(
+                line_user_id=user_id,
+                day_count=0,
+                total_generated_dream=0,
+            )
+            db.add(user)
+            db.commit()
+
         # 글자 수 제한
         if len(dream_text) < 10 or len(dream_text) > 200:
             await line_bot_api.reply_message(
