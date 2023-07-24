@@ -106,7 +106,7 @@ async def create_callback_request_kakao(prompt: str, url: str, user_id: int, db:
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-async def create_today_luck(user_day_count: int, user_id: int, db: Session):
+async def create_today_luck(user_id: int, db: Session):
     '''
     오늘의 운세 생성
 
@@ -115,18 +115,13 @@ async def create_today_luck(user_day_count: int, user_id: int, db: Session):
     :param db: database session을 의존성 주입합니다.
     :return:
     '''
-    # kakao_chatbot_dream에서 마지막으로 생성된 꿈 가져오기, user_day_count갯수만큼
-    user_dream = db.query(kakao_chatbot_dream).filter(kakao_chatbot_dream.user_id == user_id).order_by(kakao_chatbot_dream.id.desc()).limit(user_day_count).all()
-    print(user_dream)
-    dream_list = []
-    for dream in user_dream:
-        dream_list.append(dream.diary_id)
-    print(dream_list)
-    # dream_list를 이용해 Diary_KR 테이블에서 꿈 가져오기
-    dream = db.query(Diary_ko).filter(Diary_ko.id.in_(dream_list)).all()
-
+    # kakao_chatbot_dream에서 마지막으로 생성된 꿈 가져오기
+    dream = db.query(kakao_chatbot_dream).filter(kakao_chatbot_dream.user_id == user_id).order_by(kakao_chatbot_dream.id.desc()).first()
+    if dream is None:
+        raise HTTPException(status_code=404, detail="dream not found")
+    print(dream.diary_id)
     # 오늘의 운세 생성
-    print(dream)
+
 
 
 @router.post("/callback", tags=["kakao"])
@@ -156,8 +151,6 @@ async def make_chatgpt_async_callback_request_to_openai_from_kakao(
         )
         db.add(user)
         db.commit()
-
-    print(kakao_ai_request['userRequest']['utterance'])
 
     # mbti 설정하기
     if kakao_ai_request['userRequest']['utterance'].lower() in mbti_list:
@@ -196,7 +189,7 @@ async def make_chatgpt_async_callback_request_to_openai_from_kakao(
         if user.day_count == 0:
             return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "도슨트는 오늘 꾼 꿈을 분석해 운세를 제공해드려요!\n\n오늘 꾼 꿈을 입력해주세요!"}}]}}
         else:
-            background_tasks.add_task(create_today_luck, user.day_count, user.id)
+            background_tasks.add_task(create_today_luck, user.id)
 
     # total_users 정보
     elif kakao_ai_request['userRequest']['utterance'] == "total_users":
