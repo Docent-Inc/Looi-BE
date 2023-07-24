@@ -134,6 +134,8 @@ async def make_chatgpt_async_callback_request_to_openai_from_kakao(
         db.add(user)
         db.commit()
 
+    print(kakao_ai_request['userRequest']['utterance'])
+
     # mbti 설정하기
     if kakao_ai_request['userRequest']['utterance'].lower() in mbti_list:
         user.mbti = kakao_ai_request['userRequest']['utterance'].lower()
