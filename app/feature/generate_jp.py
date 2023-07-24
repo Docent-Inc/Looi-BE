@@ -1,9 +1,20 @@
 import asyncio
 from app.core.current_time import get_current_time
+from app.db.models.mbti_data_JP import Mbti_data_JP
 from app.feature.generateImg import generate_img
 from app.db.models.dream import DreamText, DreamImage
 from app.db.database import get_db
 from app.feature.aiRequset import send_gpt_request, send_bard_request, send_hyperclova_request
+
+mbti_list = [
+        "ISTJ", "ISFJ", "INFJ", "INTJ", "ISTP", "ISFP", "INFP", "INTP", "ESTP", "ESFP", "ENFP", "ENTP", "ESTJ", "ESFJ",
+        "ENFJ", "ENTJ",
+        "istj", "isfj", "infj", "intj", "istp", "isfp", "infp", "intp", "estp", "esfp", "enfp", "entp", "estj", "esfj",
+        "enfj", "entj",
+        "Istj", "Isfj", "Infj", "Intj", "Istp", "Isfp", "Infp", "Intp", "Estp", "Esfp", "Enfp", "Entp", "Estj", "Esfj",
+        "Enfj", "Entj",
+    ]
+
 async def generate_text(text: str, userId: int, db: get_db()) -> str:
     async def get_dreamName(message: str) -> str:
         messages_prompt = [
@@ -79,4 +90,15 @@ async def generate_resolution_clova(text: str, db: get_db()) -> str:
     # HyperClova를 호출하여 해몽 결과물을 받아옴
     dream_resolution = await send_hyperclova_request(prompt)
     dream_resolution = dream_resolution.replace("###클로바:", "").lstrip()
+
+    # MBTI 맞춤 해몽이라면 데이터베이스에 저장함
+    if text[0:4] in mbti_list:
+        mbti_data = Mbti_data_JP(
+            user_text=text,
+            mbti_resolution=dream_resolution,
+        )
+        db.add(mbti_data)
+        db.commit()
+        db.refresh(mbti_data)
+
     return dream_resolution

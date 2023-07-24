@@ -1,6 +1,6 @@
 import asyncio
 from app.core.current_time import get_current_time
-from app.db.models.mbti_data import Mbti_data
+from app.db.models.mbti_data_KR import Mbti_data_KR
 from app.feature.generateImg import generate_img
 from app.db.models.dream import DreamText, DreamImage
 from app.db.database import get_db
@@ -118,7 +118,7 @@ async def generate_resolution_clova(text: str, db: get_db()) -> str:
 
     # MBTI 맞춤 해몽이라면 데이터베이스에 저장함
     if text[0:4] in mbti_list:
-        mbti_data = Mbti_data(
+        mbti_data = Mbti_data_KR(
             user_text=text,
             mbti_resolution=dream_resolution,
         )

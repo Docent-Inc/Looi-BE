@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, Text
-from app.db.models.mbti_data import get_MBTIBase
+from app.db.models.mbti_data_KR import get_Base
 
-Base = get_MBTIBase()
+Base = get_Base()
 
 class kakao_chatbot_user(Base):
     __tablename__ = "kakao_chatbot_user"
