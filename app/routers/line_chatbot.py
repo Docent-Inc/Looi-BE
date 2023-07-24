@@ -89,13 +89,12 @@ async def handle_message(event):
     :param event: 라인에서 보내주는 사용자 정보 body
     :return:
     '''
-    print(type(event))
     dream_text = event.message.text
     SessionLocal = get_SessionLocal()
     db = SessionLocal()  # 실제 데이터베이스 세션을 얻는다.
     try:
         # user_id는 라인 챗봇 사용자의 고유 식별자입니다.
-        user_id = event['source']['userId']
+        user_id = event.source.user_id
 
         # database에 저장된 사용자의 정보를 가져옵니다.
         user = db.query(line_chatbot_user).filter(line_chatbot_user.line_user_id == user_id).first()
