@@ -299,6 +299,9 @@ async def kakao_ai_chatbot_callback(
                 return {"version": "2.0", "template": {"outputs": [{"SimpleImage": {"imageUrl": my_dream_url.image_url}}, {"simpleText": {"text": f"{my_dream.dream_name}\n\n꿈 내용: {my_dream.dream}\n\n해몽: {my_dream.dream_resolution}"}}]}}
         except Exception as e:
             print(e)
+            print("diary_id: " + str(diary_id))
+            print("my_dream_url: " + str(my_dream_url.image_url))
+            print("my_dream: " + str(my_dream.dream))
             return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "잘못된 입력입니다!"}}]}}
 
     # 무의식 분석
