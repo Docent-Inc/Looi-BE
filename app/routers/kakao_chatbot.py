@@ -287,6 +287,7 @@ async def kakao_ai_chatbot_callback(
     elif kakao_ai_request['userRequest']['utterance'] == "total_dreams":
         return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "총 꿈의 수: " + str(db.query(kakao_chatbot_dream).count()) + "개"}}]}}
 
+    # 꿈 다시보기
     elif len(kakao_ai_request['userRequest']['utterance']) <= 3:
         try:
             dream_number = int(kakao_ai_request['userRequest']['utterance'])
@@ -297,7 +298,7 @@ async def kakao_ai_chatbot_callback(
                 diary_id = my_dreams[dream_number - 1].diary_id
                 my_dream_url = db.query(Diary).filter(Diary.id == diary_id).first()
                 my_dream = db.query(Diary_ko).filter(Diary_ko.Diary_id == diary_id).first()
-                return {"version": "2.0", "template": {"outputs": [{"simpleImage": {"imageUrl": my_dream_url.image_url}}, {"simpleText": {"text": my_dream.dream_name}}]}}
+                return {"version": "2.0", "template": {"outputs": [{"simpleImage": {"imageUrl": my_dream_url.image_url}}, {"simpleText": {"text": my_dream.dream_name + "\n\n꿈 내용: " + my_dream.dream + "\n\n해몽: " + my_dream.resolution}}]}}
 
         except:
             return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "잘못된 입력입니다!"}}]}}
