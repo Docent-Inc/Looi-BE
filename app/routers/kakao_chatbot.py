@@ -142,6 +142,26 @@ async def create_callback_request_kakao(prompt: str, url: str, user_id: int, db:
         raise HTTPException(status_code=500, detail=str(e))
 
 
+async def read_my_diary(url: str, diary_id: int, db: Session):
+    my_dream_url = db.query(Diary).filter(Diary.id == diary_id).first()
+    my_dream = db.query(Diary_ko).filter(Diary_ko.Diary_id == diary_id).first()
+
+    outputs = [
+        Output(simpleImage=SimpleImage(imageUrl=my_dream_url)),
+        Output(simpleText=SimpleText(text=f"{my_dream.dream_name}\n\n꿈 내용: {my_dream.dream}\n\n해몽: {my_dream.resolution}"))
+    ]
+    request_body = KakaoChatbotResponse(
+        version="2.0",
+        template=Template(outputs=outputs)
+    ).dict()
+    response = requests.post(url, json=request_body)
+
+    # 카카오 챗봇 응답 확인
+    if response.status_code == 200:
+        print("kakao chatbot callback request success")
+    else:
+        print(f"kakao chatbot callback request fail: {response.status_code}, {response.text}")
+
 
 async def create_today_luck(url: str, user_id: int, db: Session):
     '''
@@ -265,7 +285,7 @@ async def kakao_ai_chatbot_callback(
             return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "도슨트는 오늘 꾼 꿈을 분석해 운세를 제공해드려요!\n\n오늘 꾼 꿈을 입력해주세요!"}}]}}
         else:
             background_tasks.add_task(create_today_luck, url=kakao_ai_request['userRequest']['callbackUrl'], user_id=user.id, db=db)
-            return {"version": "2.0", "useCallback": True, "data": {"text": "오늘의 운세를 생성하는 중입니다!"}}
+            return {"version": "2.0", "useCallback": True, "data": {"text": "오늘의 운세를 분석중이에요!"}}
 
     elif kakao_ai_request['userRequest']['utterance'] == "😴 내 꿈 보기":
         my_dreams = db.query(kakao_chatbot_dream).filter(kakao_chatbot_dream.user_id == user.id).all()
@@ -295,10 +315,8 @@ async def kakao_ai_chatbot_callback(
                 return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "꿈 번호를 잘못 입력하셨어요!"}}]}}
             else:
                 diary_id = my_dreams[dream_number - 1].diary_id
-                my_dream_url = db.query(Diary).filter(Diary.id == diary_id).first()
-                my_dream = db.query(Diary_ko).filter(Diary_ko.Diary_id == diary_id).first()
-                print(f"my_dream_url.image_url: {my_dream_url.image_url}, my_dream.dream_name: {my_dream.dream_name}, my_dream.dream: {my_dream.dream}, my_dream.resolution: {my_dream.resolution}")
-                return {"version": "2.0", "template": {"outputs": [{"SimpleImage": {"imageUrl": my_dream_url.image_url}}, {"simpleText": {"text": f"{my_dream.dream_name}\n\n꿈 내용: {my_dream.dream}\n\n해몽: {my_dream.resolution}"}}]}}
+                background_tasks.add_task(read_my_diary, url=kakao_ai_request['userRequest']['callbackUrl'], diary_id=diary_id, db=db)
+                return {"version": "2.0", "useCallback": True, "data": {"text": "꿈을 찾는중이에요!"}}
         except:
             return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "잘못된 입력입니다!"}}]}}
 
