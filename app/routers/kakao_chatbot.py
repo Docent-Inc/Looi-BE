@@ -265,6 +265,7 @@ async def kakao_ai_chatbot_callback(
             return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "도슨트는 오늘 꾼 꿈을 분석해 운세를 제공해드려요!\n\n오늘 꾼 꿈을 입력해주세요!"}}]}}
         else:
             background_tasks.add_task(create_today_luck, url=kakao_ai_request['userRequest']['callbackUrl'], user_id=user.id, db=db)
+            return {"version": "2.0", "useCallback": True, "data": {"text": "오늘의 운세를 생성하는 중입니다!"}}
 
     elif kakao_ai_request['userRequest']['utterance'] == "😴 내 꿈 보기":
         my_dreams = db.query(kakao_chatbot_dream).filter(kakao_chatbot_dream.user_id == user.id).all()
@@ -296,6 +297,7 @@ async def kakao_ai_chatbot_callback(
                 diary_id = my_dreams[dream_number - 1].diary_id
                 my_dream_url = db.query(Diary).filter(Diary.id == diary_id).first()
                 my_dream = db.query(Diary_ko).filter(Diary_ko.Diary_id == diary_id).first()
+                print(f"my_dream_url.image_url: {my_dream_url.image_url}, my_dream.dream_name: {my_dream.dream_name}, my_dream.dream: {my_dream.dream}, my_dream.resolution: {my_dream.resolution}")
                 return {"version": "2.0", "template": {"outputs": [{"SimpleImage": {"imageUrl": my_dream_url.image_url}}, {"simpleText": {"text": f"{my_dream.dream_name}\n\n꿈 내용: {my_dream.dream}\n\n해몽: {my_dream.resolution}"}}]}}
         except:
             return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "잘못된 입력입니다!"}}]}}
@@ -325,5 +327,6 @@ async def kakao_ai_chatbot_callback(
                                   prompt=user.mbti + ", " + kakao_ai_request['userRequest']['utterance'],
                                   url=kakao_ai_request['userRequest']['callbackUrl'], user_id=user.id, db=db)
 
-    # 카카오 챗봇에게 보낼 응답을 반환합니다.
-    return {"version": "2.0", "useCallback": True}
+        return {"version": "2.0", "useCallback": True, "data": {"text": "꿈을 분석하는 중이에요! \n20초 정도 소요될 거 같아요"}}
+
+    return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "잘못된 입력입니다!"}}]}}
