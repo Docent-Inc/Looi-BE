@@ -122,7 +122,8 @@ async def create_callback_request_kakao(prompt: str, url: str, user_id: int, db:
                  f"###클로바: 34" \
                  f"###꿈 내용: {prompt}"
 
-        status_score = await send_hyperclova_request(prompt).replace("###클로바:", "").lstrip()
+        status_score = await send_hyperclova_request(prompt)
+        status_score = status_score.replace("###클로바:", "").lstrip()
 
         user = db.query(kakao_chatbot_user).filter(kakao_chatbot_user.id == user_id).first()
         user.day_count += 1
@@ -297,6 +298,9 @@ async def kakao_ai_chatbot_callback(
                 my_dream = db.query(Diary_ko).filter(Diary_ko.id == diary_id).first()
                 return {"version": "2.0", "template": {"outputs": [{"SimpleImage": {"imageUrl": my_dream_url.image_url}}, {"simpleText": {"text": f"{my_dream.dream_name}\n\n꿈 내용: {my_dream.dream}\n\n해몽: {my_dream.dream_resolution}"}}]}}
         except:
+            print("diary_id: " + diary_id)
+            print("my_dream_url: " + my_dream_url)
+            print("my_dream: " + my_dream)
             return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "잘못된 입력입니다!"}}]}}
 
     # 무의식 분석
