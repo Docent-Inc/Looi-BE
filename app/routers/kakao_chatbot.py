@@ -297,7 +297,7 @@ async def kakao_ai_chatbot_callback(
                 diary_id = my_dreams[dream_number - 1].diary_id
                 my_dream_url = db.query(Diary).filter(Diary.id == diary_id).first()
                 my_dream = db.query(Diary_ko).filter(Diary_ko.Diary_id == diary_id).first()
-                return {"version": "2.0", "template": {"outputs": [{"simpleImage": {"imageUrl": my_dream_url.image_url}}]}}
+                return {"version": "2.0", "template": {"outputs": [{"simpleImage": {"imageUrl": my_dream_url.image_url}}, {"simpleText": {"text": my_dream.dream_name}}]}}
 
         except:
             return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "잘못된 입력입니다!"}}]}}
