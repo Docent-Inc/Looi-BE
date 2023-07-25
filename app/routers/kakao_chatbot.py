@@ -198,7 +198,7 @@ async def create_today_luck(url: str, user_id: int, db: Session):
 
 
 @router.post("/callback", tags=["kakao"])
-async def make_chatgpt_async_callback_request_to_openai_from_kakao(
+async def kakao_ai_chatbot_callback(
         kakao_ai_request: Dict[str, Any],
         background_tasks: BackgroundTasks,
         db: Session = Depends(get_db),
@@ -243,9 +243,9 @@ async def make_chatgpt_async_callback_request_to_openai_from_kakao(
     # 내 정보 보여주기
     elif kakao_ai_request['userRequest']['utterance'] == "🧐 내 정보" or kakao_ai_request['userRequest']['utterance'] == "내정보":
         if user.mbti is None:
-            return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "mbti가 아직 설정 되지 않았어요!\nmbti를 설정하려면 mbti를 입력해주세요!\n무의식 점수: " + user.status_score + "점\n오늘 남은 요청 횟수 : " + str(MAX_REQUESTS_PER_DAY - user.day_count) + "번\n총 생성한 꿈의 수: " + str(user.total_generated_dream) + "개"}}]}}
+            return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "mbti가 아직 설정 되지 않았어요!\nmbti를 설정하려면 mbti를 입력해주세요!\n무의식 점수: " + str(user.status_score) + "점\n오늘 남은 요청 횟수 : " + str(MAX_REQUESTS_PER_DAY - user.day_count) + "번\n총 생성한 꿈의 수: " + str(user.total_generated_dream) + "개"}}]}}
         else:
-            return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "내 mbti: " + user.mbti + "\n무의식 점수: " + user.status_score + "점\n오늘 남은 요청 횟수: " + str(MAX_REQUESTS_PER_DAY - user.day_count) + "번\n총 생성한 꿈의 수: " + str(user.total_generated_dream) + "개"}}]}}
+            return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "내 mbti: " + user.mbti + "\n무의식 점수: " + str(user.status_score) + "점\n오늘 남은 요청 횟수: " + str(MAX_REQUESTS_PER_DAY - user.day_count) + "번\n총 생성한 꿈의 수: " + str(user.total_generated_dream) + "개"}}]}}
 
     # 곽서준 정보
     elif kakao_ai_request['userRequest']['utterance'] == "곽서준":
