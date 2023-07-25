@@ -100,9 +100,22 @@ async def create_callback_request_kakao(prompt: str, url: str, user_id: int, db:
         ).dict()
         response = requests.post(url, json=request_body)
 
+        # 심리 점수 부여
+        prompt = f"꿈의 내용을 통해 100점 만점으로 심리상태 점수를 부여해줘" \
+                 f"###꿈 내용: entj, 엄마를 인천공항에 데려다주고 쌀국수도 먹었어" \
+                 f"###클로바: 87" \
+                 f"###꿈 내용: ISTJ, 치즈 김밥과 참치 김밥을 손에 들고 폭우가 쏟아지는 도시를 행복한 표정으로 뛰어간다." \
+                 f"###클로바: 95" \
+                 f"###꿈 내용: isfp, 내가 좋아하는 연예인이랑 같이 데이트하다가 집 가는 길에 차 타고 가다가 교통사고 나서 둘 다 죽음" \
+                 f"###클로바: 34" \
+                 f"###꿈 내용: {test}"
+
+        status_score = await send_hyperclova_request(prompt).replace("###클로바:", "").lstrip()
+
         user = db.query(kakao_chatbot_user).filter(kakao_chatbot_user.id == user_id).first()
         user.day_count += 1
         user.total_generated_dream += 1
+        user.status_score = int(user.status_score * 2 / 3 + int(status_score) / 3)
         db.commit()
 
         # 카카오 챗봇 응답 확인
@@ -193,6 +206,7 @@ async def make_chatgpt_async_callback_request_to_openai_from_kakao(
             kakao_user_id=user_id,
             day_count=0,
             total_generated_dream=0,
+            status_score=80,
         )
         db.add(user)
         db.commit()
@@ -214,9 +228,9 @@ async def make_chatgpt_async_callback_request_to_openai_from_kakao(
     # 내 정보 보여주기
     elif kakao_ai_request['userRequest']['utterance'] == "🧐 내 정보" or kakao_ai_request['userRequest']['utterance'] == "내정보":
         if user.mbti is None:
-            return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "mbti가 아직 설정 되지 않았어요!\nmbti를 설정하려면 mbti를 입력해주세요!\n오늘 남은 요청 횟수 : " + str(MAX_REQUESTS_PER_DAY - user.day_count) + "번\n총 생성한 꿈의 수: " + str(user.total_generated_dream) + "개"}}]}}
+            return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "mbti가 아직 설정 되지 않았어요!\nmbti를 설정하려면 mbti를 입력해주세요!\n무의식 점수: " + user.status_score + "점\n오늘 남은 요청 횟수 : " + str(MAX_REQUESTS_PER_DAY - user.day_count) + "번\n총 생성한 꿈의 수: " + str(user.total_generated_dream) + "개"}}]}}
         else:
-            return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "내 mbti: " + user.mbti + "\n오늘 남은 요청 횟수: " + str(MAX_REQUESTS_PER_DAY - user.day_count) + "번\n총 생성한 꿈의 수: " + str(user.total_generated_dream) + "개"}}]}}
+            return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "내 mbti: " + user.mbti + "\n무의식 점수: " + user.status_score + "\n오늘 남은 요청 횟수: " + str(MAX_REQUESTS_PER_DAY - user.day_count) + "번\n총 생성한 꿈의 수: " + str(user.total_generated_dream) + "개"}}]}}
 
     # 곽서준 정보
     elif kakao_ai_request['userRequest']['utterance'] == "곽서준":
@@ -271,3 +285,10 @@ async def make_chatgpt_async_callback_request_to_openai_from_kakao(
 
     # 카카오 챗봇에게 보낼 응답을 반환합니다.
     return {"version": "2.0", "useCallback": True}
+
+@router.post("/test")
+async def test(
+        test: str,
+):
+
+    return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": dream_resolution}}]}}
