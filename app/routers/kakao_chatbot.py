@@ -143,28 +143,6 @@ async def create_callback_request_kakao(prompt: str, url: str, user_id: int, db:
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
-async def read_my_diary(url: str, diary_id: int, db: Session):
-    my_dream_url = db.query(Diary).filter(Diary.id == diary_id).first()
-    my_dream = db.query(Diary_ko).filter(Diary_ko.Diary_id == diary_id).first()
-
-    outputs = [
-        Output(simpleImage=SimpleImage(imageUrl=my_dream_url)),
-        Output(simpleText=SimpleText(text=f"{my_dream.dream_name}\n\n꿈 내용: {my_dream.dream}\n\n해몽: {my_dream.resolution}"))
-    ]
-    request_body = KakaoChatbotResponse(
-        version="2.0",
-        template=Template(outputs=outputs)
-    ).dict()
-    response = requests.post(url, json=request_body)
-
-    # 카카오 챗봇 응답 확인
-    if response.status_code == 200:
-        print("kakao chatbot callback request success")
-    else:
-        print(f"kakao chatbot callback request fail: {response.status_code}, {response.text}")
-
-
 async def create_today_luck(url: str, user_id: int, db: Session):
     '''
     오늘의 운세 생성
@@ -299,7 +277,7 @@ async def kakao_ai_chatbot_callback(
             for dream_name in my_dreams:
                 text += f"\n{number}. {dream_name.dream_name}"
                 number += 1
-            return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "꿈 번호를 입력하시면 다시 볼 수 있어요!\n" +  text}}]}}
+            return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "꿈 번호를 입력하시면 다시 볼 수 있어요!\n" + text}}]}}
 
     # total_users 정보
     elif kakao_ai_request['userRequest']['utterance'] == "total_users":
@@ -319,7 +297,7 @@ async def kakao_ai_chatbot_callback(
                 diary_id = my_dreams[dream_number - 1].diary_id
                 my_dream_url = db.query(Diary).filter(Diary.id == diary_id).first()
                 my_dream = db.query(Diary_ko).filter(Diary_ko.Diary_id == diary_id).first()
-                return {"version": "2.0", "template": {"outputs": [{"simpleImage": {"imageUrl": my_dream_url.url}}]}}
+                return {"version": "2.0", "template": {"outputs": [{"simpleImage": {"imageUrl": my_dream_url.image_url}}]}}
 
         except:
             return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "잘못된 입력입니다!"}}]}}
