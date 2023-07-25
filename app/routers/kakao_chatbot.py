@@ -128,6 +128,8 @@ async def create_callback_request_kakao(prompt: str, url: str, user_id: int, db:
         user = db.query(kakao_chatbot_user).filter(kakao_chatbot_user.id == user_id).first()
         user.day_count += 1
         user.total_generated_dream += 1
+        if user.status_score == 0:
+            user.status_score = int(status_score)
         user.status_score = int(user.status_score * 2 / 3 + int(status_score) / 3)
         db.add(user)
 
@@ -242,7 +244,7 @@ async def kakao_ai_chatbot_callback(
             kakao_user_id=user_id,
             day_count=0,
             total_generated_dream=0,
-            status_score=80,
+            status_score=0,
         )
         db.add(user)
         db.commit()
@@ -315,8 +317,10 @@ async def kakao_ai_chatbot_callback(
                 return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "꿈 번호를 잘못 입력하셨어요!"}}]}}
             else:
                 diary_id = my_dreams[dream_number - 1].diary_id
-                background_tasks.add_task(read_my_diary, url=kakao_ai_request['userRequest']['callbackUrl'], diary_id=diary_id, db=db)
-                return {"version": "2.0", "useCallback": True, "data": {"text": "꿈을 찾는중이에요!"}}
+                my_dream_url = db.query(Diary).filter(Diary.id == diary_id).first()
+                my_dream = db.query(Diary_ko).filter(Diary_ko.Diary_id == diary_id).first()
+                return {"version": "2.0", "template": {"outputs": [{"simpleImage": {"imageUrl": my_dream_url.url}}]}}
+
         except:
             return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "잘못된 입력입니다!"}}]}}
 
