@@ -296,12 +296,8 @@ async def kakao_ai_chatbot_callback(
                 diary_id = my_dreams[dream_number - 1].diary_id
                 my_dream_url = db.query(Diary).filter(Diary.id == diary_id).first()
                 my_dream = db.query(Diary_ko).filter(Diary_ko.Diary_id == diary_id).first()
-                return {"version": "2.0", "template": {"outputs": [{"SimpleImage": {"imageUrl": my_dream_url.image_url}}, {"simpleText": {"text": f"{my_dream.dream_name}\n\n꿈 내용: {my_dream.dream}\n\n해몽: {my_dream.dream_resolution}"}}]}}
-        except Exception as e:
-            print(e)
-            print("diary_id: " + str(diary_id))
-            print("my_dream_url: " + str(my_dream_url.image_url))
-            print("my_dream: " + str(my_dream.dream))
+                return {"version": "2.0", "template": {"outputs": [{"SimpleImage": {"imageUrl": my_dream_url.image_url}}, {"simpleText": {"text": f"{my_dream.dream_name}\n\n꿈 내용: {my_dream.dream}\n\n해몽: {my_dream.resolution}"}}]}}
+        except:
             return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "잘못된 입력입니다!"}}]}}
 
     # 무의식 분석
