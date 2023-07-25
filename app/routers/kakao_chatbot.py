@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from starlette.background import BackgroundTasks
 from app.db.database import get_db, get_SessionLocal
 from app.db.models.diary_ko import Diary_ko
+from app.db.models.dream_score import dream_score
 from app.db.models.kakao_chatbot_dream import kakao_chatbot_dream
 from app.db.models.kakao_chatbot_user import kakao_chatbot_user
 from app.db.models.today_luck import today_luck
@@ -85,6 +86,7 @@ async def create_callback_request_kakao(prompt: str, url: str, user_id: int, db:
         kakao_user_dream = kakao_chatbot_dream(
             user_id=user_id,
             diary_id=diary_id,
+            dream_name=dream_name,
         )
         db.add(kakao_user_dream)
         db.commit()
@@ -100,24 +102,6 @@ async def create_callback_request_kakao(prompt: str, url: str, user_id: int, db:
         ).dict()
         response = requests.post(url, json=request_body)
 
-        # 심리 점수 부여
-        prompt = f"꿈의 내용을 통해 100점 만점으로 심리상태 점수를 부여해줘" \
-                 f"###꿈 내용: entj, 엄마를 인천공항에 데려다주고 쌀국수도 먹었어" \
-                 f"###클로바: 87" \
-                 f"###꿈 내용: ISTJ, 치즈 김밥과 참치 김밥을 손에 들고 폭우가 쏟아지는 도시를 행복한 표정으로 뛰어간다." \
-                 f"###클로바: 95" \
-                 f"###꿈 내용: isfp, 내가 좋아하는 연예인이랑 같이 데이트하다가 집 가는 길에 차 타고 가다가 교통사고 나서 둘 다 죽음" \
-                 f"###클로바: 34" \
-                 f"###꿈 내용: {test}"
-
-        status_score = await send_hyperclova_request(prompt).replace("###클로바:", "").lstrip()
-
-        user = db.query(kakao_chatbot_user).filter(kakao_chatbot_user.id == user_id).first()
-        user.day_count += 1
-        user.total_generated_dream += 1
-        user.status_score = int(user.status_score * 2 / 3 + int(status_score) / 3)
-        db.commit()
-
         # 카카오 챗봇 응답 확인
         if response.status_code == 200:
             print("kakao chatbot callback request success")
@@ -126,6 +110,37 @@ async def create_callback_request_kakao(prompt: str, url: str, user_id: int, db:
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+    try:
+        # 심리 점수 부여
+        prompt = f"꿈의 내용을 통해 100점 만점으로 심리상태 점수를 부여해줘" \
+                 f"###꿈 내용: entj, 엄마를 인천공항에 데려다주고 쌀국수도 먹었어" \
+                 f"###클로바: 87" \
+                 f"###꿈 내용: ISTJ, 치즈 김밥과 참치 김밥을 손에 들고 폭우가 쏟아지는 도시를 행복한 표정으로 뛰어간다." \
+                 f"###클로바: 95" \
+                 f"###꿈 내용: isfp, 내가 좋아하는 연예인이랑 같이 데이트하다가 집 가는 길에 차 타고 가다가 교통사고 나서 둘 다 죽음" \
+                 f"###클로바: 34" \
+                 f"###꿈 내용: {prompt}"
+
+        status_score = await send_hyperclova_request(prompt).replace("###클로바:", "").lstrip()
+
+        user = db.query(kakao_chatbot_user).filter(kakao_chatbot_user.id == user_id).first()
+        user.day_count += 1
+        user.total_generated_dream += 1
+        user.status_score = int(user.status_score * 2 / 3 + int(status_score) / 3)
+        db.add(user)
+
+        score = dream_score(
+            diary_id=diary_id,
+            score=int(status_score),
+        )
+        db.add(score)
+        db.commit()
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 
 async def create_today_luck(url: str, user_id: int, db: Session):
     '''
@@ -230,7 +245,7 @@ async def make_chatgpt_async_callback_request_to_openai_from_kakao(
         if user.mbti is None:
             return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "mbti가 아직 설정 되지 않았어요!\nmbti를 설정하려면 mbti를 입력해주세요!\n무의식 점수: " + user.status_score + "점\n오늘 남은 요청 횟수 : " + str(MAX_REQUESTS_PER_DAY - user.day_count) + "번\n총 생성한 꿈의 수: " + str(user.total_generated_dream) + "개"}}]}}
         else:
-            return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "내 mbti: " + user.mbti + "\n무의식 점수: " + user.status_score + "\n오늘 남은 요청 횟수: " + str(MAX_REQUESTS_PER_DAY - user.day_count) + "번\n총 생성한 꿈의 수: " + str(user.total_generated_dream) + "개"}}]}}
+            return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "내 mbti: " + user.mbti + "\n무의식 점수: " + user.status_score + "점\n오늘 남은 요청 횟수: " + str(MAX_REQUESTS_PER_DAY - user.day_count) + "번\n총 생성한 꿈의 수: " + str(user.total_generated_dream) + "개"}}]}}
 
     # 곽서준 정보
     elif kakao_ai_request['userRequest']['utterance'] == "곽서준":
@@ -249,6 +264,18 @@ async def make_chatgpt_async_callback_request_to_openai_from_kakao(
             return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "도슨트는 오늘 꾼 꿈을 분석해 운세를 제공해드려요!\n\n오늘 꾼 꿈을 입력해주세요!"}}]}}
         else:
             background_tasks.add_task(create_today_luck, url=kakao_ai_request['userRequest']['callbackUrl'], user_id=user.id, db=db)
+
+    elif kakao_ai_request['userRequest']['utterance'] == "😴 내 꿈 보기":
+        my_dreams = db.query(kakao_chatbot_dream).filter(kakao_chatbot_dream.user_id == user.id).all()
+        if len(my_dreams) == 0:
+            return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "아직 꿈을 기록하지 않으셨어요!\n\n꿈을 기록하려면 꿈을 입력해주세요!"}}]}}
+        else:
+            text = ""
+            number = 1
+            for dream_name in my_dreams:
+                text += f"{number}. {dream_name.dream_name}\n"
+                number += 1
+            return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "꿈 번호를 입력하시면 꿈을 다시 볼 수 있어요!\n" +  text}}]}}
 
     # total_users 정보
     elif kakao_ai_request['userRequest']['utterance'] == "total_users":
@@ -273,15 +300,15 @@ async def make_chatgpt_async_callback_request_to_openai_from_kakao(
                 "template": {"outputs": [{"simpleText": {"text": "꿈 분석은 하루에 3번만 가능해요ㅠㅠ 내일 다시 시도해주세요"}}]}}
 
     # 백그라운드에서 create_callback_request_kakao 함수를 실행하여 카카오 챗봇에게 응답을 보냅니다.
-    else:
-        if user.mbti is None:
-            background_tasks.add_task(create_callback_request_kakao,
-                                      prompt=kakao_ai_request['userRequest']['utterance'],
-                                      url=kakao_ai_request['userRequest']['callbackUrl'], user_id=user.id, db=db)
-        else:
-            background_tasks.add_task(create_callback_request_kakao,
-                                  prompt=user.mbti + ", " + kakao_ai_request['userRequest']['utterance'],
-                                  url=kakao_ai_request['userRequest']['callbackUrl'], user_id=user.id, db=db)
+    # else:
+    #     if user.mbti is None:
+    #         background_tasks.add_task(create_callback_request_kakao,
+    #                                   prompt=kakao_ai_request['userRequest']['utterance'],
+    #                                   url=kakao_ai_request['userRequest']['callbackUrl'], user_id=user.id, db=db)
+    #     else:
+    #         background_tasks.add_task(create_callback_request_kakao,
+    #                               prompt=user.mbti + ", " + kakao_ai_request['userRequest']['utterance'],
+    #                               url=kakao_ai_request['userRequest']['callbackUrl'], user_id=user.id, db=db)
 
     # 카카오 챗봇에게 보낼 응답을 반환합니다.
     return {"version": "2.0", "useCallback": True}
