@@ -285,10 +285,3 @@ async def make_chatgpt_async_callback_request_to_openai_from_kakao(
 
     # 카카오 챗봇에게 보낼 응답을 반환합니다.
     return {"version": "2.0", "useCallback": True}
-
-@router.post("/test")
-async def test(
-        test: str,
-):
-
-    return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": dream_resolution}}]}}
