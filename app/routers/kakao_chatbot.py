@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from starlette.background import BackgroundTasks
 from app.db.database import get_db, get_SessionLocal
+from app.db.models.diary import Diary
 from app.db.models.diary_ko import Diary_ko
 from app.db.models.dream_score import dream_score
 from app.db.models.kakao_chatbot_dream import kakao_chatbot_dream
@@ -90,7 +91,6 @@ async def create_callback_request_kakao(prompt: str, url: str, user_id: int, db:
         )
         db.add(kakao_user_dream)
         db.commit()
-
         # 카카오 챗봇 응답
         outputs = [
             Output(simpleImage=SimpleImage(imageUrl=dream_image_url)),
@@ -273,9 +273,9 @@ async def kakao_ai_chatbot_callback(
             text = ""
             number = 1
             for dream_name in my_dreams:
-                text += f"{number}. {dream_name.dream_name}\n"
+                text += f"\n{number}. {dream_name.dream_name}"
                 number += 1
-            return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "꿈 번호를 입력하시면 꿈을 다시 볼 수 있어요!\n" +  text}}]}}
+            return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "꿈 번호를 입력하시면 다시 볼 수 있어요!\n" +  text}}]}}
 
     # total_users 정보
     elif kakao_ai_request['userRequest']['utterance'] == "total_users":
@@ -284,6 +284,20 @@ async def kakao_ai_chatbot_callback(
     # total_dreams 정보
     elif kakao_ai_request['userRequest']['utterance'] == "total_dreams":
         return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "총 꿈의 수: " + str(db.query(kakao_chatbot_dream).count()) + "개"}}]}}
+
+    elif len(kakao_ai_request['userRequest']['utterance']) <= 3:
+        try:
+            dream_number = int(kakao_ai_request['userRequest']['utterance'])
+            my_dreams = db.query(kakao_chatbot_dream).filter(kakao_chatbot_dream.user_id == user.id).all()
+            if dream_number > len(my_dreams):
+                return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "꿈 번호를 잘못 입력하셨어요!"}}]}}
+            else:
+                diary_id = my_dreams[dream_number - 1].diary_id
+                my_dream_url = db.query(Diary).filter(Diary.id == diary_id).first()
+                my_dream = db.query(Diary_ko).filter(Diary_ko.id == diary_id).first()
+                return {"version": "2.0", "template": {"outputs": [{"SimpleImage": {"imageUrl": my_dream_url.image_url}}, {"simpleText": {"text": f"{my_dream.dream_name}\n\n꿈 내용: {my_dream.dream}\n\n해몽: {my_dream.dream_resolution}"}}]}}
+        except:
+            return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "잘못된 입력입니다!"}}]}}
 
     # 무의식 분석
     elif kakao_ai_request['userRequest']['utterance'] == "👨‍⚕️ 무의식 분석":
@@ -300,15 +314,15 @@ async def kakao_ai_chatbot_callback(
                 "template": {"outputs": [{"simpleText": {"text": "꿈 분석은 하루에 3번만 가능해요ㅠㅠ 내일 다시 시도해주세요"}}]}}
 
     # 백그라운드에서 create_callback_request_kakao 함수를 실행하여 카카오 챗봇에게 응답을 보냅니다.
-    # else:
-    #     if user.mbti is None:
-    #         background_tasks.add_task(create_callback_request_kakao,
-    #                                   prompt=kakao_ai_request['userRequest']['utterance'],
-    #                                   url=kakao_ai_request['userRequest']['callbackUrl'], user_id=user.id, db=db)
-    #     else:
-    #         background_tasks.add_task(create_callback_request_kakao,
-    #                               prompt=user.mbti + ", " + kakao_ai_request['userRequest']['utterance'],
-    #                               url=kakao_ai_request['userRequest']['callbackUrl'], user_id=user.id, db=db)
+    else:
+        if user.mbti is None:
+            background_tasks.add_task(create_callback_request_kakao,
+                                      prompt=kakao_ai_request['userRequest']['utterance'],
+                                      url=kakao_ai_request['userRequest']['callbackUrl'], user_id=user.id, db=db)
+        else:
+            background_tasks.add_task(create_callback_request_kakao,
+                                  prompt=user.mbti + ", " + kakao_ai_request['userRequest']['utterance'],
+                                  url=kakao_ai_request['userRequest']['callbackUrl'], user_id=user.id, db=db)
 
     # 카카오 챗봇에게 보낼 응답을 반환합니다.
     return {"version": "2.0", "useCallback": True}
