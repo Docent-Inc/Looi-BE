@@ -27,6 +27,7 @@ async def reset_day_count():
         for user in users:
             user.day_count = 0
         db.commit()
+        print("Reset line day_count successfully")
     finally:
         db.close()
 
