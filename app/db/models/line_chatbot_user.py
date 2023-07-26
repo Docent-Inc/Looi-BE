@@ -10,6 +10,8 @@ class line_chatbot_user(Base):
     line_user_id = Column(Text, nullable=False)
     mbti = Column(String(4), nullable=True)
     day_count = Column(Integer, nullable=False)
+    only_luck_count = Column(Integer, nullable=False)
+    luck_count = Column(Integer, nullable=False)
     total_generated_dream = Column(Integer, nullable=False)
 
 def get_Base():

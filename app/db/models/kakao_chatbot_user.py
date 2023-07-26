@@ -12,6 +12,8 @@ class kakao_chatbot_user(Base):
     day_count = Column(Integer, nullable=False)
     total_generated_dream = Column(Integer, nullable=False)
     status_score = Column(Integer, nullable=False)
+    only_luck_count = Column(Integer, nullable=False)
+    luck_count = Column(Integer, nullable=False)
 
 def get_kakao_chatbot_userBase():
     return Base
