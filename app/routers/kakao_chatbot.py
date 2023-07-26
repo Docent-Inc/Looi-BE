@@ -246,7 +246,7 @@ async def kakao_ai_chatbot_callback(
 
     # 도움말 보여주기
     elif kakao_ai_request['userRequest']['utterance'] == "🤔 도움말":
-        return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": " - 도슨트 설명서 -\n✡️ MBTI를 설정 해주세요. MBTI를 설정해주시면 더 정확한 해몽을 해드려요\n💭 오늘 꾸신 꿈을 말씀해 주세요. 꿈 그림과 해몽을 20초안에 보여드립니다\n🔮오늘의 운세 메뉴를 클릭하시면 꿈 내용을 기반으로 오늘의 운세를 알려드립니다\n\n또한 메뉴에서 내 정보, 내 꿈 보기 등 다양한 기능을 활용해 보세요🙏"}}]}}
+        return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": " - 도슨트 설명서 -\n\n✡️ MBTI를 설정 해주세요. MBTI를 설정해주시면 더 정확한 해몽을 해드려요\n\n💭 오늘 꾸신 꿈을 말씀해 주세요. 꿈 그림과 해몽을 20초안에 보여드립니다\n\n🔮오늘의 운세 메뉴를 클릭하시면 꿈 내용을 기반으로 오늘의 운세를 알려드립니다\n\n또한 메뉴에서 내 정보, 내 꿈 보기 등 다양한 기능을 활용해 보세요🙏"}}]}}
 
     # 도슨트 소개 보여주기
     elif kakao_ai_request['userRequest']['utterance'] == "🌙 도슨트":
