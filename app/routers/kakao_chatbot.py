@@ -231,6 +231,8 @@ async def kakao_ai_chatbot_callback(
             day_count=0,
             total_generated_dream=0,
             status_score=0,
+            only_luck_count=0,
+            luck_count=0,
         )
         db.add(user)
         db.commit()
