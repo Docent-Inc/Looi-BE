@@ -322,7 +322,7 @@ async def kakao_ai_chatbot_callback(
     elif kakao_ai_request['userRequest']['utterance'] == "👨‍⚕️ 무의식 분석":
         user.luck_count += 1
         db.commit()
-        return {"version": "2.0", "template": {"outputs": [{"textCard": {"text": "안녕하세요! 🌼 저희 서비스를 더 좋게 만들기 위해 여러분의 소중한 의견을 듣고 싶어요. 함께 성장하는 서비스를 위해 손길 한 번, 부탁드려요!\n\n추첨을 통해 스타벅스 기프티콘을 선물해드려요💛", "buttons": [{"action": "webLink", "label": "설문조사 하러가기", "webLinkUrl": "https://walla.my/survey/nt6dhKP3LIJsX0QUwGwi"}]}}]}}
+        return {"version": "2.0", "template": {"outputs": [{"textCard": {"text": "안녕하세요! 🌼 저희 서비스를 더 좋게 만들기 위해 여러분의 소중한 의견을 듣고 싶어요. 함께 성장하는 서비스를 위해 손길 한 번, 부탁드려요!\n\n추첨을 통해 스타벅스 기프티콘을 선물해드려요💛", "buttons": [{"action": "webLink", "label": "커피 받으러가기", "webLinkUrl": "https://walla.my/survey/nt6dhKP3LIJsX0QUwGwi"}]}}]}}
 
     # 꿈 해몽하기
     elif len(kakao_ai_request['userRequest']['utterance']) < 10 or len(
