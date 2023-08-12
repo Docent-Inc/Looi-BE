@@ -11,7 +11,7 @@ hyperclova_api_key = os.getenv("HYPER_CLOVA_KEY")
 hyperclova_api_gateway = os.getenv("HYPER_CLOVA_GATEWAY")
 hyperclova_request_id = os.getenv("HYPER_CLOVA_REQUEST_ID")
 kakao_api_key = os.getenv("KAKAO_API_KEY")
-bard = Bard(timeout=30)
+# bard = Bard(timeout=30)
 
 async def send_gpt_request(messages_prompt, retries=3):
     '''
