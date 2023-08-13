@@ -31,14 +31,6 @@ async def generate_text(image_model: int, text: str, userId: int, db: get_db()) 
             {"role": "user", "content": message}
         ]
         dreamName = await send_gpt_request(messages_prompt)
-        # prompt = f"꿈의 내용을 이해하고 너가 재미있는 꿈의 제목을 만들어줘" \
-        #          f"###꿈 내용: 기묘한 문양의 불꽃놀이를 보는데 내 키의 4배는 되어 보이는 파도가 동네 끝자락부터 덮쳐왔다. 나는 파도에 휩쓸리다가 건물 위쪽의 난간을 붙잡고 겨우 발을 디뎠다." \
-        #          f"###클로바: 거대한 파도와 불꽃놀이 속의 기막힌 모험" \
-        #          f"###꿈 내용: {text}"
-
-        # # HyperClova를 호출하여 꿈 제목을 만든다.
-        # dreamName = await send_hyperclova_request(prompt)
-        # dreamName = dreamName.replace("###클로바:", "").lstrip()
         return dreamName
 
     async def DALLE2(image_model: int, message: str):
@@ -56,16 +48,6 @@ async def generate_text(image_model: int, text: str, userId: int, db: get_db()) 
             {"role": "user", "content": message}
         ]
         prompt = await send_gpt_request(messages_prompt)
-        # prompt = f"꿈의 한 장면을 이미지로 만들건데, 한 문장으로, 250자 이내로 Subject, Medium, Environment, Lighting, Color, Mood, Composition 등에 대한 내용을 표현할 수 있는 프롬프트를 만들어줘" \
-        #          f"digital art, illustration의 키워드를 포함해줘" \
-        #          f"###꿈 내용: 학교 축제날이어서 여러가지 부스 체험을 했다. 나는 타로부스 가서 연애운 봤는데 상대방이랑 안 맞는다고 해서 기분 상했다. 그래도 마지막에는 좋게 끝나서 다행이라고 생각했다. " \
-        #          f"###클로바: Festival-goer getting a tarot reading, digital illustration, lively school festival environment, warm and inviting lighting, colorful and vibrant hues, a mix of disappointment and relief, focus on protagonist's reaction to the fortune telling." \
-        #          f"###꿈 내용: {text}"
-
-        # # HyperClova를 호출하여 이미지 프롬프트를 생성함
-        # prompt = await send_hyperclova_request(prompt)
-        # prompt = prompt.replace("###클로바:", "").lstrip()
-
         dream_image_url = await generate_img(image_model, prompt, userId, db)
         return dream_image_url, prompt
 
