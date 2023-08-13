@@ -35,7 +35,6 @@ async def reset_day_count():
         for user in users:
             user.day_count = 0
             user.only_luck_count = 0
-            user.luck_count = 0
         db.commit()
         print("Reset kakao day_count successfully")
     finally:
