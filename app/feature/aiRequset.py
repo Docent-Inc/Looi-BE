@@ -62,7 +62,7 @@ async def send_hyperclova_request(messages_prompt, retries=3):
     '''
     for i in range(retries):
         try:
-            url = "https://clovastudio.apigw.ntruss.com/testapp/v1/tasks/x56n5fyu/completions/LK-D2"
+            url = "https://clovastudio.apigw.ntruss.com/serviceapp/v1/tasks/x56n5fyu/completions/LK-D2"
 
             request_data = {
                 'text': messages_prompt,
