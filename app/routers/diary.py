@@ -68,6 +68,15 @@ async def update_diary(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    '''
+    게시물 수정 API
+
+    :param diary_id: 수정할 게시물의 id입니다.
+    :param create: 수정할 게시물의 정보를 담은 Update 모델 클래스입니다.
+    :param db: database session을 의존성 주입합니다.
+    :param current_user: 현재 로그인한 유저를 의존성 주입합니다.
+    :return: 성공 여부를 담은 ApiResponse 모델 클래스를 반환합니다.
+    '''
     await updateDiary(diary_id, current_user.id, create, db)
     return ApiResponse(
         success=True,
