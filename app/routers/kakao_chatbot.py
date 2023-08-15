@@ -34,7 +34,7 @@ async def reset_day_count():
         users = db.query(kakao_chatbot_user).all()
         for user in users:
             user.day_count = 0
-            user.only_luck_count = 0
+            user.luck_count = 0
         db.commit()
         print("Reset kakao day_count successfully")
     finally:
@@ -275,7 +275,7 @@ async def kakao_ai_chatbot_callback(
     elif kakao_ai_request['userRequest']['utterance'] == "⭐️ 오늘의 운세":
         if user.day_count == 0:
             return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "도슨트는 오늘 꾼 꿈을 분석해 운세를 제공해드려요!\n\n오늘 꾼 꿈을 입력해주세요!"}}]}}
-        elif user.luck_count != 0:
+        elif user.only_luck_count != 0:
             return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "오늘의 운세는 이미 생성되었어요. 내일 다시 시도해주세요!"}}]}}
         else:
             background_tasks.add_task(create_today_luck, url=kakao_ai_request['userRequest']['callbackUrl'], user_id=user.id, db=db)
@@ -319,7 +319,7 @@ async def kakao_ai_chatbot_callback(
 
     # 무의식 분석
     elif kakao_ai_request['userRequest']['utterance'] == "👨‍⚕️ 무의식 분석":
-        user.luck_count += 1
+        user.only_luck_count += 1
         db.commit()
         return {"version": "2.0", "template": {"outputs": [{"textCard": {"text": "안녕하세요! 🌼 저희 서비스를 더 좋게 만들기 위해 여러분의 소중한 의견을 듣고 싶어요. 함께 성장하는 서비스를 위해 손길 한 번, 부탁드려요!\n\n추첨을 통해 스타벅스 기프티콘을 선물해드려요💛", "buttons": [{"action": "webLink", "label": "커피 받으러가기", "webLinkUrl": "https://walla.my/survey/nt6dhKP3LIJsX0QUwGwi"}]}}]}}
 
