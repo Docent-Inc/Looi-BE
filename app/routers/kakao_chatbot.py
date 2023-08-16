@@ -515,7 +515,7 @@ async def kakao_ai_chatbot_callback(
     elif user.mode == 0:
         return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "😉 하단 메뉴 중 하나를 설정해주세요!"}}]}}
 
-    elif user_text >= 500:
+    elif len(user_text) >= 500:
         return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "😦 글자가 너무 길어요. 500자 이내로 입력해주세요!"}}]}}
 
     # 백그라운드에서 create_callback_request_kakao 함수를 실행하여 카카오 챗봇에게 응답을 보냅니다.
