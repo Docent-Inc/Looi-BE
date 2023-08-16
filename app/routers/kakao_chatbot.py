@@ -310,9 +310,6 @@ async def kakao_ai_chatbot_callback(
         db.commit()
         return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "mbti를 " + user.mbti + "로 설정했어요!"}}]}}
 
-    elif user.mode == 0:
-        return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "하단 메뉴 중 하나를 설정해주세요!"}}]}}
-
     # 오늘의 운세 보기
     elif user_text == "⭐️ 오늘의 운세":
         if user.luck_count != 0:
@@ -489,6 +486,9 @@ async def kakao_ai_chatbot_callback(
         user.only_luck_count += 1
         db.commit()
         return {"version": "2.0", "template": {"outputs": [{"textCard": {"text": "안녕하세요! 🌼 저희 서비스를 더 좋게 만들기 위해 여러분의 소중한 의견을 듣고 싶어요. 함께 성장하는 서비스를 위해 손길 한 번, 부탁드려요!\n\n추첨을 통해 스타벅스 기프티콘을 선물해드려요💛", "buttons": [{"action": "webLink", "label": "커피 받으러가기", "webLinkUrl": "https://walla.my/survey/nt6dhKP3LIJsX0QUwGwi"}]}}]}}
+
+    elif user.mode == 0:
+        return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "하단 메뉴 중 하나를 설정해주세요!"}}]}}
 
     # 백그라운드에서 create_callback_request_kakao 함수를 실행하여 카카오 챗봇에게 응답을 보냅니다.
     else:
