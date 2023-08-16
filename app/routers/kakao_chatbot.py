@@ -309,6 +309,7 @@ async def kakao_ai_chatbot_callback(
             only_luck_count=0,
             luck_count=0,
             mode=0,
+            diary_count=0,
         )
         db.add(user)
         db.commit()
