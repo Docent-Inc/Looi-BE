@@ -194,7 +194,7 @@ async def kakao_callback(
         )
     )
 
-@router.get("/kakao/moblie", response_model=ApiResponse, tags=["Auth"])
+@router.get("/kakao/mobile", response_model=ApiResponse, tags=["Auth"])
 async def kakao_mobile(
         data: str,
         db: Session = Depends(get_db),
