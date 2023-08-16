@@ -216,7 +216,7 @@ async def create_diary(prompt: str, url: str, user_id: int, db: Session):
     '''
     try:
         # 일기 생성
-        id, dream_name, dream, dream_image_url = generate_text(1, prompt, 2, db)
+        id, dream_name, dream, dream_image_url = await generate_text(1, prompt, 2, db)
 
         # 다이어리 생성
         create = Create(
@@ -379,7 +379,7 @@ async def kakao_ai_chatbot_callback(
                         return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "꿈 번호를 잘못 입력하셨어요!"}}]}}
                     else:
                         # is_deleted를 1로 바꿔서 삭제
-                        my_dreams[dream_number - 1].is_deleted = 1
+                        my_dreams[dream_number - 1].is_deleted = True
                         db.commit()
                         return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "꿈을 삭제했어요!"}}]}}
                 elif user.mode == 2: # 일기장
@@ -388,7 +388,7 @@ async def kakao_ai_chatbot_callback(
                         return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "일기 번호를 잘못 입력하셨어요!"}}]}}
                     else:
                         # is_deleted를 1로 바꿔서 삭제
-                        my_diarys[dream_number - 1].is_deleted = 1
+                        my_diarys[dream_number - 1].is_deleted = True
                         db.commit()
                         return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "일기를 삭제했어요!"}}]}}
                 elif user.mode == 3: # 메모장
@@ -397,7 +397,7 @@ async def kakao_ai_chatbot_callback(
                         return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "메모 번호를 잘못 입력하셨어요!"}}]}}
                     else:
                         # is_deleted를 1로 바꿔서 삭제
-                        my_memos[dream_number - 1].is_deleted = 1
+                        my_memos[dream_number - 1].is_deleted = True
                         db.commit()
                         return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "메모를 삭제했어요!"}}]}}
             else:
