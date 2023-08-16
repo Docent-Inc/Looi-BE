@@ -275,7 +275,7 @@ async def kakao_ai_chatbot_callback(
     elif kakao_ai_request['userRequest']['utterance'] == "⭐️ 오늘의 운세":
         if user.day_count == 0:
             return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "도슨트는 오늘 꾼 꿈을 분석해 운세를 제공해드려요!\n\n오늘 꾼 꿈을 입력해주세요!"}}]}}
-        elif user.only_luck_count != 0:
+        elif user.luck_count != 0:
             return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "오늘의 운세는 이미 생성되었어요. 내일 다시 시도해주세요!"}}]}}
         else:
             background_tasks.add_task(create_today_luck, url=kakao_ai_request['userRequest']['callbackUrl'], user_id=user.id, db=db)
