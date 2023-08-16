@@ -446,6 +446,14 @@ async def kakao_ai_chatbot_callback(
         my_dreams = db.query(kakao_chatbot_dream).filter(kakao_chatbot_dream.user_id == user.id, kakao_chatbot_dream.is_deleted == 0).all()
         my_diarys = db.query(kakao_chatbot_diary).filter(kakao_chatbot_diary.user_id == user.id, kakao_chatbot_diary.is_deleted == 0).all()
         my_memos = db.query(kakao_chatbot_memo).filter(kakao_chatbot_memo.user_id == user.id, kakao_chatbot_memo.is_deleted == 0).all()
+        if user.mode == 1:
+            mode = "꿈 기록장"
+        elif user.mode == 2:
+            mode = "일기장"
+        elif user.mode == 3:
+            mode = "메모장"
+        else:
+            mode = "메뉴 중 하나를 눌러 모드를 설정해주세요"
         if my_dreams is None:
             my_dreams = []
         if my_diarys is None:
@@ -453,9 +461,9 @@ async def kakao_ai_chatbot_callback(
         if my_memos is None:
             my_memos = []
         if user.mbti == None:
-            return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "👨‍🏫 MBTI를 설정해주세요! MBTI를 입력해주시면 더 정확한 해몽이 가능해요\n\n" +"무의식 점수: " + str(user.status_score) + "점\n\n" + "꿈 기록장: " + str(len(my_dreams)) + "개\n\n" + "일기장: " + str(len(my_diarys)) + "개\n\n" + "메모장: " + str(len(my_memos)) + "개"}}]}}
+            return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "👨‍🏫 MBTI를 설정해주세요! MBTI를 입력해주시면 더 정확한 해몽이 가능해요\n\n" +"무의식 점수: " + str(user.status_score) + "점\n\n" + "꿈 기록장: " + str(len(my_dreams)) + "개\n\n" + "일기장: " + str(len(my_diarys)) + "개\n\n" + "메모장: " + str(len(my_memos)) + "개\n\n" + "현재 모드: " + str(mode)}}]}}
         else:
-            return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "👨‍🏫 MBTI: " + user.mbti + "\n\n" +"무의식 점수: " + str(user.status_score) + "점\n\n" + "꿈 기록장: " + str(len(my_dreams)) + "개\n\n" + "일기장: " + str(len(my_diarys)) + "개\n\n" + "메모장: " + str(len(my_memos)) + "개"}}]}}
+            return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "👨‍🏫 MBTI: " + user.mbti + "\n\n" +"무의식 점수: " + str(user.status_score) + "점\n\n" + "꿈 기록장: " + str(len(my_dreams)) + "개\n\n" + "일기장: " + str(len(my_diarys)) + "개\n\n" + "메모장: " + str(len(my_memos)) + "개\n\n" + "현재 모드: " + str(mode)}}]}}
 
     # 도움말 보여주기
     elif user_text == "🤔 도움말":
@@ -513,7 +521,7 @@ async def kakao_ai_chatbot_callback(
     # 백그라운드에서 create_callback_request_kakao 함수를 실행하여 카카오 챗봇에게 응답을 보냅니다.
     else:
         if user.mode == 1:
-            if user.day_count > MAX_REQUESTS_PER_DAY:
+            if int(user.day_count) > MAX_REQUESTS_PER_DAY:
                 return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "하루 요청량이 초과되었어요. 내일 다시 이용해주세요!"}}]}}
             elif user.mbti is None:
                 background_tasks.add_task(create_callback_request_kakao,
@@ -527,7 +535,7 @@ async def kakao_ai_chatbot_callback(
             return {"version": "2.0", "useCallback": True, "data": {"text": "🌙 꿈을 분석하는 중이에요!\n20초 정도 소요될 거 같아요"}}
 
         elif user.mode == 2:
-            if user.diary_count > MAX_REQUESTS_PER_DAY:
+            if int(user.diary_count) > MAX_REQUESTS_PER_DAY:
                 return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "하루 요청량이 초과되었어요. 내일 다시 이용해주세요!"}}]}}
             background_tasks.add_task(create_diary, prompt=user_text, url=kakao_ai_request['userRequest']['callbackUrl'], user_id=user.id, db=db)
             return {"version": "2.0", "useCallback": True, "data": {"text": "📔 일기를 저장 하는 중이에요!\n20초 정도 소요될 거 같아요"}}
