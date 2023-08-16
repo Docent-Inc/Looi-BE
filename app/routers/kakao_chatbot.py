@@ -333,7 +333,7 @@ async def kakao_ai_chatbot_callback(
                 text += f"\n{number}. {dream_name.dream_name}"
                 number += 1
             return {"version": "2.0",
-                    "template": {"outputs": [{"simpleText": {"text": "꿈 기록장에 오신 것을 환영해요!\n\n꿈 번호를 입력하시면 다시 볼 수 있어요!\n" + text + "\n삭제하시려면 '삭제 번호'를 입력해주세요! 예시: 삭제 1"}}]}}
+                    "template": {"outputs": [{"simpleText": {"text": "꿈 기록장에 오신 것을 환영해요!\n\n꿈 번호를 입력하시면 다시 볼 수 있어요!\n" + text + "\n\n삭제하시려면 '삭제 번호'를 입력해주세요! 예시: 삭제 1"}}]}}
 
     # 📔 일기장 mode
     elif user_text == "📔 일기장":
@@ -351,7 +351,7 @@ async def kakao_ai_chatbot_callback(
                 number += 1
             return {"version": "2.0",
                     "template": {"outputs": [
-                        {"simpleText": {"text": "일기장에 오신 것을 환영해요!\n\n일기 번호를 입력하시면 다시 볼 수 있어요!\n" + text + "\n삭제하시려면 '삭제 번호'를 입력해주세요! 예시: 삭제 1"}}]}}
+                        {"simpleText": {"text": "일기장에 오신 것을 환영해요!\n\n일기 번호를 입력하시면 다시 볼 수 있어요!\n" + text + "\n\n삭제하시려면 '삭제 번호'를 입력해주세요! 예시: 삭제 1"}}]}}
 
     # 📝 메모장 mode
     elif user_text == "📝 메모장":
@@ -366,7 +366,7 @@ async def kakao_ai_chatbot_callback(
             for memeo in my_memos:
                 text += f"\n{number}. {memeo.text}"
                 number += 1
-            return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "메모장에 오신 것을 환영합니다!\n" + text + "\n삭제하시려면 '삭제 번호'를 입력해주세요! 예시: 삭제 1"}}]}}
+            return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "메모장에 오신 것을 환영합니다!\n" + text + "\n\n삭제하시려면 '삭제 번호'를 입력해주세요! 예시: 삭제 1"}}]}}
 
     # 기록 보기
     elif len(user_text) <= 3 or user_text.split(" ")[0] == "삭제":
@@ -510,7 +510,7 @@ async def kakao_ai_chatbot_callback(
 
         elif user.mode == 3:
             memo = kakao_chatbot_memo(
-                user_id=user_id,
+                user_id=user.id,
                 text=user_text,
                 is_deleted=False,
             )
