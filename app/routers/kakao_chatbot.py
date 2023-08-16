@@ -16,7 +16,7 @@ from app.db.models.kakao_chatbot_user import kakao_chatbot_user, kakao_chatbot_d
 from app.db.models.today_luck import today_luck
 from app.feature.aiRequset import send_hyperclova_request
 from app.feature.diary import createDiary
-from app.feature.generate_kr import generate_text, generate_resolution_clova
+from app.feature.generate_kr import generate_text, generate_resolution_clova, generate_diary
 from app.schemas.response.kakao_chatbot import Output, SimpleImage, SimpleText, KakaoChatbotResponse, Template
 from app.schemas.request.crud import Create
 
@@ -218,7 +218,7 @@ async def create_diary(prompt: str, url: str, user_id: int, db: Session):
     '''
     try:
         # 일기 생성
-        id, dream_name, dream, dream_image_url = await generate_text(1, prompt, 2, db)
+        id, dream_name, dream, dream_image_url = await generate_diary(1, prompt, 2, db)
 
         # 다이어리 생성
         create = Create(
@@ -461,9 +461,9 @@ async def kakao_ai_chatbot_callback(
         if my_memos is None:
             my_memos = []
         if user.mbti == None:
-            return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "👨‍🏫 MBTI를 설정해주세요! MBTI를 입력해주시면 더 정확한 해몽이 가능해요\n\n" +"무의식 점수: " + str(user.status_score) + "점\n\n" + "꿈 기록장: " + str(len(my_dreams)) + "개\n\n" + "일기장: " + str(len(my_diarys)) + "개\n\n" + "메모장: " + str(len(my_memos)) + "개\n\n" + "현재 모드: " + str(mode)}}]}}
+            return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "👨‍🏫 내 정보\n\nMBTI를 설정해주세요! MBTI를 입력해주시면 더 정확한 해몽이 가능해요\n\n" +"무의식 점수: " + str(user.status_score) + "점\n\n" + "꿈 기록장: " + str(len(my_dreams)) + "개\n\n" + "일기장: " + str(len(my_diarys)) + "개\n\n" + "메모장: " + str(len(my_memos)) + "개\n\n" + "현재 모드: " + str(mode)}}]}}
         else:
-            return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "👨‍🏫 MBTI: " + user.mbti + "\n\n" +"무의식 점수: " + str(user.status_score) + "점\n\n" + "꿈 기록장: " + str(len(my_dreams)) + "개\n\n" + "일기장: " + str(len(my_diarys)) + "개\n\n" + "메모장: " + str(len(my_memos)) + "개\n\n" + "현재 모드: " + str(mode)}}]}}
+            return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "👨‍🏫 내 정보\n\nMBTI: " + user.mbti + "\n\n" +"무의식 점수: " + str(user.status_score) + "점\n\n" + "꿈 기록장: " + str(len(my_dreams)) + "개\n\n" + "일기장: " + str(len(my_diarys)) + "개\n\n" + "메모장: " + str(len(my_memos)) + "개\n\n" + "현재 모드: " + str(mode)}}]}}
 
     # 도움말 보여주기
     elif user_text == "🤔 도움말":
