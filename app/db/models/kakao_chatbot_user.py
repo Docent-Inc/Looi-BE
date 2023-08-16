@@ -32,5 +32,11 @@ class kakao_chatbot_memo(Base):
     text = Column(Text, nullable=False)
     is_deleted = Column(Boolean, nullable=False)
 
+class kakao_chatbot_total_chat(Base):
+    __tablename__ = "kakao_chatbot_total_chat"
+
+    id = Column(Integer, primary_key=True)
+    count = Column(Integer, nullable=False)
+
 def get_kakao_chatbot_userBase():
     return Base

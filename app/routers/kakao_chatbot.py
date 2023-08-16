@@ -11,7 +11,8 @@ from app.db.models.diary import Diary
 from app.db.models.diary_ko import Diary_ko
 from app.db.models.dream_score import dream_score
 from app.db.models.kakao_chatbot_dream import kakao_chatbot_dream
-from app.db.models.kakao_chatbot_user import kakao_chatbot_user, kakao_chatbot_diary, kakao_chatbot_memo
+from app.db.models.kakao_chatbot_user import kakao_chatbot_user, kakao_chatbot_diary, kakao_chatbot_memo, \
+    kakao_chatbot_total_chat
 from app.db.models.today_luck import today_luck
 from app.feature.aiRequset import send_hyperclova_request
 from app.feature.diary import createDiary
@@ -279,6 +280,11 @@ async def kakao_ai_chatbot_callback(
     :param db: database session을 의존성 주입합니다.
     :return: 카카오 챗봇에게 보낼 응답을 반환합니다.
     '''
+    total_chat = db.query(kakao_chatbot_total_chat).first()
+    total_chat.count += 1
+    db.commit()
+    db.refresh(total_chat)
+
     # user_id는 카카오 챗봇 사용자의 고유 식별자입니다.
     user_id = kakao_ai_request['userRequest']['user']['id']
 
@@ -299,7 +305,6 @@ async def kakao_ai_chatbot_callback(
         )
         db.add(user)
         db.commit()
-
 
     if user_text == "안녕":
         return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "안녕하세요! 저는 도슨트AI에요!"}}]}}
