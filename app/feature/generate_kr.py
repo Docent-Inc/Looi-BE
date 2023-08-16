@@ -126,7 +126,7 @@ async def generate_diary(image_model: int, message: str, userId: int, db: get_db
     # 데이터베이스에 DreamText 저장하기
     dream_text = DreamText(
         User_id=userId,
-        User_text=text,
+        User_text=message,
         dream_name=dream_name,
         dream=dream,
         DALLE2=dream_image_prompt,
