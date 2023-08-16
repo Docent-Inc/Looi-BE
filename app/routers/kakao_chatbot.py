@@ -379,7 +379,7 @@ async def kakao_ai_chatbot_callback(
             if user_text.split(" ")[0] == "삭제":
                 dream_number = int(user_text.split(" ")[1])
                 if user.mode == 1: # 꿈 기록장
-                    my_dreams = db.query(kakao_chatbot_dream).filter(kakao_chatbot_dream.user_id == user.id).all()
+                    my_dreams = db.query(kakao_chatbot_dream).filter(kakao_chatbot_dream.user_id == user.id, kakao_chatbot_dream.is_deleted == 0).all()
                     if dream_number > len(my_dreams):
                         return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "꿈 번호를 잘못 입력하셨어요!"}}]}}
                     else:
@@ -388,7 +388,7 @@ async def kakao_ai_chatbot_callback(
                         db.commit()
                         return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "꿈을 삭제했어요!"}}]}}
                 elif user.mode == 2: # 일기장
-                    my_diarys = db.query(kakao_chatbot_diary).filter(kakao_chatbot_diary.user_id == user.id).all()
+                    my_diarys = db.query(kakao_chatbot_diary).filter(kakao_chatbot_diary.user_id == user.id, kakao_chatbot_diary.is_deleted == 0).all()
                     if dream_number > len(my_diarys):
                         return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "일기 번호를 잘못 입력하셨어요!"}}]}}
                     else:
@@ -397,7 +397,7 @@ async def kakao_ai_chatbot_callback(
                         db.commit()
                         return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "일기를 삭제했어요!"}}]}}
                 elif user.mode == 3: # 메모장
-                    my_memos = db.query(kakao_chatbot_memo).filter(kakao_chatbot_memo.user_id == user.id).all()
+                    my_memos = db.query(kakao_chatbot_memo).filter(kakao_chatbot_memo.user_id == user.id, kakao_chatbot_memo.is_deleted == 0).all()
                     if dream_number > len(my_memos):
                         return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "메모 번호를 잘못 입력하셨어요!"}}]}}
                     else:
@@ -408,7 +408,7 @@ async def kakao_ai_chatbot_callback(
             else:
                 dream_number = int(user_text)
                 if user.mode == 1: # 꿈 기록장
-                    my_dreams = db.query(kakao_chatbot_dream).filter(kakao_chatbot_dream.user_id == user.id).all()
+                    my_dreams = db.query(kakao_chatbot_dream).filter(kakao_chatbot_dream.user_id == user.id, kakao_chatbot_dream.is_deleted == 0).all()
                     if dream_number > len(my_dreams):
                         return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "꿈 번호를 잘못 입력하셨어요!"}}]}}
                     else:
@@ -419,7 +419,7 @@ async def kakao_ai_chatbot_callback(
                             "outputs": [{"simpleImage": {"imageUrl": my_dream_url.image_url}}, {"simpleText": {
                                 "text": my_dream.dream_name + "\n\n꿈 내용: " + my_dream.dream + "\n\n해몽: " + my_dream.resolution}}]}}
                 elif user.mode == 2: # 일기장
-                    my_diarys = db.query(kakao_chatbot_diary).filter(kakao_chatbot_diary.user_id == user.id).all()
+                    my_diarys = db.query(kakao_chatbot_diary).filter(kakao_chatbot_diary.user_id == user.id, kakao_chatbot_diary.is_deleted == 0).all()
                     if dream_number > len(my_diarys):
                         return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "일기 번호를 잘못 입력하셨어요!"}}]}}
                     else:
@@ -436,9 +436,9 @@ async def kakao_ai_chatbot_callback(
 
     # 내 정보 보여주기
     elif user_text == "🧐 내 정보":
-        my_dreams = db.query(kakao_chatbot_dream).filter(kakao_chatbot_dream.user_id == user.id).all()
-        my_diarys = db.query(kakao_chatbot_diary).filter(kakao_chatbot_diary.user_id == user.id).all()
-        my_memos = db.query(kakao_chatbot_memo).filter(kakao_chatbot_memo.user_id == user.id).all()
+        my_dreams = db.query(kakao_chatbot_dream).filter(kakao_chatbot_dream.user_id == user.id, kakao_chatbot_dream.is_deleted == 0).all()
+        my_diarys = db.query(kakao_chatbot_diary).filter(kakao_chatbot_diary.user_id == user.id, kakao_chatbot_diary.is_deleted == 0).all()
+        my_memos = db.query(kakao_chatbot_memo).filter(kakao_chatbot_memo.user_id == user.id, kakao_chatbot_memo.is_deleted == 0).all()
         if my_dreams is None:
             my_dreams = []
         if my_diarys is None:
