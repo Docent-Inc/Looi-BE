@@ -28,7 +28,7 @@ class kakao_chatbot_memo(Base):
     __tablename__ = "kakao_chatbot_memo"
 
     id = Column(Integer, primary_key=True)
-    kakao_user_id = Column(Text, nullable=False)
+    user_id = Column(Text, nullable=False)
     text = Column(Text, nullable=False)
     is_deleted = Column(Boolean, nullable=False)
 
