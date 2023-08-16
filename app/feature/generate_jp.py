@@ -4,7 +4,7 @@ from app.db.models.mbti_data_JP import Mbti_data_JP
 from app.feature.generateImg import generate_img
 from app.db.models.dream import DreamText, DreamImage
 from app.db.database import get_db
-from app.feature.aiRequset import send_gpt_request, send_bard_request, send_hyperclova_request
+from app.feature.aiRequset import send_gpt_request, send_hyperclova_request
 
 mbti_list = [
         "ISTJ", "ISFJ", "INFJ", "INTJ", "ISTP", "ISFP", "INFP", "INTP", "ESTP", "ESFP", "ENFP", "ENTP", "ESTJ", "ESFJ",

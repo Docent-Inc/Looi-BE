@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from app.feature.generate_kr import generate_text, generate_resolution, generate_resolution_clova
+from app.feature.generate_kr import generate_text, generate_resolution_clova
 from app.schemas.response.gpt import BasicResponse, ImageResponse, ResolutionResponse
 from app.schemas.request.generate import Generate, Image, Resolution
 from app.schemas.common import ApiResponse
