@@ -322,7 +322,7 @@ async def kakao_ai_chatbot_callback(
     elif user_text == "🌙 꿈 기록장":
         user.mode = 1
         db.commit()
-        my_dreams = db.query(kakao_chatbot_dream).filter(kakao_chatbot_dream.user_id == user.id and kakao_chatbot_dream.is_deleted == False).all()
+        my_dreams = db.query(kakao_chatbot_dream).filter(kakao_chatbot_dream.user_id == user.id and kakao_chatbot_dream.is_deleted == 0).all()
         if len(my_dreams) == 0:
             return {"version": "2.0",
                     "template": {"outputs": [{"simpleText": {"text": "꿈 기록장에 오신 것을 환영해요!\n\n꿈을 기록하려면 꿈을 입력해주세요!"}}]}}
@@ -339,7 +339,7 @@ async def kakao_ai_chatbot_callback(
     elif user_text == "📔 일기장":
         user.mode = 2
         db.commit()
-        my_diarys = db.query(kakao_chatbot_diary).filter(kakao_chatbot_diary.user_id == user.id and kakao_chatbot_diary.is_deleted == False).all()
+        my_diarys = db.query(kakao_chatbot_diary).filter(kakao_chatbot_diary.user_id == user.id and kakao_chatbot_diary.is_deleted == 0).all()
         if len(my_diarys) == 0:
             return {"version": "2.0",
                     "template": {"outputs": [{"simpleText": {"text": "일기장에 오신 것을 환영해요!\n\n오늘 하루를 기록해보세요!"}}]}}
@@ -357,7 +357,7 @@ async def kakao_ai_chatbot_callback(
     elif user_text == "📝 메모장":
         user.mode = 3
         db.commit()
-        my_memos = db.query(kakao_chatbot_memo).filter(kakao_chatbot_memo.user_id == user.id and kakao_chatbot_memo.is_deleted == False).all()
+        my_memos = db.query(kakao_chatbot_memo).filter(kakao_chatbot_memo.user_id == user.id and kakao_chatbot_memo.is_deleted == 0).all()
         if len(my_memos) == 0:
             return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "메모장에 오신 것을 환영합니다!\n\n메모를 입력해주세요!"}}]}}
         else:
@@ -379,7 +379,7 @@ async def kakao_ai_chatbot_callback(
                         return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "꿈 번호를 잘못 입력하셨어요!"}}]}}
                     else:
                         # is_deleted를 1로 바꿔서 삭제
-                        my_dreams[dream_number - 1].is_deleted = True
+                        my_dreams[dream_number - 1].is_deleted = 1
                         db.commit()
                         return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "꿈을 삭제했어요!"}}]}}
                 elif user.mode == 2: # 일기장
@@ -388,7 +388,7 @@ async def kakao_ai_chatbot_callback(
                         return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "일기 번호를 잘못 입력하셨어요!"}}]}}
                     else:
                         # is_deleted를 1로 바꿔서 삭제
-                        my_diarys[dream_number - 1].is_deleted = True
+                        my_diarys[dream_number - 1].is_deleted = 1
                         db.commit()
                         return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "일기를 삭제했어요!"}}]}}
                 elif user.mode == 3: # 메모장
@@ -397,7 +397,7 @@ async def kakao_ai_chatbot_callback(
                         return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "메모 번호를 잘못 입력하셨어요!"}}]}}
                     else:
                         # is_deleted를 1로 바꿔서 삭제
-                        my_memos[dream_number - 1].is_deleted = True
+                        my_memos[dream_number - 1].is_deleted = 1
                         db.commit()
                         return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "메모를 삭제했어요!"}}]}}
             else:
