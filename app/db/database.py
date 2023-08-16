@@ -1,18 +1,18 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
-from app.db.models.dream_score import get_Base
+from app.db import models
 
 PUBLIC_IP_ADDRESS = 'db-h50qv-kr.vpc-pub-cdb.ntruss.com' # ncp sql database
 DB_USER = 'docent'
 DB_PASSWORD = 'cocone0331!'
-DB_NAME = 'docent'
-
+# DB_NAME = 'docent'
+DB_NAME = 'docent_test'
 
 # TCP 연결을 사용하여 인스턴스에 연결
 DB_URL = f'mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{PUBLIC_IP_ADDRESS}/{DB_NAME}'
 engine = create_engine(DB_URL, pool_recycle=150)
 
-Base = get_Base()
+Base = models.get_Base()
 def get_Base():
     return Base
 

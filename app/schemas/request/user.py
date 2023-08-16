@@ -1,16 +1,8 @@
-from typing import Optional
 from pydantic import BaseModel
 
 
-class UserBase(BaseModel):
-    email: Optional[str] = None
-    username: Optional[str] = None
-    nickName: Optional[str] = None
-
-
-class UserCreate(UserBase):
+class UserCreate(BaseModel):
     email: str
-    username: str
     password: str
     nickName: str
 
@@ -19,7 +11,7 @@ class PasswordChangeRequest(BaseModel):
     new_password: str
 
 class NicknameChangeRequest(BaseModel):
-    nickname: str
+    nickName: str
 
 class KakaoLoginRequest(BaseModel):
     code: str
