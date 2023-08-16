@@ -338,7 +338,7 @@ async def kakao_ai_chatbot_callback(
                 text += f"\n{number}. {dream_name.dream_name}"
                 number += 1
             return {"version": "2.0",
-                    "template": {"outputs": [{"simpleText": {"text": "꿈 기록장에 오신 것을 환영해요!\n\n꿈 번호를 입력하시면 다시 볼 수 있어요!\n" + text + "\n\n삭제하시려면 '삭제 번호'를 입력해주세요! 예시: 삭제 1"}}]}}
+                    "template": {"outputs": [{"simpleText": {"text": "🌙 꿈 기록장에 오신 것을 환영해요!\n꿈을 기록하려면 꿈을 입력해주세요!\n꿈 번호를 입력하시면 다시 볼 수 있어요!\n" + text + "\n\n삭제하시려면 '삭제 번호'를 입력해주세요! 예시: 삭제 1"}}]}}
 
     # 📔 일기장 mode
     elif user_text == "📔 일기장":
@@ -347,7 +347,7 @@ async def kakao_ai_chatbot_callback(
         my_diarys = db.query(kakao_chatbot_diary).filter(kakao_chatbot_diary.user_id == user.id, kakao_chatbot_diary.is_deleted == 0).all()
         if len(my_diarys) == 0:
             return {"version": "2.0",
-                    "template": {"outputs": [{"simpleText": {"text": "일기장에 오신 것을 환영해요!\n\n오늘 하루를 기록해보세요!"}}]}}
+                    "template": {"outputs": [{"simpleText": {"text": "📔 일기장에 오신 것을 환영해요!\n\n오늘 하루를 기록해보세요!"}}]}}
         else:
             text = ""
             number = 1
@@ -356,7 +356,7 @@ async def kakao_ai_chatbot_callback(
                 number += 1
             return {"version": "2.0",
                     "template": {"outputs": [
-                        {"simpleText": {"text": "일기장에 오신 것을 환영해요!\n\n일기 번호를 입력하시면 다시 볼 수 있어요!\n" + text + "\n\n삭제하시려면 '삭제 번호'를 입력해주세요! 예시: 삭제 1"}}]}}
+                        {"simpleText": {"text": "일기장에 오신 것을 환영해요!\n오늘 하루를 기록해보세요!\n\n일기 번호를 입력하시면 다시 볼 수 있어요!\n" + text + "\n\n삭제하시려면 '삭제 번호'를 입력해주세요! 예시: 삭제 1"}}]}}
 
     # 📝 메모장 mode
     elif user_text == "📝 메모장":
@@ -486,6 +486,11 @@ async def kakao_ai_chatbot_callback(
     elif user_text == "total_memo":
         return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "총 메모의 수: " + str(db.query(kakao_chatbot_memo).count()) + "개"}}]}}
 
+    # total_chat 정보
+    elif user_text == "total_chat":
+        total_chat = db.query(kakao_chatbot_total_chat).first()
+        return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "총 채팅의 수: " + str(total_chat.count) + "개"}}]}}
+
     # 무의식 분석
     elif user_text == "👨‍⚕️ 무의식 분석":
         user.only_luck_count += 1
@@ -494,6 +499,9 @@ async def kakao_ai_chatbot_callback(
 
     elif user.mode == 0:
         return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "하단 메뉴 중 하나를 설정해주세요!"}}]}}
+
+    elif user_text >= 500:
+        return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "글자가 너무 길어요. 500자 이내로 입력해주세요!"}}]}}
 
     # 백그라운드에서 create_callback_request_kakao 함수를 실행하여 카카오 챗봇에게 응답을 보냅니다.
     else:
