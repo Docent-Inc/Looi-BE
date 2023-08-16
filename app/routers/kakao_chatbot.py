@@ -322,7 +322,7 @@ async def kakao_ai_chatbot_callback(
     elif user_text == "🌙 꿈 기록장":
         user.mode = 1
         db.commit()
-        my_dreams = db.query(kakao_chatbot_dream).filter(kakao_chatbot_dream.user_id == user.id).all()
+        my_dreams = db.query(kakao_chatbot_dream).filter(kakao_chatbot_dream.user_id == user.id and kakao_chatbot_dream.is_deleted == False).all()
         if len(my_dreams) == 0:
             return {"version": "2.0",
                     "template": {"outputs": [{"simpleText": {"text": "꿈 기록장에 오신 것을 환영해요!\n\n꿈을 기록하려면 꿈을 입력해주세요!"}}]}}
@@ -339,7 +339,7 @@ async def kakao_ai_chatbot_callback(
     elif user_text == "📔 일기장":
         user.mode = 2
         db.commit()
-        my_diarys = db.query(kakao_chatbot_diary).filter(kakao_chatbot_diary.user_id == user.id).all()
+        my_diarys = db.query(kakao_chatbot_diary).filter(kakao_chatbot_diary.user_id == user.id and kakao_chatbot_diary.is_deleted == False).all()
         if len(my_diarys) == 0:
             return {"version": "2.0",
                     "template": {"outputs": [{"simpleText": {"text": "일기장에 오신 것을 환영해요!\n\n오늘 하루를 기록해보세요!"}}]}}
@@ -357,16 +357,16 @@ async def kakao_ai_chatbot_callback(
     elif user_text == "📝 메모장":
         user.mode = 3
         db.commit()
-        my_memos = db.query(kakao_chatbot_memo).filter(kakao_chatbot_memo.user_id == user.id).all()
+        my_memos = db.query(kakao_chatbot_memo).filter(kakao_chatbot_memo.user_id == user.id and kakao_chatbot_memo.is_deleted == False).all()
         if len(my_memos) == 0:
-            return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "메모장에 오신 것을 환영합니다!\n메모를 입력해주세요!"}}]}}
+            return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "메모장에 오신 것을 환영합니다!\n\n메모를 입력해주세요!"}}]}}
         else:
             text = ""
             number = 1
             for memeo in my_memos:
                 text += f"\n{number}. {memeo.text}"
                 number += 1
-            return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "메모장에 오신 것을 환영합니다!\n" + text + "\n\n삭제하시려면 '삭제 번호'를 입력해주세요! 예시: 삭제 1"}}]}}
+            return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "메모장에 오신 것을 환영합니다!\n\n" + text + "\n\n삭제하시려면 '삭제 번호'를 입력해주세요! 예시: 삭제 1"}}]}}
 
     # 기록 보기
     elif len(user_text) <= 3 or user_text.split(" ")[0] == "삭제":
@@ -506,7 +506,7 @@ async def kakao_ai_chatbot_callback(
 
         elif user.mode == 2:
             background_tasks.add_task(create_diary, prompt=user_text, url=kakao_ai_request['userRequest']['callbackUrl'], user_id=user.id, db=db)
-            return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "일기를 저장하는 중이에요!\n20초 정도 소요될 거 같아요"}}]}}
+            return {"version": "2.0", "useCallback": True, "data": {"text": "일기를 저장 하는 중이에요!\n20초 정도 소요될 거 같아요"}}
 
         elif user.mode == 3:
             memo = kakao_chatbot_memo(
