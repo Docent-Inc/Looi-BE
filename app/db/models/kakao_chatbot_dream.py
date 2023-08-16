@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, ForeignKey, String
+from sqlalchemy import Column, Integer, ForeignKey, String, Boolean
 from app.db.models.kakao_chatbot_user import get_kakao_chatbot_userBase
 
 Base = get_kakao_chatbot_userBase()
@@ -10,6 +10,7 @@ class kakao_chatbot_dream(Base):
     user_id = Column(Integer, ForeignKey('kakao_chatbot_user.id'), nullable=False)
     diary_id = Column(Integer, ForeignKey('Diary.id'), nullable=False)
     dream_name = Column(String(50), nullable=False)
+    is_deleted = Column(Boolean, nullable=False)
 
 def get_Base():
     return Base
