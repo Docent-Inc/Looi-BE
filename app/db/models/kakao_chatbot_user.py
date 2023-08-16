@@ -10,6 +10,7 @@ class kakao_chatbot_user(Base):
     kakao_user_id = Column(Text, nullable=False)
     mbti = Column(String(4), nullable=True)
     day_count = Column(Integer, nullable=False)
+    diary_count = Column(Integer, nullable=False)
     total_generated_dream = Column(Integer, nullable=False)
     status_score = Column(Integer, nullable=False)
     only_luck_count = Column(Integer, nullable=False)

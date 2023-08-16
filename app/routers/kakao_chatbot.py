@@ -26,8 +26,8 @@ from app.schemas.request.crud import Create
 
 router = APIRouter(prefix="/kakao-chatbot")
 
-# 매일 0시에 모든 user 의 day_count 를 0으로 초기화
-MAX_REQUESTS_PER_DAY = 3
+# 매일 0시에 모든 user 의 count 를 0으로 초기화
+MAX_REQUESTS_PER_DAY = 10
 async def reset_day_count():
     SessionLocal = get_SessionLocal()
     db = SessionLocal()
@@ -35,6 +35,7 @@ async def reset_day_count():
         users = db.query(kakao_chatbot_user).all()
         for user in users:
             user.day_count = 0
+            user.diary_count = 0
             user.luck_count = 0
         db.commit()
         print("Reset kakao day_count successfully")
@@ -261,6 +262,12 @@ async def create_diary(prompt: str, url: str, user_id: int, db: Session):
         else:
             print(f"kakao chatbot callback request fail: {response.status_code}, {response.text}")
 
+        user = db.query(kakao_chatbot_user).filter(kakao_chatbot_user.id == user_id).first()
+        user.diary_count += 1
+        db.commit()
+        db.refresh(user)
+
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -330,7 +337,7 @@ async def kakao_ai_chatbot_callback(
         my_dreams = db.query(kakao_chatbot_dream).filter(kakao_chatbot_dream.user_id == user.id, kakao_chatbot_dream.is_deleted == 0).all()
         if len(my_dreams) == 0:
             return {"version": "2.0",
-                    "template": {"outputs": [{"simpleText": {"text": "꿈 기록장에 오신 것을 환영해요!\n\n꿈을 기록하려면 꿈을 입력해주세요!"}}]}}
+                    "template": {"outputs": [{"simpleText": {"text": "🌙 꿈 기록장에 오신 것을 환영해요!\n\n꿈을 기록하려면 꿈을 입력해주세요!"}}]}}
         else:
             text = ""
             number = 1
@@ -356,7 +363,7 @@ async def kakao_ai_chatbot_callback(
                 number += 1
             return {"version": "2.0",
                     "template": {"outputs": [
-                        {"simpleText": {"text": "일기장에 오신 것을 환영해요!\n오늘 하루를 기록해보세요!\n\n일기 번호를 입력하시면 다시 볼 수 있어요!\n" + text + "\n\n삭제하시려면 '삭제 번호'를 입력해주세요! 예시: 삭제 1"}}]}}
+                        {"simpleText": {"text": "📔 일기장에 오신 것을 환영해요!\n오늘 하루를 기록해보세요!\n\n일기 번호를 입력하시면 다시 볼 수 있어요!\n" + text + "\n\n삭제하시려면 '삭제 번호'를 입력해주세요! 예시: 삭제 1"}}]}}
 
     # 📝 메모장 mode
     elif user_text == "📝 메모장":
@@ -364,14 +371,14 @@ async def kakao_ai_chatbot_callback(
         db.commit()
         my_memos = db.query(kakao_chatbot_memo).filter(kakao_chatbot_memo.user_id == user.id, kakao_chatbot_memo.is_deleted == 0).all()
         if len(my_memos) == 0:
-            return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "메모장에 오신 것을 환영합니다!\n\n메모를 입력해주세요!"}}]}}
+            return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "📝 메모장에 오신 것을 환영합니다!\n\n메모를 입력해주세요!"}}]}}
         else:
             text = ""
             number = 1
             for memeo in my_memos:
                 text += f"\n{number}. {memeo.text}"
                 number += 1
-            return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "메모장에 오신 것을 환영합니다!\n\n" + text + "\n\n삭제하시려면 '삭제 번호'를 입력해주세요! 예시: 삭제 1"}}]}}
+            return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "📝 메모장에 오신 것을 환영합니다!\n\n" + text + "\n\n삭제하시려면 '삭제 번호'를 입력해주세요! 예시: 삭제 1"}}]}}
 
     # 기록 보기
     elif len(user_text) <= 3 or user_text.split(" ")[0] == "삭제":
@@ -446,9 +453,9 @@ async def kakao_ai_chatbot_callback(
         if my_memos is None:
             my_memos = []
         if user.mbti == None:
-            return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "MBTI를 설정해주세요! MBTI를 입력해주시면 더 정확한 해몽이 가능해요\n\n" +"무의식 점수: " + str(user.status_score) + "점\n\n" + "꿈 기록장: " + str(len(my_dreams)) + "개\n\n" + "일기장: " + str(len(my_diarys)) + "개\n\n" + "메모장: " + str(len(my_memos)) + "개"}}]}}
+            return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "👨‍🏫 MBTI를 설정해주세요! MBTI를 입력해주시면 더 정확한 해몽이 가능해요\n\n" +"무의식 점수: " + str(user.status_score) + "점\n\n" + "꿈 기록장: " + str(len(my_dreams)) + "개\n\n" + "일기장: " + str(len(my_diarys)) + "개\n\n" + "메모장: " + str(len(my_memos)) + "개"}}]}}
         else:
-            return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "MBTI: " + user.mbti + "\n\n" +"무의식 점수: " + str(user.status_score) + "점\n\n" + "꿈 기록장: " + str(len(my_dreams)) + "개\n\n" + "일기장: " + str(len(my_diarys)) + "개\n\n" + "메모장: " + str(len(my_memos)) + "개"}}]}}
+            return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "👨‍🏫 MBTI: " + user.mbti + "\n\n" +"무의식 점수: " + str(user.status_score) + "점\n\n" + "꿈 기록장: " + str(len(my_dreams)) + "개\n\n" + "일기장: " + str(len(my_diarys)) + "개\n\n" + "메모장: " + str(len(my_memos)) + "개"}}]}}
 
     # 도움말 보여주기
     elif user_text == "🤔 도움말":
@@ -460,15 +467,15 @@ async def kakao_ai_chatbot_callback(
 
     # 곽서준 정보
     elif user_text == "곽서준":
-        return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "도슨트의 CEO입니다. 도슨트를 만든 이유는 꿈을 통해 자신의 내면에 더 가까워지고, 건강한 미래를 창조할 수 있기 때문입니다."}}]}}
+        return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "👨‍💼 도슨트의 CEO입니다. 도슨트를 만든 이유는 꿈을 통해 자신의 내면에 더 가까워지고, 건강한 미래를 창조할 수 있기 때문입니다."}}]}}
 
     # 조태완 정보
     elif user_text == "조태완":
-        return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "도슨트의 CTO입니다. 도슨트를 만든 이유는 사용자들이 첨단 기술을 조금 더 손쉽게 사용할 수 있도록 하기 위해서입니다."}}]}}
+        return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "👨‍💻 도슨트의 CTO입니다. 도슨트를 만든 이유는 사용자들이 첨단 기술을 조금 더 손쉽게 사용할 수 있도록 하기 위해서입니다."}}]}}
 
     # 이예람 정보
     elif user_text == "이예람":
-        return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "도슨트의 CMO입니다. 도슨트를 만든 이유는 사용자들이 꿈을 기록하는 것을 쉽고 재밌게 할 수 있도록 하기 위해서입니다."}}]}}
+        return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "👩‍💼 도슨트의 CMO입니다. 도슨트를 만든 이유는 사용자들이 꿈을 기록하는 것을 쉽고 재밌게 할 수 있도록 하기 위해서입니다."}}]}}
 
     # total_users 정보
     elif user_text == "total_users":
@@ -498,15 +505,17 @@ async def kakao_ai_chatbot_callback(
         return {"version": "2.0", "template": {"outputs": [{"textCard": {"text": "안녕하세요! 🌼 저희 서비스를 더 좋게 만들기 위해 여러분의 소중한 의견을 듣고 싶어요. 함께 성장하는 서비스를 위해 손길 한 번, 부탁드려요!\n\n추첨을 통해 스타벅스 기프티콘을 선물해드려요💛", "buttons": [{"action": "webLink", "label": "커피 받으러가기", "webLinkUrl": "https://walla.my/survey/nt6dhKP3LIJsX0QUwGwi"}]}}]}}
 
     elif user.mode == 0:
-        return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "하단 메뉴 중 하나를 설정해주세요!"}}]}}
+        return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "😉 하단 메뉴 중 하나를 설정해주세요!"}}]}}
 
     elif user_text >= 500:
-        return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "글자가 너무 길어요. 500자 이내로 입력해주세요!"}}]}}
+        return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "😦 글자가 너무 길어요. 500자 이내로 입력해주세요!"}}]}}
 
     # 백그라운드에서 create_callback_request_kakao 함수를 실행하여 카카오 챗봇에게 응답을 보냅니다.
     else:
         if user.mode == 1:
-            if user.mbti is None:
+            if user.day_count > MAX_REQUESTS_PER_DAY:
+                return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "하루 요청량이 초과되었어요. 내일 다시 이용해주세요!"}}]}}
+            elif user.mbti is None:
                 background_tasks.add_task(create_callback_request_kakao,
                                           prompt=user_text,
                                           url=kakao_ai_request['userRequest']['callbackUrl'], user_id=user.id, db=db)
@@ -515,11 +524,13 @@ async def kakao_ai_chatbot_callback(
                                       prompt=user.mbti + ", " + user_text,
                                       url=kakao_ai_request['userRequest']['callbackUrl'], user_id=user.id, db=db)
 
-            return {"version": "2.0", "useCallback": True, "data": {"text": "꿈을 분석하는 중이에요!\n20초 정도 소요될 거 같아요"}}
+            return {"version": "2.0", "useCallback": True, "data": {"text": "🌙 꿈을 분석하는 중이에요!\n20초 정도 소요될 거 같아요"}}
 
         elif user.mode == 2:
+            if user.diary_count > MAX_REQUESTS_PER_DAY:
+                return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "하루 요청량이 초과되었어요. 내일 다시 이용해주세요!"}}]}}
             background_tasks.add_task(create_diary, prompt=user_text, url=kakao_ai_request['userRequest']['callbackUrl'], user_id=user.id, db=db)
-            return {"version": "2.0", "useCallback": True, "data": {"text": "일기를 저장 하는 중이에요!\n20초 정도 소요될 거 같아요"}}
+            return {"version": "2.0", "useCallback": True, "data": {"text": "📔 일기를 저장 하는 중이에요!\n20초 정도 소요될 거 같아요"}}
 
         elif user.mode == 3:
             memo = kakao_chatbot_memo(
@@ -530,6 +541,6 @@ async def kakao_ai_chatbot_callback(
             db.add(memo)
             db.commit()
             db.refresh(memo)
-            return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "메모를 저장했어요!"}}]}}
+            return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "📝 메모를 저장했어요!\n\n메뉴를 눌러 메모를 확인하세요!"}}]}}
 
     return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": "잘못된 입력입니다!"}}]}}
