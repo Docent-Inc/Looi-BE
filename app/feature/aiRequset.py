@@ -46,10 +46,10 @@ async def send_hyperclova_request(messages_prompt, retries=3):
             request_data = {
                 'text': messages_prompt,
                 'maxTokens': 1200,
-                'temperature': 0.7,
+                'temperature': 0.65,
                 'topK': 0,
                 'topP': 0.8,
-                'repeatPenalty': 8.0,
+                'repeatPenalty': 7.0,
                 'start': '###클로바:',
                 'restart': '',
                 'stopBefore': ['###꿈 내용:'],
