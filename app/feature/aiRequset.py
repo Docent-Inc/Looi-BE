@@ -45,7 +45,7 @@ async def send_hyperclova_request(messages_prompt, retries=3):
 
             request_data = {
                 'text': messages_prompt,
-                'maxTokens': 1000,
+                'maxTokens': 1200,
                 'temperature': 0.7,
                 'topK': 0,
                 'topP': 0.8,
