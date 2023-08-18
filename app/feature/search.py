@@ -1,9 +1,9 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import joinedload
-from app.db.models.diary import Diary
-from app.db.models.hot import Hot
-from app.db.models.search import SearchHistory
-from app.db.models.user import User
+from app.db.models1.diary import Diary
+from app.db.models1.hot import Hot
+from app.db.models1.search import SearchHistory
+from app.db.models1.user import User
 from sqlalchemy import func, desc
 from sqlalchemy.sql.expression import or_
 from sqlalchemy.orm import Session

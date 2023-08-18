@@ -4,14 +4,6 @@ from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
 
-class kakao_chatbot_dream(Base):
-    __tablename__ = "kakao_chatbot_dream"
-
-    id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('kakao_chatbot_user.id'), nullable=False)
-    diary_id = Column(Integer, ForeignKey('Diary.id'), nullable=False)
-    dream_name = Column(String(50), nullable=False)
-
 class kakao_chatbot_user(Base):
     __tablename__ = "kakao_chatbot_user"
 
@@ -24,116 +16,89 @@ class kakao_chatbot_user(Base):
     only_luck_count = Column(Integer, nullable=False)
     luck_count = Column(Integer, nullable=False)
 
-class line_chatbot_dream(Base):
-    __tablename__ = "line_chatbot_dream"
+class kakao_chatbot_MorningDiary(Base):
+    __tablename__ = "kakao_chatbot_MorningDiary"
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('line_chatbot_user.id'), nullable=False)
-    diary_id = Column(Integer, ForeignKey('Diary.id'), nullable=False)
+    user_id = Column(Integer, ForeignKey('kakao_chatbot_user.id'), nullable=False, index=True)
+    diary_id = Column(Integer, ForeignKey('MorningDiary.id'), nullable=False)
+    diary_name = Column(Text, nullable=False)
 
-class line_chatbot_user(Base):
-    __tablename__ = "line_chatbot_user"
+class kakao_chatbot_NightDiary(Base):
+    __tablename__ = "kakao_chatbot_NightDiary"
 
     id = Column(Integer, primary_key=True)
-    line_user_id = Column(Text, nullable=False)
-    mbti = Column(String(4), nullable=True)
-    day_count = Column(Integer, nullable=False)
-    only_luck_count = Column(Integer, nullable=False)
-    luck_count = Column(Integer, nullable=False)
-    total_generated_dream = Column(Integer, nullable=False)
+    user_id = Column(Integer, ForeignKey('kakao_chatbot_user.id'), nullable=False, index=True)
+    diary_id = Column(Integer, ForeignKey('NightDiary.id'), nullable=False)
+    diary_name = Column(String(50), nullable=False)
+
+class kakao_chatbot_Memo(Base):
+    __tablename__ = "kakao_chatbot_Memo"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('kakao_chatbot_user.id'), nullable=False, index=True)
+    memo_id = Column(Integer, ForeignKey('Memo.id'), nullable=False)
 
 class User(Base):
     __tablename__ = 'User'
     id = Column(Integer, primary_key=True, index=True)
-    nickName = Column(String(25), unique=True, index=True, nullable=False)
-    email = Column(String(25), unique=True, index=True, nullable=False)
-    hashed_password = Column(String(255), nullable=False)
-    gender = Column(String(10), nullable=True)
-    age_range = Column(String(10), nullable=True)
-    is_active = Column(Boolean, default=True)
+    nickname = Column(String(25), index=True, nullable=False)
+    email = Column(String(25), index=True, nullable=False)
+    hashed_password = Column(Text, nullable=False)
+    gender = Column(String(5), nullable=True)
+    age_range = Column(String(5), nullable=True)
+    mbti = Column(String(4), nullable=True)
     is_deleted = Column(Boolean, default=False)
     subscription_status = Column(Boolean, default=False)
     language_id = Column(Integer, nullable=True)
-    search_history = relationship("SearchHistory", back_populates="user")
 
-class SearchHistory(Base):
-    __tablename__ = 'search_history'
-
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey('User.id'))
-    search_term = Column(String(200))
-    search_timestamp = Column(DateTime(timezone=True), server_default=func.now())
-
-    user = relationship("User", back_populates="search_history")
-
-class Diary(Base):
-    __tablename__ = "Diary"
+class MorningDiary(Base):
+    __tablename__ = "MorningDiary"
 
     id = Column(Integer, primary_key=True)
-    user = relationship('User', backref='diaries')
-    User_id = Column(Integer, ForeignKey('User.id'), nullable=False)
+    User = relationship('User', backref='morning_diaries')
+    User_id = Column(Integer, ForeignKey('User.id'), nullable=False, index=True)
+    diary_name = Column(String(50), nullable=False)
+    content = Column(Text, nullable=False)
+    resolution = Column(Text, nullable=True)
     image_url = Column(String(100), nullable=True)
-    create_date = Column(String(14), nullable=False)
-    modify_date = Column(String(14), nullable=False)
-    is_deleted = Column(Boolean, default=False)
-    is_public = Column(Boolean, default=False)
-    report_count = Column(Integer, default=0)
-    view_count = Column(Integer, default=0)
-    like_count = Column(Integer, default=0)
-    comment_count = Column(Integer, default=0)
+    create_date = Column(DateTime, nullable=False)
+    modify_date = Column(DateTime, nullable=False)
+    is_deleted = Column(Boolean, default=False, index=True)
     is_modified = Column(Boolean, default=False)
 
-class Diary_EN(Base):
-    __tablename__ = "Diary_EN"
+class NightDiary(Base):
+    __tablename__ = "NightDiary"
 
     id = Column(Integer, primary_key=True)
-    diary_id = Column(Integer, ForeignKey('Diary.id'), nullable=False)
-    dream_name = Column(Text, nullable=False)
-    dream = Column(Text, nullable=False)
-    resolution = Column(Text, nullable=True)
-    today_luck = Column(Text, nullable=True)
+    User = relationship('User', backref='night_diaries')
+    User_id = Column(Integer, ForeignKey('User.id'), nullable=False)
+    diary_name = Column(Text, nullable=False)
+    content = Column(Text, nullable=False)
+    create_date = Column(DateTime, nullable=False)
+    modify_date = Column(DateTime, nullable=False)
+    is_deleted = Column(Boolean, default=False, index=True)
 
-class Diary_JP(Base):
-    __tablename__ = "Diary_JP"
-
-    id = Column(Integer, primary_key=True)
-    diary_id = Column(Integer, ForeignKey('Diary.id'), nullable=False)
-    dream_name = Column(Text, nullable=False)
-    dream = Column(Text, nullable=False)
-    resolution = Column(Text, nullable=True)
-    today_luck = Column(Text, nullable=True)
-
-class Diary_KR(Base):
-    __tablename__ = "Diary_KR"
+class Memo(Base):
+    __tablename__ = "Memo"
 
     id = Column(Integer, primary_key=True)
-    diary_id = Column(Integer, ForeignKey('Diary.id'), nullable=False)
-    dream_name = Column(Text, nullable=False)
-    dream = Column(Text, nullable=False)
-    resolution = Column(Text, nullable=True)
-    today_luck = Column(Text, nullable=True)
+    User = relationship('User', backref='memos')
+    User_id = Column(Integer, ForeignKey('User.id'), nullable=False, index=True)
+    memo = Column(Text, nullable=False)
+    create_date = Column(DateTime, nullable=False)
+    modify_date = Column(DateTime, nullable=False)
+    is_deleted = Column(Boolean, default=False, index=True)
 
-class Mbti_data_KR(Base):
-    __tablename__ = "MBTI_data_KR"
-
-    id = Column(Integer, primary_key=True)
-    user_text = Column(Text, nullable=False)
-    mbti_resolution = Column(Text, nullable=False)
-
-class Mbti_data_JP(Base):
-    __tablename__ = "MBTI_data_JP"
+class Calender(Base):
+    __tablename__ = "Calender"
 
     id = Column(Integer, primary_key=True)
-    user_text = Column(Text, nullable=False)
-    mbti_resolution = Column(Text, nullable=False)
-
-class Mbti_data_EN(Base):
-    __tablename__ = "MBTI_data_EN"
-
-    id = Column(Integer, primary_key=True)
-    user_text = Column(Text, nullable=False)
-    mbti_resolution = Column(Text, nullable=False)
+    User = relationship('User', backref='calenders')
+    User_id = Column(Integer, ForeignKey('User.id'), nullable=False, index=True)
+    date = Column(DateTime, nullable=False)
+    content = Column(Text, nullable=False)
+    is_deleted = Column(Boolean, default=False, index=True)
 
 def get_Base():
     return Base
-
