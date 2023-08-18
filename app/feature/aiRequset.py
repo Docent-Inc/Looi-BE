@@ -154,33 +154,3 @@ async def send_karlo_request(messages_prompt, retries=3):
             else:
                 print("Failed to get response after maximum retries")
                 raise HTTPException(status_code=500, detail="Failed Karlo API Request")
-
-async def send_sentiment_request(messages_prompt, retries=3):
-    for i in range(retries):
-        try:
-            url = "https://naveropenapi.apigw.ntruss.com/sentiment-analysis/v1/analyze"
-
-            data = {
-                'content': messages_prompt
-            }
-
-            headers = {
-                'X-NCP-APIGW-API-KEY-ID': "km17ullvto",
-                'X-NCP-APIGW-API-KEY': "LQf2hW5GrcEQQdacwYPyAR35UxtpUfRc5bHUWNOy",
-                'Content-Type': 'application/json'
-            }
-
-            async with ClientSession() as session:
-                async with session.post(url, headers=headers, json=data) as response:
-                    result = await response.json()
-                    return result
-
-        except Exception as e:
-            print(f"Hypercolva API Error: {e}")
-            if i < retries - 1:
-                print(f"Retrying {i + 1} of {retries}...")
-            else:
-                print("Failed to get response after maximum retries")
-                raise HTTPException(status_code=500, detail="Failed Hyperclova API Request")
-
-

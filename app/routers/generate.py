@@ -1,14 +1,28 @@
 from fastapi import APIRouter, Depends
-from app.feature.generate_kr import generate_text, generate_resolution_clova
-from app.schemas.response.gpt import BasicResponse, ImageResponse, ResolutionResponse
-from app.schemas.request.generate import Generate, Image, Resolution
+from app.feature.generate_kr import generate_text, generate_resolution_clova, generate_image_model
+from app.schemas.response.gpt import BasicResponse, ResolutionResponse
+from app.schemas.request.generate import Generate, Resolution, ImageRequest
 from app.schemas.common import ApiResponse
-from app.feature.generateImg import additional_generate_image
 from app.core.security import get_current_user
 from app.schemas.response.user import User
 from app.db.database import get_db
 from sqlalchemy.orm import Session
 router = APIRouter(prefix="/generate")
+
+@router.post("/image", response_model=ApiResponse, tags=["Generate"])
+async def generate_image(
+    body: ImageRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    '''
+    이미지 생성 API, 사용자가 입력한 텍스트를 기반으로 이미지를 생성합니다.
+    '''
+    iamge_url = await generate_image_model(body.image_model, body.text)
+    return ApiResponse(
+        success=True,
+        data=iamge_url
+    )
 
 @router.post("/dream", response_model=ApiResponse, tags=["Generate"])
 async def generate_basic(
@@ -35,27 +49,7 @@ async def generate_basic(
         )
     )
 
-@router.post("/image", response_model=ApiResponse, tags=["Generate"])
-async def generate_image(
-    req: Image, # 생성된 꿈 텍스트의 id
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-) -> ImageResponse:
-    '''
-    꿈 이미지 생성 API, 꿈 텍스트의 id를 기반으로 꿈 이미지를 추가 생성합니다.
 
-    :param textId: 생성된 꿈 텍스트의 id
-    :param current_user: 로그인한 사용자의 정보를 가져오는 의존성 주입
-    :param db: 데이터베이스 세션을 가져오는 의존성 주입
-    :return: 꿈 이미지 생성 결과
-    '''
-    dream_image_url = await additional_generate_image(req.image_model, req.textId, current_user.id, db)
-    return ApiResponse(
-        success=True,
-        data=ImageResponse(
-            image_url=dream_image_url
-        )
-    )
 
 @router.post("/resolution", response_model=ApiResponse, tags=["Generate"])
 async def resolution(

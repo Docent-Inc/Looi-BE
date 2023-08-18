@@ -3,8 +3,8 @@ from pydantic import BaseModel
 class Generate(BaseModel):
     image_model: int
     text: str
-class Image(BaseModel):
+class ImageRequest(BaseModel):
     image_model: int
-    textId: int
+    text: str
 class Resolution(BaseModel):
     text: str

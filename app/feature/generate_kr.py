@@ -1,10 +1,7 @@
 import asyncio
-from app.core.current_time import get_current_time
-from app.db.models.mbti_data_KR import Mbti_data_KR
-from app.feature.generateImg import generate_img
-from app.db.models.dream import DreamText, DreamImage
+from app.feature.generateImg import generate_image_model
 from app.db.database import get_db
-from app.feature.aiRequset import send_gpt_request, send_bard_request, send_hyperclova_request
+from app.feature.aiRequset import send_gpt_request, send_hyperclova_request
 
 mbti_list = [
         "ISTJ", "ISFJ", "INFJ", "INTJ", "ISTP", "ISFP", "INFP", "INTP", "ESTP", "ESFP", "ENFP", "ENTP", "ESTJ", "ESFJ",
@@ -48,7 +45,7 @@ async def generate_text(image_model: int, text: str, userId: int, db: get_db()) 
             {"role": "user", "content": message}
         ]
         prompt = await send_gpt_request(messages_prompt)
-        dream_image_url = await generate_img(image_model, prompt, userId, db)
+        dream_image_url = await generate_image_model(image_model, prompt)
         return dream_image_url, prompt
 
     dream_name, L = await asyncio.gather(
@@ -58,32 +55,32 @@ async def generate_text(image_model: int, text: str, userId: int, db: get_db()) 
     dream = message
     dream_image_url, dream_image_prompt = L
 
-    # 데이터베이스에 DreamText 저장하기
-    dream_text = DreamText(
-        User_id=userId,
-        User_text=text,
-        dream_name=dream_name,
-        dream=dream,
-        DALLE2=dream_image_prompt,
-        date=get_current_time(),
-        is_deleted=False
-    )
-    db.add(dream_text)
-    db.commit()
-    db.refresh(dream_text)
+    # # 데이터베이스에 DreamText 저장하기
+    # dream_text = DreamText(
+    #     User_id=userId,
+    #     User_text=text,
+    #     dream_name=dream_name,
+    #     dream=dream,
+    #     DALLE2=dream_image_prompt,
+    #     date=get_current_time(),
+    #     is_deleted=False
+    # )
+    # db.add(dream_text)
+    # db.commit()
+    # db.refresh(dream_text)
+    #
+    # # 데이터베이스에 DreamImage 저장하기
+    # dream_image = DreamImage(
+    #     Text_id=dream_text.id,
+    #     dream_image_url=dream_image_url
+    # )
+    # db.add(dream_image)
+    # db.commit()
+    # db.refresh(dream_image)
+    # # 데이터베이스에서 id값 찾기
+    # dream_text_id = dream_text.id
 
-    # 데이터베이스에 DreamImage 저장하기
-    dream_image = DreamImage(
-        Text_id=dream_text.id,
-        dream_image_url=dream_image_url
-    )
-    db.add(dream_image)
-    db.commit()
-    db.refresh(dream_image)
-    # 데이터베이스에서 id값 찾기
-    dream_text_id = dream_text.id
-
-    return dream_text_id, dream_name, dream, dream_image_url
+    return "dream_text_id", dream_name, dream, dream_image_url
 
 async def generate_resolution_clova(text: str, db: get_db()) -> str:
     prompt = f"꿈을 요소별로 자세하게, mbti맞춤 해몽 해줘. mbti가 입력되지 않았으면 자세하게 꿈의 요소별 일반적인 꿈 해몽 해줘." \
@@ -92,15 +89,22 @@ async def generate_resolution_clova(text: str, db: get_db()) -> str:
 
     dream_resolution = await send_hyperclova_request(prompt)
     dream_resolution = dream_resolution.replace("###클로바:", "").lstrip()
-
-    # MBTI 맞춤 해몽이라면 데이터베이스에 저장함
-    if text[0:4] in mbti_list:
-        mbti_data = Mbti_data_KR(
-            user_text=text,
-            mbti_resolution=dream_resolution,
-        )
-        db.add(mbti_data)
-        db.commit()
-        db.refresh(mbti_data)
-
     return dream_resolution
+
+async def generate_image_model(image_model: int, message: str):
+    messages_prompt = [
+        {"role": "system", "content": "make just one scene a prompt for generate image model about this text"},
+        {"role": "system", "content": "include the word illustration, digital art and 7 world about Subject, Medium, Environment, Lighting, Color, Mood, Compoition"},
+        {"role": "system", "content": "make just prompt only engilsh"},
+        {"role": "system", "content": "max_length=250"},
+        {"role": "user", "content": "학교 복도에서 친구랑 얘기하다가 갑자기 앞문쪽에서 좀비떼가 몰려와서 도망침. 근데 알고보니 우리반 애였음. 걔네 반 담임쌤한테 가서 말하니까 쌤이 괜찮다고 하심. 그래서 안심하고 있었는데 또다른 좀비가 와서 막 물어뜯음. 그러다가 깼는데 아직도 심장이 벌렁벌렁 거림.."},
+        {"role": "system", "content": "Fleeing from a zombie horde in school, digital art, illustration, school hallway turned into a zombie apocalypse, eerie greenish light, dull and muted colors punctuated with blood red, shock and fear, focus on the chase and surprise zombie attack."},
+        {"role": "user", "content": "학교 축제날이어서 여러가지 부스 체험을 했다. 나는 타로부스 가서 연애운 봤는데 상대방이랑 안 맞는다고 해서 기분 상했다. 그래도 마지막에는 좋게 끝나서 다행이라고 생각했다."},
+        {"role": "system", "content": "Festival-goer getting a tarot reading, digital art, illustration, lively school festival environment, warm and inviting lighting, colorful and vibrant hues, a mix of disappointment and relief, focus on protagonist's reaction to the fortune telling."},
+        {"role": "user", "content": "적에게 계속 도망치면서 세상을 구할 목표를 향해 팀원들과 향해 나아간다. 모험중에서 새로운 사람도 만나며 나아가지만 결국 나 혼자서 해내야 하는 상황에 마주친다. 하지만 목표를 향한 문제 풀이 과정에서 답도 모르지만 안풀리는 상황에 놓이고 적에게 붙잡히지는 않았지만 따라잡히게 된다."},
+        {"role": "system", "content": "Hero's journey, digital art, illustration, Adventure to save world, Dramatic adventure lighting, Vivid fantasy colors, Determination and anxiety, Spotlight on the lone struggle and pursuit."},
+        {"role": "user", "content": message}
+    ]
+    prompt = await send_gpt_request(messages_prompt)
+    dream_image_url = await generate_img(image_model, prompt)
+    return dream_image_url, prompt
