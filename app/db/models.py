@@ -45,8 +45,8 @@ class User(Base):
     nickname = Column(String(25), index=True, nullable=False)
     email = Column(String(25), index=True, nullable=False)
     hashed_password = Column(Text, nullable=False)
-    gender = Column(String(5), nullable=True)
-    age_range = Column(String(5), nullable=True)
+    gender = Column(String(10), nullable=True)
+    age_range = Column(String(10), nullable=True)
     mbti = Column(String(4), nullable=True)
     is_deleted = Column(Boolean, default=False)
     subscription_status = Column(Boolean, default=False)
@@ -65,7 +65,6 @@ class MorningDiary(Base):
     create_date = Column(DateTime, nullable=False)
     modify_date = Column(DateTime, nullable=False)
     is_deleted = Column(Boolean, default=False, index=True)
-    is_modified = Column(Boolean, default=False)
 
 class NightDiary(Base):
     __tablename__ = "NightDiary"
@@ -75,6 +74,7 @@ class NightDiary(Base):
     User_id = Column(Integer, ForeignKey('User.id'), nullable=False)
     diary_name = Column(Text, nullable=False)
     content = Column(Text, nullable=False)
+    image_url = Column(String(100), nullable=True)
     create_date = Column(DateTime, nullable=False)
     modify_date = Column(DateTime, nullable=False)
     is_deleted = Column(Boolean, default=False, index=True)
