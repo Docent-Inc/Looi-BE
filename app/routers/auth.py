@@ -1,21 +1,19 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from fastapi.responses import JSONResponse
-from app.auth.kakaoOAuth2 import KAKAO_AUTH_URL, get_user_kakao, mobile_create_token, KAKAO_AUTH_URL_TEST, \
+from app.feature.kakaoOAuth2 import KAKAO_AUTH_URL, get_user_kakao, KAKAO_AUTH_URL_TEST, \
     get_user_kakao_test
 from app.db.database import get_db
-from app.core.config import settings
 from sqlalchemy.orm import Session
-from app.core.security import create_access_token, decode_access_token, create_token
-from app.schemas.response.token import TokenData, TokenDataInfo
-from app.schemas.request.token import TokenRefresh
-from datetime import timedelta
+from app.core.security import decode_access_token, create_token
+from app.schemas.response import TokenData, TokenDataInfo
+from app.schemas.request import TokenRefresh
 from app.schemas.common import ApiResponse
-from app.auth.user import get_user_by_email, create_user, authenticate_user, changeNickName, changePassword, deleteUser, \
-    user_kakao
-from app.schemas.request.user import UserCreate, PasswordChangeRequest, NicknameChangeRequest
+from app.feature.user import get_user_by_email, create_user, authenticate_user, changeNickName, changePassword, \
+    deleteUser, user_kakao, changeMbti
+from app.schemas.request import UserCreate, PasswordChangeRequest, NicknameChangeRequest, \
+    MbtiChangeRequest
 from app.core.security import get_current_user, get_user_by_nickname
-from app.schemas.response.user import User, PasswordChangeResponse, NicknameChangeResponse, DeleteUserResponse
+from app.schemas.response import User
 
 router = APIRouter(prefix="/auth")
 
@@ -57,7 +55,7 @@ async def login(
     form_data: OAuth2PasswordRequestForm = Depends(), # OAuth2PasswordRequestForm을 사용합니다.
     db: Session = Depends(get_db),
 ):
-    user = await authenticate_user( # 이메일과 비밀번호로 사용자를 조회합니다.
+    user = authenticate_user( # 이메일과 비밀번호로 사용자를 조회합니다.
         db, email=form_data.username, password=form_data.password
     )
     if not user: # 사용자가 존재하지 않으면
@@ -125,6 +123,16 @@ async def change_nickname(
     await changeNickName(nickname_change_request.nickname, current_user, db)
     return ApiResponse(success=True, data={"nickname": nickname_change_request.nickname})
 
+@router.post("/change/mbti", response_model=ApiResponse, tags=["Auth"])
+async def change_mbti(
+    body: MbtiChangeRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    # 사용자 정보를 수정합니다.
+    await changeMbti(body.mbti, current_user, db)
+    return ApiResponse(success=True, data={"mbti": body.mbti})
+
 @router.delete("/delete", response_model=ApiResponse, tags=["Auth"])
 async def delete_user(
     current_user: User = Depends(get_current_user),
@@ -189,3 +197,4 @@ async def kakao_callback(
             user_nickname=data.get("kakao_account").get("email")[0:data.get("kakao_account").get("email").find("@")],
         )
     )
+

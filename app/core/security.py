@@ -9,7 +9,7 @@ from fastapi.security.api_key import APIKeyHeader
 from app.db.database import get_db
 from app.db.models import User
 from typing import Optional
-from app.core.config import settings # .env파일에 저장된 secret key셋팅을 불러온다.
+from app.core.config import settings
 access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
 refresh_token_expires = timedelta(days=7)  # 리프레시 토큰 만료 기간을 설정합니다.
 
@@ -67,7 +67,7 @@ async def get_current_user(
     except JWTError:
         raise credentials_exception
 
-    user = await get_user_by_email(db, email=email) # email을 통해 유저를 가져온다.
+    user = get_user_by_email(db, email=email) # email을 통해 유저를 가져온다.
     if user is None or user.is_deleted == True: # 유저가 없거나 삭제된 유저면
         raise credentials_exception
     return user # 토큰을 복호화하여 유저 정보를 가져온다.
@@ -81,10 +81,10 @@ async def create_refresh_token(data: dict, expires_delta: timedelta = None) -> s
     to_encode.update({"exp": expire, "type": "refresh"}) # 토큰에 만료시간과 type을 추가
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM) # 토큰을 생성
     return encoded_jwt, expire
-async def get_user_by_email(db: Session, email: str) -> Optional[User]:
+def get_user_by_email(db: Session, email: str) -> Optional[User]:
     return db.query(User).filter(User.email == email, User.is_deleted == False).first()
 
-async def get_user_by_nickname(db: Session, nickname: str) -> Optional[User]:
+def get_user_by_nickname(db: Session, nickname: str) -> Optional[User]:
     return db.query(User).filter(User.nickname == nickname, User.is_deleted == False).first()
 
 async def create_token(email):

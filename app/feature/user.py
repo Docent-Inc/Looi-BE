@@ -1,10 +1,12 @@
 from sqlalchemy.orm import Session
 from app.core.security import verify_password, get_password_hash
-from app.schemas.request.user import UserCreate
+from app.schemas.request import UserCreate
 from typing import Optional
 from app.core.security import get_user_by_email, get_user_by_nickname
 from app.db.models import User
 from fastapi import HTTPException, status
+
+mbti_list = ['istj', 'isfj', 'infj', 'intj', 'istp', 'isfp', 'infp', 'intp', 'estp', 'esfp', 'enfp', 'entp', 'estj', 'esfj', 'enfj', 'entj']
 
 async def create_user(db: Session, user: UserCreate) -> User:
     hashed_password = get_password_hash(user.password)
@@ -12,7 +14,6 @@ async def create_user(db: Session, user: UserCreate) -> User:
         nickname=user.nickname,
         email=user.email,
         hashed_password=hashed_password,
-        is_active=True,
         is_deleted=False
     )
     try:
@@ -26,11 +27,11 @@ async def create_user(db: Session, user: UserCreate) -> User:
             detail="유저정보 생성을 실패했습니다.",  # 에러 메시지를 반환합니다.
         )
 
-async def authenticate_user(db: Session, email: str, password: str) -> Optional[User]:
-    user = await get_user_by_email(db, email) # 이메일로 사용자 정보 가져오기
+def authenticate_user(db: Session, email: str, password: str) -> Optional[User]:
+    user = get_user_by_email(db, email) # 이메일로 사용자 정보 가져오기
     if not user:
         return None
-    if not await verify_password(password, user.hashed_password): # 비밀번호 확인
+    if not verify_password(password, user.hashed_password): # 비밀번호 확인
         return None
     return user
 
@@ -72,6 +73,26 @@ async def changePassword(request_password: str, new_password: str, current_user:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="비밀번호 변경을 실패했습니다.",  # 에러 메시지를 반환합니다.
         )
+
+async def changeMbti(mbti: str, user: User, db: Session):
+    # mbti가 유효한지 확인합니다.
+    if mbti not in mbti_list:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="mbti가 유효하지 않습니다.",
+        )
+    # mbti를 변경합니다.
+    try:
+        user.mbti = mbti
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    except:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="유저정보를 수정하는데 실패했습니다.",
+        )
+
 
 async def deleteUser(current_user: User, db: Session):
     # 사용자의 삭제 상태를 변경합니다.
@@ -129,12 +150,3 @@ async def user_kakao(kakao_data: dict, db: Session) -> Optional[User]:
             )
     return user
 
-async def readUserCount(db: Session):
-    try:
-        count = db.query(User).count()
-        return count
-    except:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="유저정보를 조회하는데 실패했습니다.",
-        )

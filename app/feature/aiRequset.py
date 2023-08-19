@@ -1,3 +1,4 @@
+import asyncio
 import openai
 from aiohttp import ClientSession
 from dotenv import load_dotenv
@@ -5,7 +6,6 @@ import os
 from fastapi import HTTPException
 load_dotenv()
 openai.api_key = os.getenv("GPT_API_KEY")
-os.environ['_BARD_API_KEY']=os.getenv("BARD_API_KEY")
 stable_diffusion_api_key = os.getenv("STABLE_DIFFUSION")
 hyperclova_api_key = os.getenv("HYPER_CLOVA_KEY")
 hyperclova_api_gateway = os.getenv("HYPER_CLOVA_GATEWAY")
@@ -154,3 +154,22 @@ async def send_karlo_request(messages_prompt, retries=3):
             else:
                 print("Failed to get response after maximum retries")
                 raise HTTPException(status_code=500, detail="Failed Karlo API Request")
+
+async def send_dalle2_request(messages_prompt, retries=3):
+    for i in range(retries):
+        try:
+            response = await asyncio.to_thread(
+                openai.Image.create,
+                prompt=messages_prompt,
+                n=1,
+                size="512x512",
+                response_format="url"
+            )
+            return response['data'][0]['url']
+        except Exception as e:
+            print(f"DALL-E API Error{e}")
+            if i < retries - 1:
+                print(f"Retrying {i + 1} of {retries}...")
+            else:
+                print("Failed to get response after maximum retries")
+                raise HTTPException(status_code=500, detail="Failed DALL-E API Request")
