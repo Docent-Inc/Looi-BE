@@ -54,8 +54,8 @@ async def get_current_user(
     db: Session = Depends(get_db),
 ) -> User:
     credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
+        status_code=status.HTTP_401_UNAUTHORIZED, # 401 에러
+        detail=4220,
         headers={"WWW-Authenticate": "Bearer"},
     )
     token = api_key.replace("Bearer ", "") # api_key에서 Bearer를 제거

@@ -1,6 +1,12 @@
-from typing import Optional
+from typing import Optional, Any
 
 from pydantic import BaseModel
+
+class ApiResponse(BaseModel):
+    success: bool = True
+    status_code: Optional[int] = 2000
+    message: Optional[str] = "요청이 성공적으로 처리되었습니다."
+    data: Optional[Any] = None
 
 '''
 Auth 관련 Response
@@ -8,13 +14,12 @@ Auth 관련 Response
 class TokenData(BaseModel):
     access_token: str
     expires_in: int
-    token_type: str
-class TokenDataInfo(TokenData):
     refresh_token: str
     refresh_expires_in: int
-    user_email: str
-    user_password: str
-    user_nickname: str
+    token_type: str
+
+class KakaoTokenData(TokenData):
+    is_signup: bool
 
 class User(BaseModel):
     id: int

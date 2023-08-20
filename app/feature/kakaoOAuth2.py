@@ -1,5 +1,5 @@
 import requests
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from httpx_oauth.errors import GetIdEmailError
 from dotenv import load_dotenv
 import os
@@ -32,7 +32,10 @@ async def get_user_kakao(request: str):
         user_info = requests.get(PROFILE_ENDPOINT, headers=headers).json()
         return user_info
     except GetIdEmailError:
-        raise HTTPException(status_code=400, detail="Could not get user info")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=4010,
+        )
 
 async def get_user_kakao_test(request: str):
     try:
@@ -49,12 +52,7 @@ async def get_user_kakao_test(request: str):
         user_info = requests.get(PROFILE_ENDPOINT, headers=headers).json()
         return user_info
     except GetIdEmailError:
-        raise HTTPException(status_code=400, detail="Could not get user info")
-
-async def mobile_create_token(data: str):
-    try:
-        headers = {"Authorization": f"Bearer {data}"}
-        user_info = requests.get(PROFILE_ENDPOINT, headers=headers).json()
-        return user_info
-    except GetIdEmailError:
-        raise HTTPException(status_code=400, detail="Could not get user info")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=4010,
+        )

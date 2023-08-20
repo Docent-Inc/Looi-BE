@@ -33,7 +33,7 @@ async def create_morning_diary(image_model: int, content: str, user: User, db: S
     except:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="아침 일기 생성에 실패했습니다."
+            detail=5000,  # 에러 메시지를 반환합니다.
         )
     return diary.id
 
@@ -42,7 +42,7 @@ async def read_morning_diary(diary_id: int, user:User, db: Session) -> MorningDi
     if not diary:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="아침 일기를 찾을 수 없습니다."
+            detail=4011,
         )
     return diary
 
@@ -69,7 +69,7 @@ async def create_night_diary(image_model: int, content: str, user: User, db: Ses
     except:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="저녁 일기 생성에 실패했습니다."
+            detail=5000,
         )
     return diary.id
 
@@ -78,6 +78,6 @@ async def read_night_diary(diary_id: int, user:User, db: Session) -> NightDiary:
     if not diary:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="저녁 일기를 찾을 수 없습니다."
+            detail=4012,
         )
     return diary
