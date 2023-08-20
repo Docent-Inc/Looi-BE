@@ -1,12 +1,11 @@
 from fastapi import APIRouter, Depends
 
 from app.feature.diary import create_night_diary, create_morning_diary, read_morning_diary, read_night_diary
-from app.schemas.common import ApiResponse
 from app.db.database import get_db
 from sqlalchemy.orm import Session
 from app.core.security import get_current_user
 from app.schemas.request import CreateDiaryRequest
-from app.schemas.response import User
+from app.schemas.response import User, ApiResponse
 
 router = APIRouter(prefix="/diary")
 
@@ -26,7 +25,6 @@ async def morning_create(
     '''
     diary_id = await create_morning_diary(body.image_model, body.content, current_user, db)
     return ApiResponse(
-        success=True,
         data={"id": diary_id}
     )
 
@@ -46,7 +44,6 @@ async def morning_read(
     '''
     diary = await read_morning_diary(diary_id, current_user, db)
     return ApiResponse(
-        success=True,
         data={"diary": diary}
     )
 
@@ -67,7 +64,6 @@ async def night_create(
 
     diary_id = await create_night_diary(body.image_model, body.content, current_user, db)
     return ApiResponse(
-        success=True,
         data={"id": diary_id}
     )
 
@@ -87,6 +83,5 @@ async def night_read(
     '''
     diary = await read_night_diary(diary_id, current_user, db)
     return ApiResponse(
-        success=True,
         data={"diary": diary}
     )
