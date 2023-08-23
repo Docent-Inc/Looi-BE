@@ -24,5 +24,20 @@ class TokenRefresh(BaseModel):
 Diary 관련 Response
 '''
 class CreateDiaryRequest(BaseModel):
-    image_model: int
+    content: str
+
+class UpdateDiaryRequest(BaseModel):
+    diary_name: str
+    diary_content: str
+
+class CreateMemoRequest(BaseModel):
+    content: str
+
+class ChatRequest(BaseModel):
+    content: str
+
+class CalenderRequest(BaseModel):
+    start_date: str
+    end_date: str
+    title: str
     content: str
