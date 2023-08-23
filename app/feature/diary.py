@@ -179,6 +179,15 @@ async def create_memo(content: str, user: User, db: Session) -> int:
         )
     return memo.id
 
+async def read_memo(memo_id: int, user: User, db: Session) -> Memo:
+    memo = db.query(Memo).filter(Memo.id == memo_id, Memo.User_id == user.id, Memo.is_deleted == False).first()
+    if not memo:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=4016,
+        )
+    return memo
+
 async def create_calender(body: CalenderRequest, user: User, db: Session) -> int:
     calender = Calender(
         User_id=user.id,
@@ -226,3 +235,23 @@ async def update_calender(calender_id: int, body: CalenderRequest, user: User, d
             detail=5000,
         )
     return calender.id
+
+async def delete_calender(calender_id: int, user: User, db: Session):
+    calender = db.query(Calender).filter(Calender.id == calender_id, Calender.User_id == user.id, Calender.is_deleted == False).first()
+    if not calender:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=4015,
+        )
+    try:
+        calender.is_deleted = True
+        db.commit()
+    except:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=5000,
+        )
+
+async def list_calender(user: User, db: Session):
+    calenders = db.query(Calender).filter(Calender.User_id == user.id, Calender.is_deleted == False).all()
+    return calenders
