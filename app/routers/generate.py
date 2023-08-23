@@ -33,7 +33,7 @@ async def generate_chat(
             response = "일기를 그리고 있어요. 잠시만 기다려주세요!"
         elif text_type == 3:
             # await create_memo(body.content, current_user, db)
-            response = "메모장에 내용을 저장했어요!"
+            response = "메모를 저장하고 있어요. 잠시만 기다려주세요!"
         elif text_type == 4:
             background_tasks.add_task(generate_schedule, text, current_user, db)
             response = "일정을 저장중이에요. 잠시만 기다려주세요!"

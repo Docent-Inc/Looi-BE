@@ -30,7 +30,7 @@ class UpdateDiaryRequest(BaseModel):
     diary_name: str
     diary_content: str
 
-class CreateMemoRequest(BaseModel):
+class MemoRequest(BaseModel):
     content: str
 
 class ChatRequest(BaseModel):
