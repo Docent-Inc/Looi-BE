@@ -161,6 +161,7 @@ async def list_night_diary(page: int, user: User, db: Session):
     diaries = db.query(NightDiary).filter(NightDiary.User_id == user.id, NightDiary.is_deleted == False).order_by(NightDiary.create_date.desc()).limit(5).offset((page-1)*5).all()
     return diaries
 async def create_memo(content: str, user: User, db: Session) -> int:
+    # TODO: 메모의 제목과 카테고리를 생성합니다.
     # 메모를 생성합니다.
     memo = Memo(
         content=content,

@@ -6,8 +6,6 @@ COPY main.py /app/
 COPY app /app/app/
 COPY .env /app/
 COPY requirements.txt /app/
-COPY gunicorn_logging.conf /app/
-COPY app/core/formatter_with_localtime.py /app/app/core/
 
 RUN pip install --no-cache-dir -r requirements.txt
 
