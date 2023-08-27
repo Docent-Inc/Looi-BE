@@ -1,288 +1,359 @@
-from fastapi import APIRouter, Depends, BackgroundTasks
-from app.schemas.common import ApiResponse
+from fastapi import APIRouter, Depends
+
+from app.feature.diary import create_night_diary, create_morning_diary, read_morning_diary, read_night_diary, \
+    update_morning_diary, delete_morning_diary, update_night_diary, delete_night_diary, create_memo, list_morning_diary, \
+    list_night_diary, create_calender, update_calender, read_calender, delete_calender
 from app.db.database import get_db
 from sqlalchemy.orm import Session
 from app.core.security import get_current_user
-from app.schemas.response.diary import DiaryResponse, DiaryUserListResponse, CommentListResponse, DiaryListResponse
-from app.schemas.response.user import User
-from app.schemas.request.crud import Create, Update, commentRequest
-from app.feature.diary import createDiary, readDiary, deleteDiary, updateDiary, likeDiary, unlikeDiary, commentDiary, \
-    uncommentDiary, listDiary, listDiaryByUser, listComment, updateDiaryIsPublic
+from app.schemas.request import CreateDiaryRequest, UpdateDiaryRequest, CalenderRequest, MemoRequest
+from app.schemas.response import User, ApiResponse
 
 router = APIRouter(prefix="/diary")
-@router.post("/create", response_model=ApiResponse, tags=["Diary"])
-async def create_diary(
-    create: Create,
-    db: Session = Depends(get_db),
+
+'''
+moring diary crud
+'''
+@router.post("/morning/create", response_model=ApiResponse, tags=["Diary"])
+async def morning_create(
+    body: CreateDiaryRequest,
     current_user: User = Depends(get_current_user),
-):
+    db: Session = Depends(get_db),
+) -> ApiResponse:
     '''
-    게시물 생성 API
+    아침 일기 생성 API, 사용자가 입력한 텍스트를 기반으로 아침 일기를 생성합니다.
 
-    :param create: 생성할 게시물의 정보를 담은 Create 모델 클래스입니다.
-    :param db: database session을 의존성 주입합니다.
-    :param current_user: 현재 로그인한 유저를 의존성 주입합니다.
-    :return: id와 message를 담은 ApiResponse 모델 클래스를 반환합니다.
+    :param body: 사용자가 입력한 텍스트
+    :param current_user: 로그인한 사용자의 정보를 가져오는 의존성 주입
+    :param db: 데이터베이스 세션을 가져오는 의존성 주입
+    :return: 아침 일기 생성 결과
     '''
-    diary_id = await createDiary(create, current_user.id, db)
+    diary_id = await create_morning_diary(body.content, current_user, db)
     return ApiResponse(
-        success=True,
-        data={
-            "id": diary_id,
-            "message": "일기가 성공적으로 작성되었습니다."
-        }
+        data={"id": diary_id}
     )
 
-@router.get("/read", response_model=ApiResponse, tags=["Diary"])
-async def read_diary(
+@router.get("/morning/read", response_model=ApiResponse, tags=["Diary"])
+async def morning_read(
     diary_id: int,
-    background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-):
-    is_public, is_owner, create_date, modified_date, image_url, view_count, like_count, dream_name, dream, resolution, checklist, is_modified, comment_count, is_liked = await readDiary(diary_id, current_user.id, db, background_tasks)
-    return ApiResponse(
-        success=True,
-        data=DiaryResponse(
-            id=diary_id,
-            is_public=is_public,
-            create_date=create_date,
-            modified_date=modified_date,
-            image_url=image_url,
-            view_count=view_count,
-            like_count=like_count,
-            dream_name=dream_name,
-            dream=dream,
-            resolution=resolution,
-            checklist=checklist,
-            is_owner=is_owner,
-            is_modified=is_modified,
-            comment_count=comment_count,
-            is_liked=is_liked,
-        )
-    )
-@router.post("/update", response_model=ApiResponse, tags=["Diary"])
-async def update_diary(
-    diary_id: int,
-    create: Update,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
+) -> ApiResponse:
     '''
-    게시물 수정 API
+    아침 일기 조회 API, 사용자가 입력한 텍스트를 기반으로 아침 일기를 조회합니다.
 
-    :param diary_id: 수정할 게시물의 id입니다.
-    :param create: 수정할 게시물의 정보를 담은 Update 모델 클래스입니다.
-    :param db: database session을 의존성 주입합니다.
-    :param current_user: 현재 로그인한 유저를 의존성 주입합니다.
-    :return: 성공 여부를 담은 ApiResponse 모델 클래스를 반환합니다.
+    :param body: 사용자가 입력한 텍스트
+    :param current_user: 로그인한 사용자의 정보를 가져오는 의존성 주입
+    :param db: 데이터베이스 세션을 가져오는 의존성 주입
+    :return: 아침 일기 조회 결과
     '''
-    await updateDiary(diary_id, current_user.id, create, db)
+    diary = await read_morning_diary(diary_id, current_user, db)
     return ApiResponse(
-        success=True,
-        data={
-            "message": "일기가 성공적으로 수정되었습니다."
-        }
+        data={"diary": diary}
     )
-@router.post("/update/ispublic", response_model=ApiResponse, tags=["Diary"])
-async def update_diary_ispublic(
+
+@router.post("/morning/update", response_model=ApiResponse, tags=["Diary"])
+async def morning_update(
+    body: UpdateDiaryRequest,
     diary_id: int,
-    is_public: bool,
-    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-):
-    await updateDiaryIsPublic(diary_id, current_user.id, is_public, db)
+    db: Session = Depends(get_db),
+) -> ApiResponse:
+    '''
+    아침 일기 수정 API, 사용자가 입력한 텍스트를 기반으로 아침 일기를 수정합니다.
+
+    :param body: 사용자가 입력한 텍스트
+    :param diary_id: 수정할 일기의 id
+    :param current_user: 로그인한 사용자의 정보를 가져오는 의존성 주입
+    :param db: 데이터베이스 세션을 가져오는 의존성 주입
+    :return: 아침 일기 수정 결과
+    '''
+    diary_id = await update_morning_diary(diary_id, body, current_user, db)
     return ApiResponse(
-        success=True,
-        data={
-            "message": "일기가 성공적으로 수정되었습니다."
-        }
+        data={"id": diary_id}
     )
-@router.delete("/delete", response_model=ApiResponse, tags=["Diary"])
-async def delete_diary(
+
+@router.delete("/morning/delete", response_model=ApiResponse, tags=["Diary"])
+async def morning_delete(
     diary_id: int,
-    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-):
-    await deleteDiary(diary_id, current_user.id, db)
+    db: Session = Depends(get_db),
+) -> ApiResponse:
+    '''
+    아침 일기 삭제 API, 사용자가 입력한 텍스트를 기반으로 아침 일기를 삭제합니다.
+
+    :param diary_id: 삭제할 일기의 id
+    :param current_user: 로그인한 사용자의 정보를 가져오는 의존성 주입
+    :param db: 데이터베이스 세션을 가져오는 의존성 주입
+    :return: 아침 일기 삭제 결과
+    '''
+    await delete_morning_diary(diary_id, current_user, db)
+    return ApiResponse()
+
+@router.get("/morning/list", response_model=ApiResponse, tags=["Diary"])
+async def morning_list(
+    page: int = 1,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> ApiResponse:
+    '''
+    아침 일기 리스트 조회 API, 사용자가 입력한 텍스트를 기반으로 아침 일기 리스트를 조회합니다.
+
+    :param page: 조회할 페이지 번호
+    :param current_user: 로그인한 사용자의 정보를 가져오는 의존성 주입
+    :param db: 데이터베이스 세션을 가져오는 의존성 주입
+    :return: 아침 일기 리스트 조회 결과
+    '''
+    diaries = await list_morning_diary(page, current_user, db)
     return ApiResponse(
-        success=True,
-        data={
-            "message": "일기가 성공적으로 삭제되었습니다."
-        }
+        data={"diaries": diaries}
     )
 
-@router.post("/like", response_model=ApiResponse, tags=["Diary"])
-async def like_diary(
+@router.post("/night/create", response_model=ApiResponse, tags=["Diary"])
+async def night_create(
+    body: CreateDiaryRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> ApiResponse:
+    '''
+    저녁 일기 생성 API, 사용자가 입력한 텍스트를 기반으로 저녁 일기를 생성합니다.
+
+    :param body: 사용자가 입력한 텍스트
+    :param current_user: 로그인한 사용자의 정보를 가져오는 의존성 주입
+    :param db: 데이터베이스 세션을 가져오는 의존성 주입
+    :return: 저녁 일기 생성 결과
+    '''
+
+    diary_id = await create_night_diary(body.content, current_user, db)
+    return ApiResponse(
+        data={"id": diary_id}
+    )
+'''
+night diary crud
+'''
+@router.get("/night/read", response_model=ApiResponse, tags=["Diary"])
+async def night_read(
     diary_id: int,
-    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-):
-    await likeDiary(diary_id, current_user.id, db)
+    db: Session = Depends(get_db),
+) -> ApiResponse:
+    '''
+    저녁 일기 조회 API, 사용자가 입력한 텍스트를 기반으로 저녁 일기를 조회합니다.
+
+    :param body: 사용자가 입력한 텍스트
+    :param current_user: 로그인한 사용자의 정보를 가져오는 의존성 주입
+    :param db: 데이터베이스 세션을 가져오는 의존성 주입
+    :return: 저녁 일기 조회 결과
+    '''
+    diary = await read_night_diary(diary_id, current_user, db)
     return ApiResponse(
-        success=True,
-        data={
-            "message": "일기가 성공적으로 좋아요 되었습니다."
-        }
+        data={"diary": diary}
     )
 
-@router.delete("/unlike", response_model=ApiResponse, tags=["Diary"])
-async def unlike_diary(
+@router.post("/night/update", response_model=ApiResponse, tags=["Diary"])
+async def night_update(
+    body: UpdateDiaryRequest,
     diary_id: int,
-    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-):
-    await unlikeDiary(diary_id, current_user.id, db)
+    db: Session = Depends(get_db),
+) -> ApiResponse:
+    '''
+    저녁 일기 수정 API, 사용자가 입력한 텍스트를 기반으로 저녁 일기를 수정합니다.
+
+    :param body: 사용자가 입력한 텍스트
+    :param diary_id: 수정할 일기의 id
+    :param current_user: 로그인한 사용자의 정보를 가져오는 의존성 주입
+    :param db: 데이터베이스 세션을 가져오는 의존성 주입
+    :return: 저녁 일기 수정 결과
+    '''
+    diary_id = await update_night_diary(diary_id, body, current_user, db)
     return ApiResponse(
-        success=True,
-        data={
-            "message": "일기가 성공적으로 좋아요 취소되었습니다."
-        }
+        data={"id": diary_id}
     )
 
-@router.post("/comment", response_model=ApiResponse, tags=["Diary"])
-async def comment_diary(
+@router.delete("/night/delete", response_model=ApiResponse, tags=["Diary"])
+async def night_delete(
     diary_id: int,
-    comment: commentRequest,
-    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-):
-    newComment = await commentDiary(diary_id, current_user.id, comment, db)
+    db: Session = Depends(get_db),
+) -> ApiResponse:
+    '''
+    저녁 일기 삭제 API, 사용자가 입력한 텍스트를 기반으로 저녁 일기를 삭제합니다.
+
+    :param diary_id: 삭제할 일기의 id
+    :param current_user: 로그인한 사용자의 정보를 가져오는 의존성 주입
+    :param db: 데이터베이스 세션을 가져오는 의존성 주입
+    :return: 저녁 일기 삭제 결과
+    '''
+    await delete_night_diary(diary_id, current_user, db)
+    return ApiResponse()
+
+@router.get("/night/list", response_model=ApiResponse, tags=["Diary"])
+async def night_list(
+    page: int = 1,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> ApiResponse:
+    '''
+    저녁 일기 리스트 조회 API, 사용자가 입력한 텍스트를 기반으로 저녁 일기 리스트를 조회합니다.
+
+    :param page: 조회할 페이지 번호
+    :param current_user: 로그인한 사용자의 정보를 가져오는 의존성 주입
+    :param db: 데이터베이스 세션을 가져오는 의존성 주입
+    :return: 저녁 일기 리스트 조회 결과
+    '''
+    diaries = await list_night_diary(page, current_user, db)
     return ApiResponse(
-        success=True,
-        data=CommentListResponse(
-            id=newComment.id,
-            userNickname=current_user.nickName,
-            userId=current_user.id,
-            comment=newComment.comment,
-            create_date=newComment.create_date,
-            isMine=True,
-        )
+        data={"diaries": diaries}
+    )
+'''
+memo diary crud
+'''
+# @router.post("/memo/create", response_model=ApiResponse, tags=["Memo"])
+# async def memo_create(
+#     body: MemoRequest,
+#     current_user: User = Depends(get_current_user),
+#     db: Session = Depends(get_db),
+# ) -> ApiResponse:
+#     '''
+#     메모 생성 API, 사용자가 입력한 텍스트를 기반으로 메모를 생성합니다.
+#
+#     :param body: 사용자가 입력한 텍스트
+#     :param current_user: 로그인한 사용자의 정보를 가져오는 의존성 주입
+#     :param db: 데이터베이스 세션을 가져오는 의존성 주입
+#     :return 메모 생성 결과
+#     '''
+#     memo_id = await create_memo(body.content, current_user, db)
+#     return ApiResponse(
+#         data={"id": memo_id}
+#     )
+
+# @router.get("/memo/read", response_model=ApiResponse, tags=["Memo"])
+# async def memo_read(
+#     memo_id: int,
+#     current_user: User = Depends(get_current_user),
+#     db: Session = Depends(get_db),
+# ) -> ApiResponse:
+#     '''
+#     메모 조회 API, 사용자가 입력한 텍스트를 기반으로 메모를 조회합니다.
+#
+#     :param memo_id: 조회할 메모의 id
+#     :param current_user: 로그인한 사용자의 정보를 가져오는 의존성 주입
+#     :param db: 데이터베이스 세션을 가져오는 의존성 주입
+#     '''
+#     memo = await read_memo(memo_id, current_user, db)
+#     return ApiResponse(
+#         data={"memo": memo}
+#     )
+
+# @router.post("/memo/update", response_model=ApiResponse, tags=["Memo"])
+# async def memo_update(
+#     body: MemoRequest,
+#     memo_id: int,
+#     current_user: User = Depends(get_current_user),
+#     db: Session = Depends(get_db),
+# ) -> ApiResponse:
+#     '''
+#     메모 수정 API, 사용자가 입력한 텍스트를 기반으로 메모를 수정합니다.
+#
+#     :param body: 사용자가 입력한 텍스트
+#     :param memo_id: 수정할 메모의 id
+#     :param current_user: 로그인한 사용자의 정보를 가져오는 의존성 주입
+#     :param db: 데이터베이스 세션을 가져오는 의존성 주입
+#     :return 메모 수정 결과
+#     '''
+#     memo_id = await update_memo(memo_id, body.content, current_user, db)
+#     return ApiResponse(
+#         data={"id": memo_id}
+#     )
+
+'''
+calender diary crud
+'''
+@router.post("/calender/create", response_model=ApiResponse, tags=["Calender"])
+async def calender_create(
+    body: CalenderRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> ApiResponse:
+    '''
+    캘린더 생성 API, 사용자가 입력한 텍스트를 기반으로 캘린더를 생성합니다.
+
+    :param body: 사용자가 입력한 텍스트
+    :param current_user: 로그인한 사용자의 정보를 가져오는 의존성 주입
+    :param db: 데이터베이스 세션을 가져오는 의존성 주입
+    '''
+    calender_id = await create_calender(body, current_user, db)
+    return ApiResponse(
+        data={"id": calender_id}
     )
 
-
-@router.delete("/uncomment", response_model=ApiResponse, tags=["Diary"])
-async def uncomment_diary(
-    diary_id: int,
-    comment_id: int,
-    db: Session = Depends(get_db),
+@router.get("/calender/read", response_model=ApiResponse, tags=["Calender"])
+async def calender_read(
+    calender_id: int,
     current_user: User = Depends(get_current_user),
-):
-    await uncommentDiary(diary_id, comment_id, db)
+    db: Session = Depends(get_db),
+) -> ApiResponse:
+    '''
+    캘린더 조회 API, 사용자가 입력한 텍스트를 기반으로 캘린더를 조회합니다.
+
+    :param calender_id: 조회할 캘린더의 id
+    :param current_user: 로그인한 사용자의 정보를 가져오는 의존성 주입
+    :param db: 데이터베이스 세션을 가져오는 의존성 주입
+    '''
+    calender = await read_calender(calender_id, current_user, db)
     return ApiResponse(
-        success=True,
-        data={
-            "message": "댓글이 성공적으로 삭제되었습니다."
-        }
+        data={"calender": calender}
     )
 
-@router.get("/list", response_model=ApiResponse, tags=["Diary"])
-async def list_diary(
-    page: int,
-    db: Session = Depends(get_db),
+@router.put("/calender/update", response_model=ApiResponse, tags=["Calender"])
+async def calender_update(
+    body: CalenderRequest,
+    calender_id: int,
     current_user: User = Depends(get_current_user),
-):
-    diary_list = await listDiary(page, current_user.id, db)
-    diary_list_response = []
-    for diary in diary_list:
-        diary_response = DiaryListResponse(
-            id=diary.id,
-            dream_name=diary.dream_name,
-            image_url=diary.image_url,
-            view_count=diary.view_count,
-            like_count=diary.like_count,
-            comment_count=diary.comment_count,
-            userNickname=diary.nickname,
-            userId=diary.userId,
-            is_liked=diary.is_liked,
-        )
-        diary_list_response.append(diary_response)
+    db: Session = Depends(get_db),
+) -> ApiResponse:
+    '''
+    캘린더 수정 API, 사용자가 입력한 텍스트를 기반으로 캘린더를 수정합니다.
 
+    :param body: 사용자가 입력한 텍스트
+    :param calender_id: 수정할 캘린더의 id
+    :param current_user: 로그인한 사용자의 정보를 가져오는 의존성 주입
+    :param db: 데이터베이스 세션을 가져오는 의존성 주입
+    '''
+    calender_id = await update_calender(calender_id, body, current_user, db)
     return ApiResponse(
-        success=True,
-        data=diary_list_response
+        data={"id": calender_id}
     )
 
-@router.get("/list", response_model=ApiResponse, tags=["Diary"])
-async def list_diary_by_user(
-    user_id: int,
-    page: int,
-    db: Session = Depends(get_db),
+@router.delete("/calender/delete", response_model=ApiResponse, tags=["Calender"])
+async def calender_delete(
+    calender_id: int,
     current_user: User = Depends(get_current_user),
-):
-    diary_list = await listDiaryByUser(user_id, page, current_user.id, db)
-    diary_list_response = []
-    for diary in diary_list:
-        diary_response = DiaryUserListResponse(
-            id=diary.id,
-            dream_name=diary.dream_name,
-            image_url=diary.image_url,
-            view_count=diary.view_count,
-            like_count=diary.like_count,
-            comment_count=diary.comment_count,
-            userNickname=diary.nickname,
-            userId=diary.userId,
-            isMine=diary.isMine,
-            is_liked=diary.is_liked,
-        )
-        diary_list_response.append(diary_response)
-
-    return ApiResponse(
-        success=True,
-        data=diary_list_response
-    )
-
-@router.get("/list/mydiary", response_model=ApiResponse, tags=["Diary"])
-async def list_my_diary(
-    page: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    diary_list = await listDiaryByUser(current_user.id, page, current_user.id, db)
-    diary_list_response = []
-    for diary in diary_list:
-        diary_response = DiaryListResponse(
-            id=diary.id,
-            dream_name=diary.dream_name,
-            create_date=diary.create_date,
-            dream=diary.dream,
-            resolution=diary.resolution,
-            image_url=diary.image_url,
-            view_count=diary.view_count,
-            like_count=diary.like_count,
-            comment_count=diary.comment_count,
-            userNickname=diary.nickname,
-            userId=diary.userId,
-            is_liked=diary.is_liked,
-        )
-        diary_list_response.append(diary_response)
+) -> ApiResponse:
+    '''
+    캘린더 삭제 API, 사용자가 입력한 텍스트를 기반으로 캘린더를 삭제합니다.
 
-    return ApiResponse(
-        success=True,
-        data=diary_list_response
-    )
+    :param calender_id: 삭제할 캘린더의 id
+    :param current_user: 로그인한 사용자의 정보를 가져오는 의존성 주입
+    :param db: 데이터베이스 세션을 가져오는 의존성 주입
+    '''
+    await delete_calender(calender_id, current_user, db)
+    return ApiResponse()
 
-@router.get("/list/comment", response_model=ApiResponse, tags=["Diary"])
-async def list_comment(
-    id: int,
-    page: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    comment_list = await listComment(current_user.id, id, page, db)
-    comment_list_response = []
-    for comment in comment_list:
-        comment_response = CommentListResponse(
-            id=comment.id,
-            comment=comment.comment,
-            create_date=comment.create_date,
-            userNickname=comment.nickname,
-            userId=comment.userId,
-            isMine=comment.is_mine,
-        )
-        comment_list_response.append(comment_response)
-
-    return ApiResponse(
-        success=True,
-        data=comment_list_response
-    )
+# @router.get("/calender/list", response_model=ApiResponse, tags=["Calender"])
+# async def calender_list(
+#     current_user: User = Depends(get_current_user),
+#     db: Session = Depends(get_db),
+# ) -> ApiResponse:
+#     '''
+#     캘린더 목록 조회 API
+#
+#     :param current_user: 로그인한 사용자의 정보를 가져오는 의존성 주입
+#     :param db: 데이터베이스 세션을 가져오는 의존성 주입
+#     '''
+#     calender_list = await list_calender(current_user, db)
+#     return ApiResponse(
+#         data={"calender_list": calender_list}
+#     )

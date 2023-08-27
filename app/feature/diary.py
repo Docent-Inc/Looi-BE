@@ -1,438 +1,258 @@
-
-from sqlalchemy import func
-from fastapi import BackgroundTasks
-from app.core.current_time import get_current_time
-from app.db.models import User
-from app.db.models.diary_en import Diary_en
-from app.db.models.diary_jp import Diary_jp
-from app.db.models.diary_ko import Diary_ko
-from app.feature.translate import translate_ko_to_en, translate_en_to_ko, translate_jp_to_ko
-from app.feature.search import maintain_hot_table_limit
-from app.db.models.comment import Comment
-from app.db.models.diary import Diary
-from app.db.models.hot import Hot
-from app.db.models.like import Like
-from app.schemas.request.crud import Create, Update, commentRequest
+import asyncio
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
+from starlette import status
+from app.db.models import NightDiary, MorningDiary, Memo, Calender
+from app.feature.generate import generate_image, generate_diary_name, generate_resolution_clova
+import datetime
+import pytz
 
-async def createDiary(create: Create, userId: int, db: Session):
+from app.schemas.request import UpdateDiaryRequest, CalenderRequest
+from app.schemas.response import User
+
+async def create_morning_diary(content: str, user: User, db: Session) -> int:
+    # 그림과 일기의 제목과 해몽을 생성합니다.
+    mbti_content = content if user.mbti is None else user.mbti + ", " + content
+
+    image_url, diary_name, resolution = await asyncio.gather(
+        generate_image(user.image_model, content),
+        generate_diary_name(content),
+        generate_resolution_clova(mbti_content)
+    )
+    diary = MorningDiary(
+        content=content,
+        User_id=user.id,
+        image_url=image_url,
+        diary_name=diary_name,
+        resolution=resolution,
+        create_date=datetime.datetime.now(pytz.timezone('Asia/Seoul')),
+        modify_date=datetime.datetime.now(pytz.timezone('Asia/Seoul')),
+    )
     try:
-        user = db.query(User).filter(User.id == userId).first()
-        diary = Diary(
-            User_id=userId,
-            checklist=create.checklist,
-            image_url=create.image_url,
-            create_date=get_current_time(),
-            modify_date=get_current_time(),
-            is_public=create.is_public,
-        )
         db.add(diary)
         db.commit()
         db.refresh(diary)
+    except:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=5000,  # 에러 메시지를 반환합니다.
+        )
+    return diary.id
 
-        if user.language_id == 1:
-            diary_content = Diary_ko(
-                Diary_id=diary.id,
-                dream_name=create.dream_name,
-                dream=create.dream,
-                resolution=create.resolution,
-            )
-            db.add(diary_content)
-            db.commit()
-            db.refresh(diary_content)
+async def read_morning_diary(diary_id: int, user:User, db: Session) -> MorningDiary:
+    diary = db.query(MorningDiary).filter(MorningDiary.id == diary_id, MorningDiary.User_id == user.id, MorningDiary.is_deleted == False).first()
+    if not diary:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=4011,
+        )
+    return diary
 
-        elif user.language_id == 2:
-            diary_content = Diary_en(
-                Diary_id=diary.id,
-                dream_name=create.dream_name,
-                dream=create.dream,
-                resolution=create.resolution,
-            )
-            db.add(diary_content)
-            db.commit()
-            db.refresh(diary_content)
-
-        elif user.language_id == 3:
-            diary_content = Diary_jp(
-                Diary_id=diary.id,
-                dream_name=create.dream_name,
-                dream=create.dream,
-                resolution=create.resolution,
-            )
-            db.add(diary_content)
-            db.commit()
-            db.refresh(diary_content)
-
-        return diary.id
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-async def readDiary(diaryId: int, userId: int, db: Session, background_tasks: BackgroundTasks):
-    user = db.query(User).filter(User.id == userId).first()
-    diary = db.query(Diary).filter(Diary.id == diaryId).first()
-
-    if diary is None: # 해당 id의 게시글이 없을 때
-        raise HTTPException(status_code=404, detail="Diary not found")
-
-    if diary.is_deleted: # 해당 id의 게시글이 삭제되었을 때
-        raise HTTPException(status_code=400, detail="Diary has been deleted")
-
-    if user.language_id == 1: # 한국어
-        diary_content = db.query(Diary_ko).filter(Diary_ko.Diary_id == diaryId).first()
-        if diary_content is None:
-            raise HTTPException(status_code=404, detail="Diary content not found")
-        # if diary_content.resolution != "ERROR":
-        #     background_tasks.add_task(translate_ko_to_en, diary_content, diary.id, db)
-    elif user.language_id == 2: # 영어
-        diary_content = db.query(Diary_ko).filter(Diary_ko.Diary_id == diaryId).first()
-        if diary_content is None:
-            raise HTTPException(status_code=404, detail="Diary content not found")
-        # if diary_content.resolution != "ERROR":
-        #     background_tasks.add_task(translate_en_to_ko, diary_content, diary.id, db)
-    elif user.language_id == 3: # 일본어
-        diary_content = db.query(Diary_jp).filter(Diary_jp.Diary_id == diaryId).first()
-        if diary_content is None:
-            raise HTTPException(status_code=404, detail="Diary content not found")
-        # if diary_content.resolution != "ERROR":
-        #     background_tasks.add_task(translate_jp_to_ko, diary_content, diary.id, db)
-
-
+async def update_morning_diary(diary_id: int, content: UpdateDiaryRequest, user: User, db: Session) -> int:
+    diary = db.query(MorningDiary).filter(MorningDiary.id == diary_id, MorningDiary.User_id == user.id, MorningDiary.is_deleted == False).first()
+    if not diary:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=4011,
+        )
     try:
-        diary.view_count += 1
+        diary.diary_name = content.diary_name
+        diary.content = content.diary_content
+        diary.modify_date = datetime.datetime.now(pytz.timezone('Asia/Seoul'))
         db.commit()
-        db.refresh(diary)
-
-        # 가장 오래된 데이터의 id를 사용하거나, 그렇지 않으면 가장 큰 id에 1을 더합니다.
-        # Hot 테이블에 추가하기 전에 데이터 제한을 확인하고 관리합니다.
-        oldest_index = await maintain_hot_table_limit(db)
-        if oldest_index is None:
-            first_hot = db.query(Hot).order_by(Hot.id.desc()).first()
-            if first_hot is None:
-                max_index = 0
-            else:
-                max_index = first_hot.index
-            new_index = max_index + 1
-        else:
-            new_index = oldest_index
-
-        # Hot 테이블에 가중치 추가
-        existing_hot = db.query(Hot).filter(Hot.Diary_id == diaryId, Hot.User_id == userId, Hot.weight == 1).first()
-        if existing_hot is None:
-            hot = Hot(
-                index=new_index,
-                weight=1,  # 좋아요 가중치
-                Diary_id=diaryId,
-                User_id=userId
-            )
-            db.add(hot)
-            db.commit()
-            db.refresh(hot)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-    is_owner = diary.User_id == userId
-    is_liked = db.query(Like).filter(Like.Diary_id == diaryId, Like.User_id == userId).first() is not None
-    if is_owner or diary.is_public:
-        return (
-            diary.is_public,
-            is_owner,
-            diary.create_date,
-            diary.modify_date,
-            diary.image_url,
-            diary.view_count,
-            diary.like_count,
-            diary_content.dream_name,
-            diary_content.dream,
-            diary_content.resolution,
-            diary.checklist,
-            diary.is_modified,
-            diary.comment_count,
-            is_liked,
+    except:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=5000,
         )
-    else:
-        return (
-            False,
-            False,
-            diary.create_date,
-            diary.modify_date,
-            diary.image_url,
-            diary.view_count,
-            diary.like_count,
-            diary_content.dream_name,
-            "",  # 빈 문자열로 기본값 설정
-            "",
-            "",
-            diary.is_modified,
-            diary.comment_count,
-            is_liked,
+    return diary_id
+
+async def delete_morning_diary(diary_id: int, user: User, db: Session):
+    diary = db.query(MorningDiary).filter(MorningDiary.id == diary_id, MorningDiary.User_id == user.id, MorningDiary.is_deleted == False).first()
+    if not diary:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=4011,
         )
-
-async def deleteDiary(diaryId: int, userId: int, db: Session):
-    diary = db.query(Diary).filter(Diary.id == diaryId).first()
-
-    if diary is None: # 해당 id의 게시글이 없을 때
-        raise HTTPException(status_code=404, detail="Diary not found")
-
-    if diary.is_deleted: # 해당 id의 게시글이 이미 삭제되었을 때
-        raise HTTPException(status_code=400, detail="Diary has been deleted")
-
-    if diary.User_id != userId: # 해당 id의 게시글이 작성자가 아닐 때
-        raise HTTPException(status_code=400, detail="You are not the owner of this diary")
-
     try:
         diary.is_deleted = True
         db.commit()
-        db.refresh(diary)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-async def updateDiary(diaryId: int, userId: int, create: Update, db: Session):
-    diary = db.query(Diary).filter(Diary.id == diaryId).first()
-    if diary is None: # 해당 id의 게시글이 없을 때
-        raise HTTPException(status_code=404, detail="Diary not found")
-
-    if diary.is_deleted: # 해당 id의 게시글이 이미 삭제되었을 때
-        raise HTTPException(status_code=400, detail="Diary has been deleted")
-
-    if diary.User_id != userId: # 해당 id의 게시글이 작성자가 아닐 때
-        raise HTTPException(status_code=400, detail="You are not the owner of this diary")
-    try:
-        diary.dream_name = create.dream_name
-        diary.dream = create.dream
-        diary.modify_date = get_current_time()
-        diary.is_modified = True
-        db.commit()
-        db.refresh(diary)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-async def likeDiary(diaryId: int, userId: int, db: Session):
-    diary = db.query(Diary).filter(Diary.id == diaryId).first()
-    if diary is None: # 해당 id의 게시글이 없을 때
-        raise HTTPException(status_code=404, detail="Diary not found")
-
-    if diary.is_deleted: # 해당 id의 게시글이 이미 삭제되었을 때
-        raise HTTPException(status_code=400, detail="Diary has been deleted")
-
-    # like 테이블에 이미 있다면 좋아요 안됨
-    if db.query(Like).filter(Like.Diary_id == diaryId, Like.User_id == userId).first() is not None:
-        raise HTTPException(status_code=400, detail="Already liked")
-
-    try:
-        diary.like_count += 1 # 좋아요 수 증가
-        # like 테이블에 추가
-        like = Like(
-            User_id=userId,
-            Diary_id=diaryId
+    except:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=5000,
         )
-        db.add(like)
-        db.commit()
-        db.refresh(like)
-        db.refresh(diary)
+async def list_morning_diary(page: int, user: User, db: Session):
+    diaries = db.query(MorningDiary).filter(MorningDiary.User_id == user.id, MorningDiary.is_deleted == False).order_by(MorningDiary.create_date.desc()).limit(5).offset((page-1)*5).all()
+    return diaries
 
-        # 가장 오래된 데이터의 id를 사용하거나, 그렇지 않으면 가장 큰 id에 1을 더합니다.
-        # Hot 테이블에 추가하기 전에 데이터 제한을 확인하고 관리합니다.
-        oldest_index = await maintain_hot_table_limit(db)
-        if oldest_index is None:
-            first_hot = db.query(Hot).order_by(Hot.id.desc()).first()
-            if first_hot is None:
-                max_index = 0
-            else:
-                max_index = first_hot.index
-            new_index = max_index + 1
-        else:
-            new_index = oldest_index
+async def create_night_diary(content: str, user: User, db: Session):
+    # 그림과 일기의 제목을 생성합니다.
+    image_url, diary_name = await asyncio.gather(
+        generate_image(user.image_model, content),
+        generate_diary_name(content)
+    )
 
-        # Hot 테이블에 가중치 추가
-        existing_hot = db.query(Hot).filter(Hot.Diary_id == diaryId, Hot.User_id == userId, Hot.weight == 3).first()
-        if existing_hot is None:
-            hot = Hot(
-                index=new_index,
-                weight=3,  # 좋아요 가중치
-                Diary_id=diaryId,
-                User_id=userId
-            )
-            db.add(hot)
-            db.commit()
-            db.refresh(hot)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-async def unlikeDiary(diaryId: int, userId: int, db: Session):
-    diary = db.query(Diary).filter(Diary.id == diaryId).first()
-
-    if diary is None: # 해당 id의 게시글이 없을 때
-        raise HTTPException(status_code=404, detail="Diary not found")
-
-    if diary.is_deleted: # 해당 id의 게시글이 이미 삭제되었을 때
-        raise HTTPException(status_code=400, detail="Diary has been deleted")
-
+    # 저녁 일기를 생성합니다.
+    diary = NightDiary(
+        content=content,
+        User_id=user.id,
+        image_url=image_url,
+        diary_name=diary_name,
+        create_date=datetime.datetime.now(pytz.timezone('Asia/Seoul')),
+        modify_date=datetime.datetime.now(pytz.timezone('Asia/Seoul')),
+    )
     try:
-        diary.like_count -= 1
+        db.add(diary)
         db.commit()
         db.refresh(diary)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=5000,
+        )
+    return diary.id
 
-    # like 테이블에서 삭제
-    like = db.query(Like).filter(Like.User_id == userId, Like.Diary_id == diaryId).first()
+async def read_night_diary(diary_id: int, user:User, db: Session) -> NightDiary:
+    diary = db.query(NightDiary).filter(NightDiary.id == diary_id, NightDiary.User_id == user.id, NightDiary.is_deleted == False).first()
+    if not diary:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=4012,
+        )
+    return diary
+
+async def update_night_diary(diary_id: int, content: UpdateDiaryRequest, user: User, db: Session) -> int:
+    diary = db.query(NightDiary).filter(NightDiary.id == diary_id, NightDiary.User_id == user.id, NightDiary.is_deleted == False).first()
+    if not diary:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=4012,
+        )
     try:
-        if like is None:
-            raise HTTPException(status_code=404, detail="Like not found")
-        db.delete(like)
+        diary.diary_name = content.diary_name
+        diary.content = content.diary_content
+        diary.modify_date = datetime.datetime.now(pytz.timezone('Asia/Seoul'))
         db.commit()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=5000,
+        )
+    return diary.id
 
-async def commentDiary(diaryId: int, userId: int, create: commentRequest, db: Session):
-    diary = db.query(Diary).filter(Diary.id == diaryId).first()
-
-    if diary is None: # 해당 id의 게시글이 없을 때
-        raise HTTPException(status_code=404, detail="Diary not found")
-
-    if diary.is_deleted: # 해당 id의 게시글이 이미 삭제되었을 때
-        raise HTTPException(status_code=400, detail="Diary has been deleted")
-
+async def delete_night_diary(diary_id: int, user: User, db: Session) -> int:
+    diary = db.query(NightDiary).filter(NightDiary.id == diary_id, NightDiary.User_id == user.id, NightDiary.is_deleted == False).first()
+    if not diary:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=4012,
+        )
     try:
-        comment = Comment(
-            comment=create.comment,
-            User_id=userId,
-            Diary_id=diaryId,
-            create_date=get_current_time()
+        diary.is_deleted = True
+        db.commit()
+    except:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=5000,
         )
 
-        # 가장 오래된 데이터의 id를 사용하거나, 그렇지 않으면 가장 큰 id에 1을 더합니다.
-        # Hot 테이블에 추가하기 전에 데이터 제한을 확인하고 관리합니다.
-        oldest_index = await maintain_hot_table_limit(db)
-        if oldest_index is None:
-            first_hot = db.query(Hot).order_by(Hot.id.desc()).first()
-            if first_hot is None:
-                max_index = 0
-            else:
-                max_index = first_hot.index
-            new_index = max_index + 1
-        else:
-            new_index = oldest_index
-
-        # Hot 테이블에 가중치 추가
-        existing_hot = db.query(Hot).filter(Hot.Diary_id == diaryId, Hot.User_id == userId, Hot.weight == 5).first()
-        if existing_hot is None:
-            hot = Hot(
-                index=new_index,
-                weight=5,  # 댓글 가중치
-                Diary_id=diaryId,
-                User_id=userId
-            )
-            db.add(hot)
-            db.commit()
-            db.refresh(hot)
-        diary.comment_count += 1
-        db.add(comment)
+async def list_night_diary(page: int, user: User, db: Session):
+    diaries = db.query(NightDiary).filter(NightDiary.User_id == user.id, NightDiary.is_deleted == False).order_by(NightDiary.create_date.desc()).limit(5).offset((page-1)*5).all()
+    return diaries
+async def create_memo(content: str, user: User, db: Session) -> int:
+    # TODO: 메모의 제목과 카테고리를 생성합니다.
+    # 메모를 생성합니다.
+    memo = Memo(
+        content=content,
+        User_id=user.id,
+        create_date=datetime.datetime.now(pytz.timezone('Asia/Seoul')),
+        modify_date=datetime.datetime.now(pytz.timezone('Asia/Seoul')),
+    )
+    try:
+        db.add(memo)
         db.commit()
-        db.refresh(comment)
+        db.refresh(memo)
+    except:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=5000,
+        )
+    return memo.id
 
-        return comment
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+async def read_memo(memo_id: int, user: User, db: Session) -> Memo:
+    memo = db.query(Memo).filter(Memo.id == memo_id, Memo.User_id == user.id, Memo.is_deleted == False).first()
+    if not memo:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=4016,
+        )
+    return memo
 
-async def uncommentDiary(diaryId: int, commentId: int, db: Session):
-    diary = db.query(Diary).filter(Diary.id == diaryId).first()
-
-    if diary is None: # 해당 id의 게시글이 없을 때
-        raise HTTPException(status_code=404, detail="Diary not found")
-
-    if diary.is_deleted: # 해당 id의 게시글이 이미 삭제되었을 때
-        raise HTTPException(status_code=400, detail="Diary has been deleted")
-
-    comment = db.query(Comment).filter(Comment.id == commentId, Comment.is_deleted == False).first()
-    if comment is None:
-        raise HTTPException(status_code=404, detail="Comment not found")
+async def create_calender(body: CalenderRequest, user: User, db: Session) -> int:
+    calender = Calender(
+        User_id=user.id,
+        start_date=body.start_date,
+        end_date=body.end_date,
+        title=body.title,
+        content=body.content,
+    )
     try:
-        comment.is_deleted = True
-        diary.comment_count -= 1
+        db.add(calender)
         db.commit()
-        db.refresh(comment)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        db.refresh(calender)
+    except:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=5000,
+        )
+    return calender.id
 
-async def listDiary(page: int, id: int , db: Session):
+async def read_calender(calender_id: int, user: User, db: Session) -> Calender:
+    calender = db.query(Calender).filter(Calender.id == calender_id, Calender.User_id == user.id, Calender.is_deleted == False).first()
+    if not calender:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=4015,
+        )
+    return calender
+
+async def update_calender(calender_id: int, body: CalenderRequest, user: User, db: Session) -> int:
+    calender = db.query(Calender).filter(Calender.id == calender_id, Calender.User_id == user.id, Calender.is_deleted == False).first()
+    if not calender:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=4015,
+        )
     try:
-        diary = db.query(Diary).filter(Diary.is_deleted == False).order_by(Diary.create_date.desc()).limit(5).offset((page-1)*5).all()
-        for i in range(len(diary)):
-            diary[i].User = db.query(User).filter(User.id == diary[i].User_id).first()
-        for i in range(len(diary)):
-            diary[i].nickname = diary[i].User.nickName
-            diary[i].userId = diary[i].User.id
-            # 현재 사용자가 좋아요를 눌렀는지 확인하여 is_liked를 추가합니다.
-            is_liked = db.query(Like).filter(Like.Diary_id == diary[i].id, Like.User_id == id).first() is not None
-            diary[i].is_liked = is_liked
-        return diary
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-async def listDiaryByUser(user_id: int, page: int, currentUser_id: int, db: Session):
-    try:
-        diary = db.query(Diary).filter(Diary.User_id == user_id, Diary.is_deleted == False).order_by(Diary.create_date.desc()).limit(12).offset((page-1)*12).all()
-        for i in range(len(diary)):
-            diary[i].User = db.query(User).filter(User.id == diary[i].User_id).first()
-        for i in range(len(diary)):
-            diary[i].nickname = diary[i].User.nickName
-            diary[i].userId = diary[i].User.id
-            if diary[i].User_id == currentUser_id:
-                diary[i].isMine = True
-            else:
-                diary[i].isMine = False
-            # 현재 사용자가 좋아요를 눌렀는지 확인하여 is_liked를 추가합니다.
-            is_liked = db.query(Like).filter(Like.Diary_id == diary[i].id, Like.User_id == currentUser_id).first() is not None
-            diary[i].is_liked = is_liked
-            diary_content = db.query(Diary_ko).filter(Diary_ko.Diary_id == diary[i].id).first()
-            diary[i].dream_name = diary_content.dream_name
-            diary[i].dream = diary_content.dream
-            diary[i].resolution = diary_content.resolution
-
-        return diary
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-async def listComment(userId: int, diaryId: int, page: int, db: Session):
-    try:
-        comments = db.query(Comment).filter(Comment.Diary_id == diaryId, Comment.is_deleted == False).order_by(Comment.create_date.asc()).limit(10).offset((page-1)*10).all()
-        for i in range(len(comments)):
-            user = db.query(User).filter(User.id == comments[i].User_id).first()
-            comments[i].nickname = user.nickName
-            comments[i].userId = user.id
-            # 댓글이 내 것인지 확인
-            comments[i].is_mine = True if userId == comments[i].User_id else False
-        return comments
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-async def updateDiaryIsPublic(diaryId: int, userId: int, isPublic: bool, db: Session):
-    diary = db.query(Diary).filter(Diary.id == diaryId, Diary.User_id == userId).first()
-    if diary is None:
-        raise HTTPException(status_code=404, detail="Diary not found")
-    try:
-        diary.is_public = isPublic
+        calender.start_date = body.start_date
+        calender.end_date = body.end_date
+        calender.title = body.title
+        calender.content = body.content
         db.commit()
-        db.refresh(diary)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=5000,
+        )
+    return calender.id
 
-async def randomDiary(db: Session):
+async def delete_calender(calender_id: int, user: User, db: Session):
+    calender = db.query(Calender).filter(Calender.id == calender_id, Calender.User_id == user.id, Calender.is_deleted == False).first()
+    if not calender:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=4015,
+        )
     try:
-        while True:
-            diary = db.query(Diary).filter(Diary.is_deleted == False).order_by(func.random()).first()
-            if diary:
-                break
-        return diary.id
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        calender.is_deleted = True
+        db.commit()
+    except:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=5000,
+        )
 
-
-async def readDiaryCount(db: Session):
-    try:
-        diary = db.query(Diary).count() + 339 # 1차 테스트 데이터 339개
-        return diary
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+async def list_calender(user: User, db: Session):
+    calenders = db.query(Calender).filter(Calender.User_id == user.id, Calender.is_deleted == False).all()
+    return calenders
