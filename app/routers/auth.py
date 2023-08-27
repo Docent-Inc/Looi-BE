@@ -65,7 +65,7 @@ async def login(
             expires_in=expires_in,
             refresh_token=refresh_token,
             refresh_expires_in=refresh_expires_in,
-            token_type="bearer",
+            token_type="Bearer",
         )
     )
 @router.post("/refresh", response_model=ApiResponse, tags=["Auth"])
@@ -163,7 +163,7 @@ async def kakao_callback(
             expires_in=expires_in,
             refresh_token=refresh_token,
             refresh_expires_in=refresh_expires_in,
-            token_type="bearer",
+            token_type="Bearer",
             is_signup=is_sign_up,
         )
     )
@@ -184,7 +184,7 @@ async def kakao_callback(
             expires_in=expires_in,
             refresh_token=refresh_token,
             refresh_expires_in=refresh_expires_in,
-            token_type="bearer",
+            token_type="Bearer",
             is_signup=is_sign_up,
         )
     )

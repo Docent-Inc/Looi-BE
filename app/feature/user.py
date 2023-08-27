@@ -14,6 +14,7 @@ async def create_user(db: Session, user: UserCreate) -> User:
         nickname=user.nickname,
         email=user.email,
         hashed_password=hashed_password,
+        image_model=1,
         is_deleted=False
     )
     try:
@@ -150,6 +151,7 @@ async def user_kakao(kakao_data: dict, db: Session) -> Optional[User]:
             age_range=str(age_range),
             image_model=1,
             language_id=1,
+            mbti=str(0)
         )
         is_sign_up = True
         try:
@@ -161,5 +163,7 @@ async def user_kakao(kakao_data: dict, db: Session) -> Optional[User]:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=5000,
             )
+    elif user.nickname == user.email[:user.email.find("@")] or user.mbti == 0:
+        is_sign_up = True
     return user, is_sign_up
 

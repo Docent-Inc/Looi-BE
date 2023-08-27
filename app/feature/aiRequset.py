@@ -247,7 +247,7 @@ async def send_dalle2_request(messages_prompt, retries=3):
         try:
             response = await asyncio.to_thread(
                 openai.Image.create,
-                prompt=messages_prompt,
+                prompt=messages_prompt[:255],
                 n=1,
                 size="512x512",
                 response_format="url"

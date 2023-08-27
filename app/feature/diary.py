@@ -23,7 +23,7 @@ async def create_morning_diary(content: str, user: User, db: Session) -> int:
         content=content,
         User_id=user.id,
         image_url=L[0],
-        background_color=L[1],
+        background_color=str(L[1]),
         diary_name=diary_name,
         resolution=resolution,
         create_date=datetime.datetime.now(pytz.timezone('Asia/Seoul')),
@@ -33,11 +33,12 @@ async def create_morning_diary(content: str, user: User, db: Session) -> int:
         db.add(diary)
         db.commit()
         db.refresh(diary)
-    except:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=5000,  # 에러 메시지를 반환합니다.
-        )
+    except Exception as e:
+        print(e)
+        # raise HTTPException(
+        #     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        #     detail=5000,  # 에러 메시지를 반환합니다.
+        # )
     return diary.id
 
 async def read_morning_diary(diary_id: int, user:User, db: Session) -> MorningDiary:
@@ -99,7 +100,7 @@ async def create_night_diary(content: str, user: User, db: Session):
         content=content,
         User_id=user.id,
         image_url=L[0],
-        background_color=L[1],
+        background_color=str(L[1]),
         diary_name=diary_name,
         create_date=datetime.datetime.now(pytz.timezone('Asia/Seoul')),
         modify_date=datetime.datetime.now(pytz.timezone('Asia/Seoul')),
