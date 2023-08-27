@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
-from app.db.database import get_db
+from collections import Counter
+import numpy as np
 from app.db.models import Calender
 from app.feature.aiRequset import send_gpt_request, send_hyperclova_request, send_dalle2_request, \
     send_stable_deffusion_request, send_karlo_request
@@ -39,7 +40,17 @@ async def generate_image(image_model: int, message: str):
     img = Image.open(BytesIO(response.content))
     buffer = BytesIO()
     img.save(buffer, format="PNG")
-    buffer.getvalue()
+
+    # 이미지를 NumPy 배열로 변환
+    img_array = np.array(img)
+    img_data = img_array.reshape((-1, 3))
+
+    # 색상 히스토그램 분석
+    color_counter = Counter(map(tuple, img_data))
+    dominant_color = color_counter.most_common(1)[0][0]
+
+    # 주요 색상을 파스텔 톤으로 변환
+    pastel_color = tuple(int(0.5 * c + (1 - 0.5) * 255) for c in dominant_color)
 
     unique_id = uuid.uuid4()
     destination_blob_name = str(unique_id) + ".png"
@@ -52,7 +63,7 @@ async def generate_image(image_model: int, message: str):
         blob = bucket.blob(destination_blob_name)
         blob.upload_from_file(image_file)
         blob.make_public()
-    return blob.public_url
+    return blob.public_url, pastel_color
 
 async def generate_schedule(text: str, user: User, db: Session) -> str:
     retries = 2

@@ -14,7 +14,7 @@ async def create_morning_diary(content: str, user: User, db: Session) -> int:
     # 그림과 일기의 제목과 해몽을 생성합니다.
     mbti_content = content if user.mbti is None else user.mbti + ", " + content
 
-    image_url, diary_name, resolution = await asyncio.gather(
+    L, diary_name, resolution = await asyncio.gather(
         generate_image(user.image_model, content),
         generate_diary_name(content),
         generate_resolution_clova(mbti_content)
@@ -22,7 +22,8 @@ async def create_morning_diary(content: str, user: User, db: Session) -> int:
     diary = MorningDiary(
         content=content,
         User_id=user.id,
-        image_url=image_url,
+        image_url=L[0],
+        background_color=L[1],
         diary_name=diary_name,
         resolution=resolution,
         create_date=datetime.datetime.now(pytz.timezone('Asia/Seoul')),
@@ -88,7 +89,7 @@ async def list_morning_diary(page: int, user: User, db: Session):
 
 async def create_night_diary(content: str, user: User, db: Session):
     # 그림과 일기의 제목을 생성합니다.
-    image_url, diary_name = await asyncio.gather(
+    L, diary_name = await asyncio.gather(
         generate_image(user.image_model, content),
         generate_diary_name(content)
     )
@@ -97,7 +98,8 @@ async def create_night_diary(content: str, user: User, db: Session):
     diary = NightDiary(
         content=content,
         User_id=user.id,
-        image_url=image_url,
+        image_url=L[0],
+        background_color=L[1],
         diary_name=diary_name,
         create_date=datetime.datetime.now(pytz.timezone('Asia/Seoul')),
         modify_date=datetime.datetime.now(pytz.timezone('Asia/Seoul')),
