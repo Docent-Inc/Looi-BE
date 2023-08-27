@@ -37,7 +37,7 @@ def authenticate_user(db: Session, email: str, password: str) -> Optional[User]:
     return user
 
 async def changeNickName(requset_nickName: str, current_user: User, db: Session):
-    existing_user = await get_user_by_nickname(db, nickname=requset_nickName)  # 닉네임으로 사용자를 조회합니다.
+    existing_user = get_user_by_nickname(db, nickname=requset_nickName)  # 닉네임으로 사용자를 조회합니다.
     if existing_user:  # 사용자가 존재하면
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -148,6 +148,7 @@ async def user_kakao(kakao_data: dict, db: Session) -> Optional[User]:
             hashed_password=get_password_hash(kakao_id),
             gender=str(gender),
             age_range=str(age_range),
+            image_model=1,
             language_id=1,
         )
         is_sign_up = True

@@ -46,15 +46,15 @@ prompt2 = [
 
 prompt3 = [
     {"role": "system", "content": "make just one scene a prompt for DALLE2 about this diary"},
-    {"role": "system", "content": "include the word illustration, digital art and 7 world about Subject, Medium, Environment, Lighting, Color, Mood, Compoition"},
+    {"role": "system", "content": "include the word illustration, digital art, vivid and 7 world about Subject, Medium, Environment, Lighting, Color, Mood, Compoition"},
     {"role": "system", "content": "make just prompt only engilsh"},
     {"role": "system", "content": "max_length=250"},
     {"role": "user", "content": "학교 복도에서 친구랑 얘기하다가 갑자기 앞문쪽에서 좀비떼가 몰려와서 도망침. 근데 알고보니 우리반 애였음. 걔네 반 담임쌤한테 가서 말하니까 쌤이 괜찮다고 하심. 그래서 안심하고 있었는데 또다른 좀비가 와서 막 물어뜯음. 그러다가 깼는데 아직도 심장이 벌렁벌렁 거림.."},
-    {"role": "system", "content": "Fleeing from a zombie horde in school, digital art, illustration, school hallway turned into a zombie apocalypse, eerie greenish light, dull and muted colors punctuated with blood red, shock and fear, focus on the chase and surprise zombie attack."},
+    {"role": "system", "content": "Vivid, Fleeing from a zombie horde in school, digital art, illustration, school hallway turned into a zombie apocalypse, eerie greenish light, dull and muted colors punctuated with blood red, shock and fear, focus on the chase and surprise zombie attack."},
     {"role": "user", "content": "학교 축제날이어서 여러가지 부스 체험을 했다. 나는 타로부스 가서 연애운 봤는데 상대방이랑 안 맞는다고 해서 기분 상했다. 그래도 마지막에는 좋게 끝나서 다행이라고 생각했다."},
-    {"role": "system", "content": "Festival-goer getting a tarot reading, digital art, illustration, lively school festival environment, warm and inviting lighting, colorful and vibrant hues, a mix of disappointment and relief, focus on protagonist's reaction to the fortune telling."},
+    {"role": "system", "content": "Vivid, Festival-goer getting a tarot reading, digital art, illustration, lively school festival environment, warm and inviting lighting, colorful and vibrant hues, a mix of disappointment and relief, focus on protagonist's reaction to the fortune telling."},
     {"role": "user", "content": "적에게 계속 도망치면서 세상을 구할 목표를 향해 팀원들과 향해 나아간다. 모험중에서 새로운 사람도 만나며 나아가지만 결국 나 혼자서 해내야 하는 상황에 마주친다. 하지만 목표를 향한 문제 풀이 과정에서 답도 모르지만 안풀리는 상황에 놓이고 적에게 붙잡히지는 않았지만 따라잡히게 된다."},
-    {"role": "system", "content": "Hero's journey, digital art, illustration, Adventure to save world, Dramatic adventure lighting, Vivid fantasy colors, Determination and anxiety, Spotlight on the lone struggle and pursuit."},
+    {"role": "system", "content": "Vivid, Hero's journey, digital art, illustration, Adventure to save world, Dramatic adventure lighting, Vivid fantasy colors, Determination and anxiety, Spotlight on the lone struggle and pursuit."},
 ]
 
 prompt4 = """
