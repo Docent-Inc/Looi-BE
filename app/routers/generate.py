@@ -12,7 +12,7 @@ from app.schemas.response import ApiResponse, User
 
 router = APIRouter(prefix="/generate")
 
-@router.post("/generate/chat", tags=["Generate"])
+@router.post("/chat", tags=["Generate"])
 async def generate_chat(
     body: ChatRequest,
     background_tasks: BackgroundTasks,

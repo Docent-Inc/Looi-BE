@@ -63,7 +63,7 @@ async def generate_image(image_model: int, message: str):
         blob = bucket.blob(destination_blob_name)
         blob.upload_from_file(image_file)
         blob.make_public()
-    return blob.public_url, pastel_color
+    return [blob.public_url, pastel_color]
 
 async def generate_schedule(text: str, user: User, db: Session) -> str:
     retries = 2
