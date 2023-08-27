@@ -1,21 +1,18 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from fastapi.responses import JSONResponse
-from app.auth.kakaoOAuth2 import KAKAO_AUTH_URL, get_user_kakao, mobile_create_token, KAKAO_AUTH_URL_TEST, \
+from app.feature.kakaoOAuth2 import KAKAO_AUTH_URL, get_user_kakao, KAKAO_AUTH_URL_TEST, \
     get_user_kakao_test
 from app.db.database import get_db
-from app.core.config import settings
 from sqlalchemy.orm import Session
-from app.core.security import create_access_token, decode_access_token, create_token
-from app.schemas.response.token import TokenData
-from app.schemas.request.token import TokenRefresh
-from datetime import timedelta
-from app.schemas.common import ApiResponse
-from app.auth.user import get_user_by_email, create_user, authenticate_user, changeNickName, changePassword, deleteUser, \
-    user_kakao
-from app.schemas.request.user import UserCreate, PasswordChangeRequest, NicknameChangeRequest
-from app.core.security import get_current_user, get_user_by_nickName, access_token_expires
-from app.schemas.response.user import User, PasswordChangeResponse, NicknameChangeResponse, DeleteUserResponse
+from app.core.security import decode_access_token, create_token
+from app.schemas.response import TokenData, ApiResponse, KakaoTokenData
+from app.schemas.request import TokenRefresh
+from app.feature.user import get_user_by_email, create_user, authenticate_user, changeNickName, changePassword, \
+    deleteUser, user_kakao, changeMbti
+from app.schemas.request import UserCreate, PasswordChangeRequest, NicknameChangeRequest, \
+    MbtiChangeRequest
+from app.core.security import get_current_user, get_user_by_nickname
+from app.schemas.response import User
 
 router = APIRouter(prefix="/auth")
 
@@ -28,26 +25,24 @@ async def signup(
     if existing_user: # 사용자가 존재하면
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered", # 에러 메시지를 반환합니다.
+            detail=4001,
         )
-    existing_user = get_user_by_nickName(db, nickName=user_data.nickName)  # 닉네임으로 사용자를 조회합니다.
+    existing_user = get_user_by_nickname(db, nickname=user_data.nickname) # 닉네임으로 사용자를 조회합니다.
     if existing_user:  # 사용자가 존재하면
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="NickName already registered",  # 에러 메시지를 반환합니다.
+            detail=4002,
         )
-    new_user = create_user(db, user_data) # 사용자를 생성합니다.
-    access_token, refresh_token = await create_token(new_user.email) # 토큰을 생성합니다.
+    new_user = await create_user(db, user_data) # 사용자를 생성합니다.
+    expires_in, refresh_expires_in, access_token, refresh_token = await create_token(new_user.email) # 토큰을 생성합니다.
     return ApiResponse(
-        success=True,
         data=TokenData(
             access_token=access_token,
-            token_type="bearer",
+            expires_in=expires_in,
             refresh_token=refresh_token,
-            user_email=new_user.email,
-            user_password=user_data.password,
-            user_nickname=user_data.nickName,
-        )
+            refresh_expires_in=refresh_expires_in,
+            token_type="bearer",
+        ),
     )
 
 @router.post("/login", response_model=ApiResponse, tags=["Auth"])
@@ -61,67 +56,57 @@ async def login(
     if not user: # 사용자가 존재하지 않으면
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-            headers={"WWW-Authenticate": "Bearer"}, # 에러 메시지를 반환합니다.
+            detail=4003,
         )
-    access_token, refresh_token = await create_token(user.email) # 토큰을 생성합니다.
-    response_data = ApiResponse(
-        success=True,
+    expires_in, refresh_expires_in, access_token, refresh_token = await create_token(user.email) # 토큰을 생성합니다.
+    return ApiResponse(
         data=TokenData(
             access_token=access_token,
-            token_type="bearer",
+            expires_in=expires_in,
             refresh_token=refresh_token,
-            user_email=user.email,
-            user_password=form_data.password,
-            user_nickname=user.nickName,
+            refresh_expires_in=refresh_expires_in,
+            token_type="bearer",
         )
     )
-    response = JSONResponse(content=response_data.dict())
-    response.set_cookie( # 쿠키에 리프레시 토큰을 저장합니다.
-        key="access_token",
-        value=access_token,
-        httponly=True,
-        max_age=access_token_expires.total_seconds() # 쿠키의 만료 기간을 설정합니다.
-    )
-    return response
-@router.post("/refresh-token", response_model=ApiResponse, tags=["Auth"])
+@router.post("/refresh", response_model=ApiResponse, tags=["Auth"])
 async def refresh_token(
     token_refresh: TokenRefresh, # TokenRefresh 스키마를 사용합니다.
     db: Session = Depends(get_db),
 ):
-    # TODO: refresh_token기능 작동 미확인
     # 리프레시 토큰이 유효한지 확인
-    payload = decode_access_token(token_refresh.refresh_token)
+    payload = await decode_access_token(token_refresh.refresh_token)
     if payload is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
-
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=4004,
+        )
     email: str = payload.get("sub") # 이메일을 가져옵니다.
-    user = get_user_by_email(db, email=email) # 이메일로 사용자를 조회합니다.
+    user = await get_user_by_email(db, email=email) # 이메일로 사용자를 조회합니다.
     if user is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
-
-    # 새로운 액세스 토큰 생성
-    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": user.email}, expires_delta=access_token_expires
-    )
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=4005,
+        )
+    expires_in, refresh_expires_in, access_token, refresh_token = await create_token(user.email) # 토큰을 생성합니다.
     return ApiResponse(
-        success=True,
         data=TokenData(
             access_token=access_token,
-            token_type="bearer")
+            expires_in=expires_in,
+            refresh_token=refresh_token,
+            refresh_expires_in=refresh_expires_in,
+            token_type="bearer",
+        )
     )
 
 @router.post("/change/password", response_model=ApiResponse, tags=["Auth"])
 async def change_password(
-    password_change_request: PasswordChangeRequest,
+    request: PasswordChangeRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     # 비밀번호를 변경합니다.
-    # TODO : 비밀번호 리턴해줘서 키체인에 저장할 수 있도록 하는 로직 필요
-    changePassword(db, current_user, password_change_request)
-    return ApiResponse(success=True, data=PasswordChangeResponse(message="Password changed successfully"))
+    changePassword(request.current_password, request.new_password, current_user, db)
+    return ApiResponse()
 
 @router.post("/change/nickname", response_model=ApiResponse, tags=["Auth"])
 async def change_nickname(
@@ -130,8 +115,18 @@ async def change_nickname(
     db: Session = Depends(get_db),
 ):
     # 닉네임을 변경합니다.
-    changeNickName(nickname_change_request.nickname, current_user, db)
-    return ApiResponse(success=True, data=NicknameChangeResponse(message="Nickname changed successfully"))
+    await changeNickName(nickname_change_request.nickname, current_user, db)
+    return ApiResponse()
+
+@router.post("/change/mbti", response_model=ApiResponse, tags=["Auth"])
+async def change_mbti(
+    body: MbtiChangeRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    # 사용자 정보를 수정합니다.
+    await changeMbti(body.mbti, current_user, db)
+    return ApiResponse()
 
 @router.delete("/delete", response_model=ApiResponse, tags=["Auth"])
 async def delete_user(
@@ -139,18 +134,18 @@ async def delete_user(
     db: Session = Depends(get_db),
 ):
     # 사용자를 삭제합니다.
-    deleteUser(current_user, db)
-    return ApiResponse(success=True, data=DeleteUserResponse(message="User deleted successfully"))
+    await deleteUser(current_user, db)
+    return ApiResponse()
 
-@router.post("/kakao", response_model=ApiResponse, tags=["Auth"])
+@router.get("/kakao", response_model=ApiResponse, tags=["Auth"])
 async def kakao():
     # 카카오 인증을 위한 URL을 반환합니다.
-    return ApiResponse(success=True, data={"url": KAKAO_AUTH_URL})
+    return ApiResponse(data={"url": KAKAO_AUTH_URL})
 
-@router.post("/kakao/test", response_model=ApiResponse, tags=["Auth"])
-async def kakao_useapp():
+@router.get("/kakao/test", response_model=ApiResponse, tags=["Auth"])
+async def kakao_test():
     # 카카오 인증을 위한 URL을 반환합니다.
-    return ApiResponse(success=True, data={"url": KAKAO_AUTH_URL_TEST})
+    return ApiResponse(data={"url": KAKAO_AUTH_URL_TEST})
 
 @router.get("/kakao/callback", response_model=ApiResponse, tags=["Auth"])
 async def kakao_callback(
@@ -159,17 +154,17 @@ async def kakao_callback(
 ):
     # 카카오 로그인 콜백을 처리합니다.
     data = await get_user_kakao(code)
-    user = user_kakao(data, db)
-    access_token, refresh_token = await create_token(user.email)
+    user, is_sign_up = await user_kakao(data, db)
+    expires_in, refresh_expires_in, access_token, refresh_token = await create_token(user.email) # 토큰을 생성합니다.
     return ApiResponse(
         success=True,
-        data=TokenData(
+        data=KakaoTokenData(
             access_token=access_token,
-            token_type="bearer",
+            expires_in=expires_in,
             refresh_token=refresh_token,
-            user_email=data.get("kakao_account").get("email"),
-            user_password=str(data.get("id")),
-            user_nickname=data.get("kakao_account").get("email")[0:data.get("kakao_account").get("email").find("@")],
+            refresh_expires_in=refresh_expires_in,
+            token_type="bearer",
+            is_signup=is_sign_up,
         )
     )
 
@@ -180,37 +175,17 @@ async def kakao_callback(
 ):
     # 카카오 로그인 콜백을 처리합니다.
     data = await get_user_kakao_test(code)
-    user = user_kakao(data, db)
-    access_token, refresh_token = await create_token(user.email)
+    user, is_sign_up = await user_kakao(data, db)
+    expires_in, refresh_expires_in, access_token, refresh_token = await create_token(user.email)  # 토큰을 생성합니다.
     return ApiResponse(
         success=True,
-        data=TokenData(
+        data=KakaoTokenData(
             access_token=access_token,
-            token_type="bearer",
+            expires_in=expires_in,
             refresh_token=refresh_token,
-            user_email=data.get("kakao_account").get("email"),
-            user_password=str(data.get("id")),
-            user_nickname=data.get("kakao_account").get("email")[0:data.get("kakao_account").get("email").find("@")],
+            refresh_expires_in=refresh_expires_in,
+            token_type="bearer",
+            is_signup=is_sign_up,
         )
     )
 
-@router.get("/kakao/moblie", response_model=ApiResponse, tags=["Auth"])
-async def kakao_mobile(
-        data: str,
-        db: Session = Depends(get_db),
-):
-    # 카카오 모바일 로그인을 처리합니다.
-    user_data = await mobile_create_token(data)
-    user = user_kakao(user_data, db)
-    access_token, refresh_token = await create_token(user.email)
-    return ApiResponse(
-        success=True,
-        data=TokenData(
-            access_token=access_token,
-            token_type="bearer",
-            refresh_token=refresh_token,
-            user_email=user_data.get("kakao_account").get("email"),
-            user_password=str(user_data.get("id")),
-            user_nickname=user_data.get("kakao_account").get("email")[0:user_data.get("kakao_account").get("email").find("@")],
-        )
-    )

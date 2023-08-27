@@ -9,7 +9,7 @@ from fastapi.security.api_key import APIKeyHeader
 from app.db.database import get_db
 from app.db.models import User
 from typing import Optional
-from app.core.config import settings # .env파일에 저장된 secret key셋팅을 불러온다.
+from app.core.config import settings
 access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
 refresh_token_expires = timedelta(days=7)  # 리프레시 토큰 만료 기간을 설정합니다.
 
@@ -32,7 +32,7 @@ def get_password_hash(password: str) -> str:
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
-def create_access_token(data: dict, expires_delta: timedelta = None) -> str:
+async def create_access_token(data: dict, expires_delta: timedelta = None) -> str:
     to_encode = data.copy()
     if expires_delta: # 만료시간이 설정되어 있으면
         expire = datetime.utcnow() + expires_delta # 현재시간 + 만료시간
@@ -40,9 +40,9 @@ def create_access_token(data: dict, expires_delta: timedelta = None) -> str:
         expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire}) # 토큰에 만료시간을 추가
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM) # 토큰을 생성
-    return encoded_jwt
+    return encoded_jwt, expire
 
-def decode_access_token(token: str) -> Union[str, Any]:
+async def decode_access_token(token: str) -> Union[str, Any]:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM]) # 토큰을 복호화
         return payload
@@ -54,8 +54,8 @@ async def get_current_user(
     db: Session = Depends(get_db),
 ) -> User:
     credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
+        status_code=status.HTTP_401_UNAUTHORIZED, # 401 에러
+        detail=4220,
         headers={"WWW-Authenticate": "Bearer"},
     )
     token = api_key.replace("Bearer ", "") # api_key에서 Bearer를 제거
@@ -72,7 +72,7 @@ async def get_current_user(
         raise credentials_exception
     return user # 토큰을 복호화하여 유저 정보를 가져온다.
 
-def create_refresh_token(data: dict, expires_delta: timedelta = None) -> str:
+async def create_refresh_token(data: dict, expires_delta: timedelta = None) -> str:
     to_encode = data.copy() # data를 복사
     if expires_delta: # 만료시간이 설정되어 있으면
         expire = datetime.utcnow() + expires_delta
@@ -80,19 +80,21 @@ def create_refresh_token(data: dict, expires_delta: timedelta = None) -> str:
         expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire, "type": "refresh"}) # 토큰에 만료시간과 type을 추가
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM) # 토큰을 생성
-    return encoded_jwt # 토큰을 반환
-
+    return encoded_jwt, expire
 def get_user_by_email(db: Session, email: str) -> Optional[User]:
-    return db.query(User).filter(User.email == email).first()
+    return db.query(User).filter(User.email == email, User.is_deleted == False).first()
 
-def get_user_by_nickName(db: Session, nickName: str) -> Optional[User]:
-    return db.query(User).filter(User.nickName == nickName).first()
+def get_user_by_nickname(db: Session, nickname: str) -> Optional[User]:
+    return db.query(User).filter(User.nickname == nickname, User.is_deleted == False).first()
 
 async def create_token(email):
-    access_token = create_access_token(  # 액세스 토큰을 생성합니다.
+    access_token, expires_in = await create_access_token(  # 액세스 토큰을 생성합니다.
         data={"sub": email}, expires_delta=access_token_expires
     )
-    refresh_token = create_refresh_token(  # 리프레시 토큰을 생성합니다.
+    refresh_token,refresh_expires_in = await create_refresh_token(  # 리프레시 토큰을 생성합니다.
         data={"sub": email}, expires_delta=refresh_token_expires
     )
-    return access_token, refresh_token
+    expires_in_seconds = int((expires_in - datetime.utcnow()).total_seconds()) + 1
+    refresh_expires_in_seconds = int((refresh_expires_in - datetime.utcnow()).total_seconds()) + 1
+
+    return expires_in_seconds, refresh_expires_in_seconds, access_token, refresh_token
