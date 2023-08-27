@@ -29,10 +29,10 @@ async def generate_chat(
             background_tasks.add_task(create_morning_diary, text, current_user, db)
             response = "꿈을 분석중이에요. 잠시만 기다려주세요!"
         elif text_type == 2:
-            # background_tasks.add_task(create_night_diary, text, current_user, db)
+            background_tasks.add_task(create_night_diary, text, current_user, db)
             response = "일기를 그리고 있어요. 잠시만 기다려주세요!"
         elif text_type == 3:
-            # await create_memo(body.content, current_user, db)
+            background_tasks.add_task(create_memo, text, current_user, db)
             response = "메모를 저장하고 있어요. 잠시만 기다려주세요!"
         elif text_type == 4:
             background_tasks.add_task(generate_schedule, text, current_user, db)
