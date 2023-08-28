@@ -4,41 +4,6 @@ from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
 
-class kakao_chatbot_user(Base):
-    __tablename__ = "kakao_chatbot_user"
-
-    id = Column(Integer, primary_key=True)
-    kakao_user_id = Column(Text, nullable=False)
-    mbti = Column(String(4), nullable=True)
-    day_count = Column(Integer, nullable=False)
-    total_generated_dream = Column(Integer, nullable=False)
-    status_score = Column(Integer, nullable=False)
-    only_luck_count = Column(Integer, nullable=False)
-    luck_count = Column(Integer, nullable=False)
-
-class kakao_chatbot_MorningDiary(Base):
-    __tablename__ = "kakao_chatbot_MorningDiary"
-
-    id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('kakao_chatbot_user.id'), nullable=False, index=True)
-    diary_id = Column(Integer, ForeignKey('MorningDiary.id'), nullable=False)
-    diary_name = Column(Text, nullable=False)
-
-class kakao_chatbot_NightDiary(Base):
-    __tablename__ = "kakao_chatbot_NightDiary"
-
-    id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('kakao_chatbot_user.id'), nullable=False, index=True)
-    diary_id = Column(Integer, ForeignKey('NightDiary.id'), nullable=False)
-    diary_name = Column(String(50), nullable=False)
-
-class kakao_chatbot_Memo(Base):
-    __tablename__ = "kakao_chatbot_Memo"
-
-    id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('kakao_chatbot_user.id'), nullable=False, index=True)
-    memo_id = Column(Integer, ForeignKey('Memo.id'), nullable=False)
-
 class User(Base):
     __tablename__ = 'User'
     id = Column(Integer, primary_key=True, index=True)
@@ -103,6 +68,28 @@ class Calender(Base):
     end_time = Column(DateTime, nullable=False)
     title = Column(Text, nullable=False)
     content = Column(Text, nullable=False)
+    is_deleted = Column(Boolean, default=False, index=True)
+
+
+class Chat(Base):
+    __tablename__ = "Chat"
+
+    id = Column(Integer, primary_key=True)
+    User = relationship('User', backref='chats')
+    User_id = Column(Integer, ForeignKey('User.id'), nullable=False, index=True)
+    MorningDiary = relationship('MorningDiary', backref='chats')
+    MorningDiary_id = Column(Integer, ForeignKey('MorningDiary.id'), nullable=True, index=True)
+    NightDiary = relationship('NightDiary', backref='chats')
+    NightDiary_id = Column(Integer, ForeignKey('NightDiary.id'), nullable=True, index=True)
+    Memo = relationship('Memo', backref='chats')
+    Memo_id = Column(Integer, ForeignKey('Memo.id'), nullable=True, index=True)
+    Calender = relationship('Calender', backref='chats')
+    Calender_id = Column(Integer, ForeignKey('Calender.id'), nullable=True, index=True)
+    is_chatbot = Column(Boolean, nullable=False)
+    content_type = Column(Integer, nullable=True)
+    content = Column(Text, nullable=False)
+    image_url = Column(String(100), nullable=True)
+    create_date = Column(DateTime, nullable=False)
     is_deleted = Column(Boolean, default=False, index=True)
 
 def get_Base():

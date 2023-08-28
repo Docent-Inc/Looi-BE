@@ -3,8 +3,8 @@ from fastapi import HTTPException, status
 from collections import Counter
 import numpy as np
 from app.db.models import Calender
-from app.feature.aiRequset import send_gpt_request, send_hyperclova_request, send_dalle2_request, \
-    send_stable_deffusion_request, send_karlo_request
+from app.feature.aiRequset import send_gpt_request, send_dalle2_request, \
+    send_stable_deffusion_request, send_karlo_request, send_gpt4_request
 import uuid
 from io import BytesIO
 import asyncio
@@ -20,8 +20,12 @@ from app.schemas.response import User
 
 load_dotenv()
 SERVICE_ACCOUNT_INFO = json.loads(os.getenv('GOOGLE_APPLICATION_CREDENTIALS_JSON'))
-async def generate_resolution_clova(text: str) -> str:
-    dream_resolution = await send_hyperclova_request(1, text)
+# async def generate_resolution_clova(text: str) -> str:
+#     dream_resolution = await send_hyperclova_request(1, text)
+#     return dream_resolution
+
+async def generate_resolution_gpt(text: str) -> str:
+    dream_resolution = await send_gpt4_request(2, text)
     return dream_resolution
 async def generate_diary_name(message: str) -> str:
     dreamName = await send_gpt_request(2, message)
