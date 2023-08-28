@@ -19,6 +19,12 @@ class MbtiChangeRequest(BaseModel):
 class TokenRefresh(BaseModel):
     refresh_token: str
 
+class UserUpdateRequest(BaseModel):
+    nickname: str
+    mbti: str
+    age: str
+    gender: str
+
 
 '''
 Diary 관련 Response
