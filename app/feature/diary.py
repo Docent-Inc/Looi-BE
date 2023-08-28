@@ -2,8 +2,8 @@ import asyncio
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from starlette import status
-from app.db.models import NightDiary, MorningDiary, Memo, Calender
-from app.feature.generate import generate_image, generate_diary_name, generate_resolution_clova
+from app.db.models import NightDiary, MorningDiary, Memo, Calender, Chat
+from app.feature.generate import generate_image, generate_diary_name, generate_resolution_gpt
 import datetime
 import pytz
 
@@ -11,13 +11,27 @@ from app.schemas.request import UpdateDiaryRequest, CalenderRequest
 from app.schemas.response import User
 
 async def create_morning_diary(content: str, user: User, db: Session) -> int:
+    try:
+        chat = Chat(
+            User_id=user.id,
+            is_chatbot=False,
+            create_date=datetime.datetime.now(pytz.timezone('Asia/Seoul')),
+            content=content,
+        )
+        db.add(chat)
+        db.commit()
+    except:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=5000,  # 에러 메시지를 반환합니다.
+        )
     # 그림과 일기의 제목과 해몽을 생성합니다.
     mbti_content = content if user.mbti is None else user.mbti + ", " + content
 
     L, diary_name, resolution = await asyncio.gather(
         generate_image(user.image_model, content),
         generate_diary_name(content),
-        generate_resolution_clova(mbti_content)
+        generate_resolution_gpt(mbti_content)
     )
     diary = MorningDiary(
         content=content,
@@ -32,13 +46,22 @@ async def create_morning_diary(content: str, user: User, db: Session) -> int:
     try:
         db.add(diary)
         db.commit()
-        db.refresh(diary)
-    except Exception as e:
-        print(e)
-        # raise HTTPException(
-        #     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        #     detail=5000,  # 에러 메시지를 반환합니다.
-        # )
+        chat = Chat(
+            User_id=user.id,
+            is_chatbot=True,
+            MorningDiary_id=diary.id,
+            create_date=datetime.datetime.now(pytz.timezone('Asia/Seoul')),
+            content_type=1,
+            content=diary_name,
+            image_url=L[0],
+        )
+        db.add(chat)
+        db.commit()
+    except:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=5000,  # 에러 메시지를 반환합니다.
+        )
     return diary.id
 
 async def read_morning_diary(diary_id: int, user:User, db: Session) -> MorningDiary:
@@ -89,6 +112,20 @@ async def list_morning_diary(page: int, user: User, db: Session):
     return diaries
 
 async def create_night_diary(content: str, user: User, db: Session):
+    try:
+        chat = Chat(
+            User_id=user.id,
+            is_chatbot=False,
+            create_date=datetime.datetime.now(pytz.timezone('Asia/Seoul')),
+            content=content,
+        )
+        db.add(chat)
+        db.commit()
+    except:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=5000,  # 에러 메시지를 반환합니다.
+        )
     # 그림과 일기의 제목을 생성합니다.
     L, diary_name = await asyncio.gather(
         generate_image(user.image_model, content),
@@ -108,7 +145,17 @@ async def create_night_diary(content: str, user: User, db: Session):
     try:
         db.add(diary)
         db.commit()
-        db.refresh(diary)
+        chat = Chat(
+            User_id=user.id,
+            is_chatbot=True,
+            NightDiary_id=diary.id,
+            create_date=datetime.datetime.now(pytz.timezone('Asia/Seoul')),
+            content_type=2,
+            content=diary_name,
+            image_url=L[0],
+        )
+        db.add(chat)
+        db.commit()
     except:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
