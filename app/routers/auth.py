@@ -6,9 +6,9 @@ from app.db.database import get_db
 from sqlalchemy.orm import Session
 from app.core.security import decode_access_token, create_token
 from app.schemas.response import TokenData, ApiResponse, KakaoTokenData
-from app.schemas.request import TokenRefresh
+from app.schemas.request import TokenRefresh, UserUpdateRequest
 from app.feature.user import get_user_by_email, create_user, authenticate_user, changeNickName, changePassword, \
-    deleteUser, user_kakao, changeMbti
+    deleteUser, user_kakao, changeMbti, updateUser
 from app.schemas.request import UserCreate, PasswordChangeRequest, NicknameChangeRequest, \
     MbtiChangeRequest
 from app.core.security import get_current_user, get_user_by_nickname
@@ -188,4 +188,14 @@ async def kakao_callback(
             is_signup=is_sign_up,
         )
     )
+
+@router.post("/update", response_model=ApiResponse, tags=["Auth"])
+async def update_user(
+    request: UserUpdateRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    # 사용자 정보를 수정합니다.
+    await updateUser(request, current_user, db)
+    return ApiResponse()
 

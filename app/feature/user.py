@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from app.core.security import verify_password, get_password_hash
-from app.schemas.request import UserCreate
+from app.schemas.request import UserCreate, UserUpdateRequest
 from typing import Optional
 from app.core.security import get_user_by_email, get_user_by_nickname
 from app.db.models import User
@@ -167,3 +167,18 @@ async def user_kakao(kakao_data: dict, db: Session) -> Optional[User]:
         is_sign_up = True
     return user, is_sign_up
 
+async def updateUser(request: UserUpdateRequest, current_user: User, db: Session):
+    try:
+        current_user.nickname = request.nickname
+        current_user.mbti = request.mbti
+        current_user.age_range = request.age
+        current_user.gender = request.gender
+        db.add(current_user)
+        db.commit()
+        db.refresh(current_user)
+    except:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=5000,
+        )
