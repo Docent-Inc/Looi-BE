@@ -53,6 +53,7 @@ class Memo(Base):
     id = Column(Integer, primary_key=True)
     User = relationship('User', backref='memos')
     User_id = Column(Integer, ForeignKey('User.id'), nullable=False, index=True)
+    title = Column(Text, nullable=False)
     content = Column(Text, nullable=False)
     create_date = Column(DateTime, nullable=False)
     modify_date = Column(DateTime, nullable=False)
