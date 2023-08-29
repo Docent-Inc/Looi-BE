@@ -1,8 +1,11 @@
+from datetime import datetime, timedelta
+
+import pytz
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from collections import Counter
 import numpy as np
-from app.db.models import Calender
+from app.db.models import MorningDiary, NightDiary, Calender, Report
 from app.feature.aiRequset import send_gpt_request, send_dalle2_request, \
     send_stable_deffusion_request, send_karlo_request, send_gpt4_request
 import uuid
@@ -20,9 +23,6 @@ from app.schemas.response import User
 
 load_dotenv()
 SERVICE_ACCOUNT_INFO = json.loads(os.getenv('GOOGLE_APPLICATION_CREDENTIALS_JSON'))
-# async def generate_resolution_clova(text: str) -> str:
-#     dream_resolution = await send_hyperclova_request(1, text)
-#     return dream_resolution
 
 async def generate_resolution_gpt(text: str) -> str:
     dream_resolution = await send_gpt4_request(2, text)
@@ -84,7 +84,6 @@ async def generate_schedule(text: str, user: User, db: Session) -> str:
             )
             db.add(calender)
             db.commit()
-            # TODO: 웹 푸시 알람
 
             return "일정을 저장했어요!"
         except Exception as e:
@@ -96,3 +95,66 @@ async def generate_schedule(text: str, user: User, db: Session) -> str:
                     detail=4014
                 )
 
+async def generate_report(user: User, db: Session) -> str:
+    text = "user name: " + user.nickname + "\n"
+    today = datetime.now(pytz.timezone('Asia/Seoul'))
+    one_week_ago = today - timedelta(days=7)
+    six_days_ago = today - timedelta(days=6)
+    # 6일 이내의 데이터가 있으면 에러 반환
+    # report = db.query(Report).filter(
+    #             Report.User_id == user.id,
+    #             Report.create_date <= today,
+    #             Report.create_date >= six_days_ago.date(),
+    #             Report.is_deleted == False
+    #         ).first()
+    # if report:
+    #     return json.loads(report.content)
+    try:
+        morning = db.query(MorningDiary).filter(
+                    MorningDiary.User_id == user.id,
+                    MorningDiary.create_date <= today,
+                    MorningDiary.create_date >= one_week_ago.date(),
+                    MorningDiary.is_deleted == False
+                ).all()
+        text += "Dreams of the last week : \n"
+        for diary in morning:
+            text += diary.content + "\n"
+        night = db.query(NightDiary).filter(
+                    NightDiary.User_id == user.id,
+                    NightDiary.create_date <= today,
+                    NightDiary.create_date >= one_week_ago.date(),
+                    NightDiary.is_deleted == False
+                ).all()
+        text += "\nDiary for the last week : \n"
+        for diary in night:
+            text += diary.content + "\n"
+        calender = db.query(Calender).filter(
+                    Calender.User_id == user.id,
+                    Calender.start_time <= today,
+                    Calender.start_time >= one_week_ago.date(),
+                    Calender.is_deleted == False
+                ).all()
+        text += "\nSchedule for the last week : \n"
+        for content in calender:
+            text += content.title + "\n"
+        report = await send_gpt4_request(3, text)
+    except:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=4017
+        )
+    try:
+        mental_report = Report(
+            User_id=user.id,
+            content=report,
+            create_date=today,
+            is_deleted=False,
+        )
+        db.add(mental_report)
+        db.commit()
+    except:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=5000
+        )
+    return json.loads(report)

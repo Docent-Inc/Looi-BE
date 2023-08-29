@@ -87,6 +87,14 @@ prompt6 = [
     {"role": "system", "content": "{\"start_time\": \"2023-09-01 18:00:00\", \"end_time\": \"2023-09-01 19:00:00\", \"title\": \"동아리 모임\", \"description\": \"중앙도서관 앞에서 자동차 동아리 모임\"}"},
 ]
 
+prompt7 = [
+    {"role": "system", "content": "Analyze the user's dreams, diary, and schedule to create a about 3000-character Concrete 'Mental State Report'. Please write korean but each title is Engilsh."},
+    {"role": "system", "content": "1. Mental State 2. Extroverted Activities 3. Introverted Activities 4. Positives 5. Negatives 6. Recommendations 7. Statistics"},
+    {"role": "system", "content": "Provide detailed analysis for 'Mental State'. For items 1, total coment about report and include user name with out last name(ex 서준님은 ~). For items 2-5, list 3 each. For item 6, list 5 recommendations."},
+    {"role": "system", "content": "For item 7, provide a list 1 detail ratio dictionary for Extroversion, Introversion, and the five keyword list that you choose. The first ratio dictionary's total should add up to 100. In the second list . For example, [{\"외향\": 50, \"내향\": 50}, [\"열정\"]]"},
+    {"role": "system", "content": "Return the only json format of the report with out number and Enter(ex {\"Mental State\":\"content(korean)\", \"Extroverted Activities\":\"[each conent]\"} ."},
+    {"role": "system", "content": "공손한 말투로 만들어주세요."},
+]
 async def send_gpt_request(prompt_num, messages_prompt, retries=3):
     '''
     주어진 프롬프트로 GPT API에 요청을 보내고, 실패할 경우 3번까지 재시도합니다.
@@ -131,6 +139,8 @@ async def send_gpt4_request(prompt_num, messages_prompt, retries=3):
         messages_prompt = f"{datetime.datetime.now(pytz.timezone('Asia/Seoul'))}, {messages_prompt}"
     elif prompt_num == 2: # 해몽
         prompt = prompt5.copy()
+    elif prompt_num == 3: # 마음상태 보고서
+        prompt = prompt7.copy()
     else:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
