@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Text, ForeignKey, String, Boolean, DateTime, func
+from sqlalchemy import Column, Integer, Text, ForeignKey, String, Boolean, DateTime, func, JSON
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -91,6 +91,17 @@ class Chat(Base):
     image_url = Column(String(100), nullable=True)
     create_date = Column(DateTime, nullable=False)
     is_deleted = Column(Boolean, default=False, index=True)
+
+class Report(Base):
+    __tablename__ = "Report"
+
+    id = Column(Integer, primary_key=True)
+    User = relationship('User', backref='reports')
+    User_id = Column(Integer, ForeignKey('User.id'), nullable=False, index=True)
+    content = Column(Text, nullable=False)
+    create_date = Column(DateTime, nullable=False)
+    is_deleted = Column(Boolean, default=False, index=True)
+
 
 def get_Base():
     return Base

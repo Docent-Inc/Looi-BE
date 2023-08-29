@@ -58,13 +58,13 @@ async def get_current_user(
         detail=4220,
         headers={"WWW-Authenticate": "Bearer"},
     )
-    token = api_key.replace("Bearer ", "") # api_key에서 Bearer를 제거
     try:
+        token = api_key.replace("Bearer ", "")  # api_key에서 Bearer를 제거
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub") # 토큰에서 email을 가져온다.
         if email is None:
             raise credentials_exception
-    except JWTError:
+    except:
         raise credentials_exception
 
     user = get_user_by_email(db, email=email) # email을 통해 유저를 가져온다.
