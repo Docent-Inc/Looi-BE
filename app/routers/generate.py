@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, status
 from app.db.models import Chat
 from app.feature.aiRequset import send_gpt_request, send_gpt4_request
 from app.feature.diary import create_morning_diary, create_night_diary, create_memo
-from app.feature.generate import generate_image, generate_schedule, generate_report
+from app.feature.generate import generate_image, generate_schedule, generate_report, generate_luck
 from app.core.security import get_current_user
 from app.db.database import get_db
 from sqlalchemy.orm import Session
@@ -69,4 +69,14 @@ async def report(
     # 그리고 그것을 바탕으로 사용자의 리포트를 생성합니다.
     return ApiResponse(
         data=report
+    )
+@router.get("/luck", tags=["Generate"])
+async def luck(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> ApiResponse:
+
+    luck = await generate_luck(current_user, db)
+    return ApiResponse(
+        data=luck
     )
