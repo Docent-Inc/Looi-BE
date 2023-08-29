@@ -102,6 +102,15 @@ class Report(Base):
     create_date = Column(DateTime, nullable=False)
     is_deleted = Column(Boolean, default=False, index=True)
 
+class Luck(Base):
+    __tablename__ = "Luck"
+
+    id = Column(Integer, primary_key=True)
+    User = relationship('User', backref='lucks')
+    User_id = Column(Integer, ForeignKey('User.id'), nullable=False, index=True)
+    content = Column(Text, nullable=False)
+    create_date = Column(DateTime, nullable=False)
+    is_deleted = Column(Boolean, default=False, index=True)
 
 def get_Base():
     return Base

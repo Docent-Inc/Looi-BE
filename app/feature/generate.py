@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from collections import Counter
 import numpy as np
-from app.db.models import MorningDiary, NightDiary, Calender, Report
+from app.db.models import MorningDiary, NightDiary, Calender, Report, Luck
 from app.feature.aiRequset import send_gpt_request, send_dalle2_request, \
     send_stable_deffusion_request, send_karlo_request, send_gpt4_request
 import uuid
@@ -95,20 +95,57 @@ async def generate_schedule(text: str, user: User, db: Session) -> str:
                     detail=4014
                 )
 
+async def generate_luck(user: User, db: Session):
+    # db에서 오늘 날짜의 MorningDiary, NightDiary, Calendar를 불러옵니다
+    today = datetime.now(pytz.timezone('Asia/Seoul'))
+    # 매일 오전 9시에 한번만 호출되도록 설정
+    if today.hour < 9:
+        today = today - timedelta(days=1)
+    luck = db.query(Luck).filter(
+            Luck.User_id == user.id,
+            Luck.create_date == today.date(),
+            Luck.is_deleted == False
+    ).first()
+    if luck:
+        return luck.content
+    text = ""
+    morning = db.query(MorningDiary).filter(
+                MorningDiary.User_id == user.id,
+                MorningDiary.create_date == today.date(),
+                MorningDiary.is_deleted == False
+            ).first()
+    # db에 데이터가 없으면 빈 문자열 넘겨줌
+    if not morning:
+        text = ""
+    else:
+        if morning:
+            text += morning.content
+    data = await send_gpt_request(5, text)
+    luck = Luck(
+        User_id=user.id,
+        content=data,
+        create_date=today.date()
+    )
+    db.add(luck)
+    db.commit()
+    return data
+
+
+
 async def generate_report(user: User, db: Session) -> str:
     text = "user name: " + user.nickname + "\n"
     today = datetime.now(pytz.timezone('Asia/Seoul'))
     one_week_ago = today - timedelta(days=7)
     six_days_ago = today - timedelta(days=6)
     # 6일 이내의 데이터가 있으면 에러 반환
-    # report = db.query(Report).filter(
-    #             Report.User_id == user.id,
-    #             Report.create_date <= today,
-    #             Report.create_date >= six_days_ago.date(),
-    #             Report.is_deleted == False
-    #         ).first()
-    # if report:
-    #     return json.loads(report.content)
+    report = db.query(Report).filter(
+                Report.User_id == user.id,
+                Report.create_date <= today,
+                Report.create_date >= six_days_ago.date(),
+                Report.is_deleted == False
+            ).first()
+    if report:
+        return json.loads(report.content)
     try:
         morning = db.query(MorningDiary).filter(
                     MorningDiary.User_id == user.id,
