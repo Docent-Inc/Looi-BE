@@ -78,5 +78,5 @@ async def luck(
 
     luck = await generate_luck(current_user, db)
     return ApiResponse(
-        data=luck
+        data={"luck": luck}
     )

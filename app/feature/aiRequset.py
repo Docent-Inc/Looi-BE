@@ -95,6 +95,16 @@ prompt7 = [
     {"role": "system", "content": "Return the only json format of the report with out number and Enter(ex {\"Mental State\":\"content(korean)\", \"Extroverted Activities\":\"[each conent]\"} ."},
     {"role": "system", "content": "공손한 말투로 만들어주세요."},
 ]
+
+promt8 = [
+    {"role": "system", "content": "Analyze the user's memo and create json format of the memo."},
+    {"role": "system", "content": "{\"title\": \"메모에 대한 제목 생성\", \"content\":\"사용자 메모\"}"},
+    {"role": "user", "content": "공손한 말투로 만들어주세요."},
+]
+
+
+
+
 async def send_gpt_request(prompt_num, messages_prompt, retries=3):
     '''
     주어진 프롬프트로 GPT API에 요청을 보내고, 실패할 경우 3번까지 재시도합니다.
