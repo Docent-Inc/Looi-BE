@@ -146,7 +146,10 @@ async def generate_report(user: User, db: Session) -> str:
                 Report.is_deleted == False
             ).first()
     if report:
-        return json.loads(report.content)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=4018
+        )
     try:
         morning = db.query(MorningDiary).filter(
                     MorningDiary.User_id == user.id,

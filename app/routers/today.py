@@ -1,3 +1,4 @@
+import json
 from datetime import datetime, timedelta
 
 import pytz
@@ -6,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.core.security import get_current_user
 from app.db.database import get_db
-from app.db.models import Calender, MorningDiary, NightDiary
+from app.db.models import Calender, MorningDiary, NightDiary, Report
 from app.schemas.response import User, ApiResponse
 
 router = APIRouter(prefix="/today")
@@ -53,4 +54,18 @@ async def get_record(
             "morning": morning,
             "night": night
         }
+    )
+
+@router.get("/report", tags=["Today"])
+async def get_report(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> ApiResponse:
+    # db에서 가장 최근의 마음 보고서를 가져옵니다.
+    report = db.query(Report).filter(
+        Report.User_id == current_user.id,
+        Report.is_deleted == False
+    ).order_by(Report.create_date.desc()).first()
+    return ApiResponse(
+        data={"create_date": report.create_date, "content": json.loads(report.content)}
     )
