@@ -137,6 +137,7 @@ async def generate_report(user: User, db: Session) -> str:
     today = datetime.now(pytz.timezone('Asia/Seoul'))
     one_week_ago = today - timedelta(days=7)
     six_days_ago = today - timedelta(days=6)
+    total_count = 0
     # 6일 이내의 데이터가 있으면 에러 반환
     report = db.query(Report).filter(
                 Report.User_id == user.id,
@@ -155,6 +156,7 @@ async def generate_report(user: User, db: Session) -> str:
                 ).all()
         text += "Dreams of the last week : \n"
         for diary in morning:
+            total_count += 1
             text += diary.content + "\n"
         night = db.query(NightDiary).filter(
                     NightDiary.User_id == user.id,
@@ -164,6 +166,7 @@ async def generate_report(user: User, db: Session) -> str:
                 ).all()
         text += "\nDiary for the last week : \n"
         for diary in night:
+            total_count += 1
             text += diary.content + "\n"
         calender = db.query(Calender).filter(
                     Calender.User_id == user.id,
@@ -179,6 +182,11 @@ async def generate_report(user: User, db: Session) -> str:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=4017
+        )
+    if total_count < 5:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=4019
         )
     try:
         mental_report = Report(
