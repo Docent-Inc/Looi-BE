@@ -132,12 +132,14 @@ async def create_night_diary(content: str, user: User, db: Session):
         generate_diary_name(content)
     )
 
+    upper_lower_color = "[" + str(L[1]) + ", " + str(L[2]) + "]"
+
     # 저녁 일기를 생성합니다.
     diary = NightDiary(
         content=content,
         User_id=user.id,
         image_url=L[0],
-        background_color=str(L[1]),
+        background_color=upper_lower_color,
         diary_name=diary_name,
         create_date=datetime.datetime.now(pytz.timezone('Asia/Seoul')),
         modify_date=datetime.datetime.now(pytz.timezone('Asia/Seoul')),

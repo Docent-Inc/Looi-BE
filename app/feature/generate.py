@@ -1,10 +1,10 @@
 from datetime import datetime, timedelta
 
+import numpy as np
 import pytz
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
-from collections import Counter
-import numpy as np
+import extcolors
 from app.db.models import MorningDiary, NightDiary, Calender, Report, Luck
 from app.feature.aiRequset import send_gpt_request, send_dalle2_request, \
     send_stable_deffusion_request, send_karlo_request, send_gpt4_request
@@ -40,21 +40,27 @@ async def generate_image(image_model: int, message: str):
     elif image_model == 3:
         dream_image_url = await send_karlo_request(prompt)
 
-    response = await asyncio.to_thread(requests.get, dream_image_url)
+    try:
+        response = await asyncio.to_thread(requests.get, dream_image_url)
+    except:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=4500
+        )
     img = Image.open(BytesIO(response.content))
-    buffer = BytesIO()
-    img.save(buffer, format="PNG")
 
-    # 이미지를 NumPy 배열로 변환
-    img_array = np.array(img)
-    img_data = img_array.reshape((-1, 3))
+    width, height = img.size
 
-    # 색상 히스토그램 분석
-    color_counter = Counter(map(tuple, img_data))
-    dominant_color = color_counter.most_common(1)[0][0]
+    # 이미지를 상하로 2등분
+    upper_half = img.crop((0, 0, width, height // 2))
+    lower_half = img.crop((0, height // 2, width, height))
 
-    # 주요 색상을 파스텔 톤으로 변환
-    pastel_color = tuple(int(0.5 * c + (1 - 0.5) * 255) for c in dominant_color)
+    # 각 부분의 대표색 추출
+    upper_colors, _ = extcolors.extract_from_image(upper_half)
+    lower_colors, _ = extcolors.extract_from_image(lower_half)
+
+    upper_dominant_color = upper_colors[0][0]
+    lower_dominant_color = lower_colors[0][0]
 
     unique_id = uuid.uuid4()
     destination_blob_name = str(unique_id) + ".png"
@@ -62,12 +68,17 @@ async def generate_image(image_model: int, message: str):
     credentials = service_account.Credentials.from_service_account_info(SERVICE_ACCOUNT_INFO)
     client = storage.Client(credentials=credentials, project=SERVICE_ACCOUNT_INFO['project_id'])
 
+    buffer = BytesIO()
+    img.save(buffer, format="PNG")
+
     with BytesIO(buffer.getvalue()) as image_file:
+        image_file.seek(0)
         bucket = client.get_bucket(bucket_name)
         blob = bucket.blob(destination_blob_name)
         blob.upload_from_file(image_file)
         blob.make_public()
-    return [blob.public_url, pastel_color]
+
+    return [blob.public_url, upper_dominant_color, lower_dominant_color]
 
 async def generate_schedule(text: str, user: User, db: Session) -> str:
     retries = 2
