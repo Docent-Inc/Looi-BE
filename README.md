@@ -36,7 +36,7 @@
 ## 개발자 정보
 
 - 이름: 조태완
-- 이메일: taewan2002@gachon.ac.kr
+- 이메일: taewan2002@docent.zip
 - 직책: CTO
 
 ## 라이선스 및 저작권

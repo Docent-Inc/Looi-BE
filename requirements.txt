@@ -20,3 +20,4 @@ httpx_oauth==0.11.2
 alembic==1.10.4
 aiocron==1.8
 numpy==1.25.2
+extcolors==1.0.0
