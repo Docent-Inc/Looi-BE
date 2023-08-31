@@ -247,8 +247,8 @@ async def read_memo(memo_id: int, user: User, db: Session) -> Memo:
 async def create_calender(body: CalenderRequest, user: User, db: Session) -> int:
     calender = Calender(
         User_id=user.id,
-        start_date=body.start_date,
-        end_date=body.end_date,
+        start_time=body.start_time,
+        end_time=body.end_time,
         title=body.title,
         content=body.content,
     )
@@ -280,8 +280,8 @@ async def update_calender(calender_id: int, body: CalenderRequest, user: User, d
             detail=4015,
         )
     try:
-        calender.start_date = body.start_date
-        calender.end_date = body.end_date
+        calender.start_time = body.start_time
+        calender.end_time = body.end_time
         calender.title = body.title
         calender.content = body.content
         db.commit()

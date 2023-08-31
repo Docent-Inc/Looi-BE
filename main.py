@@ -4,6 +4,7 @@ from app.routers import auth, generate, diary, kakao_chatbot, today
 from app.schemas.response import ApiResponse
 from app.core.middleware import TimingMiddleware
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.exceptions import RequestValidationError
 
 CUSTOM_EXCEPTIONS = {
     4000: "알 수 없는 에러가 발생했습니다.",
@@ -34,6 +35,7 @@ CUSTOM_EXCEPTIONS = {
     4503: "Stable Diffusion API 호출에 실패했습니다.",
     4504: "Karlo2 API 호출에 실패했습니다.",
     4505: "Dalle2 API 호출에 실패했습니다.",
+    4999: "요청 유효성 검사에 실패했습니다.",
     5000: "서버에 문제가 발생했습니다.",
 }
 
@@ -67,4 +69,13 @@ async def custom_http_exception_handler(request: Request, exc: HTTPException):
         status_code=exc.status_code
     )
 
-
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    return JSONResponse(
+        content=ApiResponse(
+            success=False,
+            status_code=4999,
+            message=CUSTOM_EXCEPTIONS[4999],
+        ).dict(),
+        status_code=400
+    )

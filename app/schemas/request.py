@@ -43,7 +43,7 @@ class ChatRequest(BaseModel):
     content: str
 
 class CalenderRequest(BaseModel):
-    start_date: str
-    end_date: str
+    start_time: str
+    end_time: str
     title: str
     content: str
