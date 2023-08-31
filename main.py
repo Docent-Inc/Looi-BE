@@ -37,7 +37,7 @@ CUSTOM_EXCEPTIONS = {
     5000: "서버에 문제가 발생했습니다.",
 }
 
-app = FastAPI(openapi_url="/api/v1/openapi.json")
+app = FastAPI(openapi_url="/v1/openapi.json")
 
 app.include_router(auth.router)
 app.include_router(generate.router)
