@@ -33,11 +33,14 @@ async def create_morning_diary(content: str, user: User, db: Session) -> int:
         generate_diary_name(content),
         generate_resolution_gpt(mbti_content)
     )
+
+    upper_lower_color = "[" + str(L[1]) + ", " + str(L[2]) + "]"
+
     diary = MorningDiary(
         content=content,
         User_id=user.id,
         image_url=L[0],
-        background_color=str(L[1]),
+        background_color=upper_lower_color,
         diary_name=diary_name,
         resolution=resolution,
         create_date=datetime.datetime.now(pytz.timezone('Asia/Seoul')),
