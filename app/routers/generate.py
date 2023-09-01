@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, status
 
 from app.db.models import Chat
 from app.feature.aiRequset import send_gpt_request, send_gpt4_request
-from app.feature.diary import create_morning_diary, create_night_diary, create_memo
+from app.feature.diary import create_morning_diary, create_night_diary, create_memo, create_calender
 from app.feature.generate import generate_image, generate_schedule, generate_report, generate_luck
 from app.core.security import get_current_user
 from app.db.database import get_db
@@ -25,26 +25,26 @@ async def generate_chat(
     try:
         text = body.content
         text_type = int(await send_gpt4_request(1, text))
-        # if text_type == 1:
-        #
-        # elif text_type == 2:
-        #
-        # elif text_type == 3:
-        #
-        # elif text_type == 4:
-        #
-        # else:
-        #     raise HTTPException(
-        #         status_code=status.HTTP_400_BAD_REQUEST,
-        #         detail=4013
-        #     )
+        if text_type == 1:
+            diary_id = await create_morning_diary(body.content, current_user, db)
+        elif text_type == 2:
+            diary_id = await create_night_diary(body.content, current_user, db)
+        elif text_type == 3:
+            diary_id = await create_memo(body.content, current_user, db)
+        elif text_type == 4:
+            diary_id = await generate_schedule(body.content, current_user, db)
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=4013
+            )
     except:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=4013
         )
     return ApiResponse(
-        data={"text_type": text_type}
+        data={"text_type": text_type, "diary_id": diary_id}
     )
 
 @router.post("/chat/list", tags=["Generate"])
