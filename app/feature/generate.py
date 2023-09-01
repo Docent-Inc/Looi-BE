@@ -111,6 +111,7 @@ async def generate_schedule(text: str, user: User, db: Session) -> str:
                 content_type=4,
                 Calender_id=calender.id,
                 content=schedule['title'],
+                event_time=schedule['start_time'],
                 is_chatbot=True,
                 create_date=datetime.now(pytz.timezone('Asia/Seoul')),
                 is_deleted=False
