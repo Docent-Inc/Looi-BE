@@ -89,6 +89,7 @@ class Chat(Base):
     is_chatbot = Column(Boolean, nullable=False)
     content_type = Column(Integer, nullable=True)
     content = Column(Text, nullable=False)
+    event_time = Column(DateTime, nullable=True)
     image_url = Column(String(100), nullable=True)
     create_date = Column(DateTime, nullable=False)
     is_deleted = Column(Boolean, default=False, index=True)
