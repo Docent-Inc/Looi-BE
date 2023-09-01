@@ -60,7 +60,7 @@ async def generate_chat_list(
         data={
             "page_num": page,
             "total_counts": total_counts,
-            "chat": chat
+            "list": chat
     })
 
 @router.get("/report", tags=["Generate"])
