@@ -54,10 +54,14 @@ async def generate_chat_list(
     db: Session = Depends(get_db),
 ) -> ApiResponse:
     # db에서 사용자의 채팅 리스트를 가져옵니다.
-    chat = db.query(Chat).filter(Chat.User_id == current_user.id).order_by(Chat.create_date.desc()).offset((page-1) * 5).limit(5).all()
+    chat = db.query(Chat).filter(Chat.User_id == current_user.id, Chat.is_deleted == False).order_by(Chat.id.desc()).offset((page-1) * 5).limit(5).all()
+    total_counts = db.query(Chat).filter(Chat.User_id == current_user.id, Chat.is_deleted == False).count()
     return ApiResponse(
-        data=chat
-    )
+        data={
+            "page_num": page,
+            "total_counts": total_counts,
+            "chat": chat
+    })
 
 @router.get("/report", tags=["Generate"])
 async def report(
