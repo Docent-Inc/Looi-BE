@@ -5,7 +5,7 @@ import pytz
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 import extcolors
-from app.db.models import MorningDiary, NightDiary, Calender, Report, Luck
+from app.db.models import MorningDiary, NightDiary, Calender, Report, Luck, Chat
 from app.feature.aiRequset import send_gpt_request, send_dalle2_request, \
     send_stable_deffusion_request, send_karlo_request, send_gpt4_request
 import uuid
@@ -96,8 +96,30 @@ async def generate_schedule(text: str, user: User, db: Session) -> str:
             db.add(calender)
             db.commit()
 
-            return "일정을 저장했어요!"
-        except Exception as e:
+            chat = Chat(
+                User_id=user.id,
+                content=text,
+                create_date=datetime.now(pytz.timezone('Asia/Seoul')),
+                is_chatbot=False,
+                is_deleted=False
+            )
+            db.add(chat)
+            db.commit()
+
+            chat = Chat(
+                User_id=user.id,
+                content_type=4,
+                Calender_id=calender.id,
+                content=schedule['title'],
+                is_chatbot=True,
+                create_date=datetime.now(pytz.timezone('Asia/Seoul')),
+                is_deleted=False
+            )
+            db.add(chat)
+            db.commit()
+
+            return calender.id
+        except:
             if i < retries - 1:
                 continue
             else:

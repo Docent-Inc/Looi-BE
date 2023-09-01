@@ -142,7 +142,7 @@ async def send_gpt_request(prompt_num, messages_prompt, retries=3):
 async def send_gpt4_request(prompt_num, messages_prompt, retries=3):
     '''
     주어진 프롬프트로 GPT4 API에 요청을 보내고, 실패할 경우 3번까지 재시도합니다.
-    prompt_num: 1. 택스트 분류, 2. 해몽
+    prompt_num: 1. 택스트 분류 2. 해몽 3. 마음상태 보고서
     '''
     if prompt_num == 1: # 택스트 분류
         prompt = prompt1.copy()
