@@ -181,7 +181,7 @@ async def kakao_callback(
     return ApiResponse(
         success=True,
         data=KakaoTokenData(
-            user_name=user.name,
+            user_name=user.nickname,
             access_token=access_token,
             expires_in=expires_in,
             refresh_token=refresh_token,
