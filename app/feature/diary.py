@@ -34,7 +34,7 @@ async def create_morning_diary(content: str, user: User, db: Session) -> int:
         generate_resolution_gpt(mbti_content)
     )
 
-    upper_lower_color = f'["{L[0]}, {L[1]}"]'
+    upper_lower_color = "[\"" + str(L[1]) + "\", \"" + str(L[2]) + "\"]"
 
     diary = MorningDiary(
         content=content,
@@ -135,7 +135,7 @@ async def create_night_diary(content: str, user: User, db: Session):
         generate_diary_name(content)
     )
 
-    upper_lower_color = f'["{L[0]}, {L[1]}"]'
+    upper_lower_color = "[\"" + str(L[1]) + "\", \"" + str(L[2]) + "\"]"
 
     # 저녁 일기를 생성합니다.
     diary = NightDiary(
