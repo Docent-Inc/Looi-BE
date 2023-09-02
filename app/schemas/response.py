@@ -20,6 +20,7 @@ class TokenData(BaseModel):
 
 class KakaoTokenData(TokenData):
     is_signup: bool
+    user_name: str
 
 class User(BaseModel):
     id: int
