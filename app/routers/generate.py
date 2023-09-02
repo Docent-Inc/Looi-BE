@@ -24,7 +24,8 @@ async def generate_chat(
     '''
     try:
         text = body.content
-        text_type = int(await send_gpt4_request(1, text))
+        number = await send_gpt4_request(1, text)
+        text_type = int(number.strip())
         if text_type == 1:
             diary_id = await create_morning_diary(body.content, current_user, db)
         elif text_type == 2:
