@@ -101,10 +101,13 @@ prompt7 = [
     {"role": "system", "content": "공손한 말투로 만들어주세요."},
 ]
 
-promt8 = [
-    {"role": "system", "content": "Analyze the user's memo and create json format of the memo."},
+prompt8 = [
+    {"role": "system", "content": "Analyze the user's memo and create json format of the memo. please write korean and return only json format"},
     {"role": "system", "content": "{\"title\": \"메모에 대한 제목 생성\", \"content\":\"사용자 메모\"}"},
-    {"role": "user", "content": "공손한 말투로 만들어주세요."},
+    {"role": "user", "content": "01046306320"},
+    {"role": "system", "content": "{\"title\": \"전화번호\", \"content\":\"01046306320\"}"},
+    {"role": "user", "content": "컴퓨터 구조 책 다 읽고 정리하기"},
+    {"role": "system", "content": "{\"title\": \"해야될 일\", \"content\":\"컴퓨터 구조 책 다 읽고 정리하기\"}"},
 ]
 
 
@@ -124,6 +127,8 @@ async def send_gpt_request(prompt_num, messages_prompt, retries=3):
         prompt = prompt6.copy()
     elif prompt_num == 5: # 오늘의 운세 만들기
         prompt = prompt4.copy()
+    elif prompt_num == 6: # 메모 만들기
+        prompt = prompt8.copy()
     else:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
