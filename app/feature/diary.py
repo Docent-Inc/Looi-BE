@@ -246,7 +246,7 @@ async def create_memo(content: str, user: User, db: Session) -> int:
             is_chatbot=True,
             Memo_id=memo.id,
             create_date=datetime.datetime.now(pytz.timezone('Asia/Seoul')),
-            content_type=2,
+            content_type=3,
             content=data['title'],
         )
         db.add(chat)
