@@ -1,8 +1,11 @@
 import asyncio
+import json
+
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from starlette import status
 from app.db.models import NightDiary, MorningDiary, Memo, Calender, Chat
+from app.feature.aiRequset import send_gpt_request
 from app.feature.generate import generate_image, generate_diary_name, generate_resolution_gpt
 import datetime
 import pytz
@@ -216,10 +219,12 @@ async def list_night_diary(page: int, user: User, db: Session):
     diaries = db.query(NightDiary).filter(NightDiary.User_id == user.id, NightDiary.is_deleted == False).order_by(NightDiary.create_date.desc()).limit(5).offset((page-1)*5).all()
     return diaries
 async def create_memo(content: str, user: User, db: Session) -> int:
-    # TODO: 메모의 제목과 카테고리를 생성합니다.
     # 메모를 생성합니다.
+    data = await send_gpt_request(6, content)
+    data = json.loads(data)
     memo = Memo(
-        content=content,
+        title=data['title'],
+        content=data['content'],
         User_id=user.id,
         create_date=datetime.datetime.now(pytz.timezone('Asia/Seoul')),
         modify_date=datetime.datetime.now(pytz.timezone('Asia/Seoul')),
@@ -228,6 +233,24 @@ async def create_memo(content: str, user: User, db: Session) -> int:
         db.add(memo)
         db.commit()
         db.refresh(memo)
+        chat = Chat(
+            User_id=user.id,
+            content=content,
+            is_chatbot=False,
+            create_date=datetime.datetime.now(pytz.timezone('Asia/Seoul')),
+        )
+        db.add(chat)
+        db.commit()
+        chat = Chat(
+            User_id=user.id,
+            is_chatbot=True,
+            Memo_id=memo.id,
+            create_date=datetime.datetime.now(pytz.timezone('Asia/Seoul')),
+            content_type=2,
+            content=data['title'],
+        )
+        db.add(chat)
+        db.commit()
     except:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
