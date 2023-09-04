@@ -145,7 +145,7 @@ async def generate_luck(user: User, db: Session):
     text = ""
     morning = db.query(MorningDiary).filter(
                 MorningDiary.User_id == user.id,
-                MorningDiary.create_date == today.date(),
+                MorningDiary.create_date >= today.date() - timedelta(days=1),
                 MorningDiary.is_deleted == False
             ).first()
     # db에 데이터가 없으면 빈 문자열 넘겨줌

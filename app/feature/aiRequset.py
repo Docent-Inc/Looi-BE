@@ -70,6 +70,8 @@ prompt4 = [
     {"role": "system", "content": "오늘의 운세는 “여어득수” 입니다. 기대치 않았던 곳에서 큰 지원을 받게 되니 일을 더욱 잘 풀리고 몸과 마음 또한 더없이 기쁘고 편할 수 있을 것입니다. 당신에게 스트레스로 작용했던 일이 있다면 당신의 노력이 바탕이 되어 해결할 수 있는 기회도 잡을 수 있습니다. 또한 주변사람들로부터 도움이나 조언을 통해서 자신의 방향을 잡을 수도 있습니다. 그러나 자신의 의지를 잃지 않는 것도 중요한 부분입니다. 당신에게 닥친 이 기회를 잘 활용한다면 충분히 많은 성과와 발전이 있을 것이지요. 조금 더 분발하세요."},
     {"role": "user", "content": "제가 좋아하는 연예인이랑 사귀는 꿈 꿨어요! 완전 행복했어요ᄒᄒ"},
     {"role": "system", "content": "오늘의 운세는 “이럴수가” 입니다. 마음이 다소 들떠 있는 날이니 추스르되 긴장은 푸시기 바랍니다. 너무 무리하는 것은 오히려 당신에게 이로울 수 없는 것입니다. 또한 당신이 원하는 만큼의 목표에 가까워왔다고 하여 마음을 놓아버리거나 쉽게 생각하는 태도로 좋지 않습니다. 끝까지 마무리할 수 있도록 최선을 노력을 다하는 것이 좋고 마음을 좀 더 여유롭게 가지고 행동하는 것이 필요하겠습니다. 또한 그저 평소에 해왔던 것과 같이 행동하면 어려울 것이 없는 날이니 눈앞에 놓인 것에 충실해 보시기 바랍니다."},
+    {"role": "user", "content": ""},
+    {"role": "system", "content": "오늘의 운세는 “박장대소” 입니다. 좋은 운이 당신에게 많이 몰리는 날입니다. 당신이 목표하고 있는 일이 있다면 별 어려움 없이 일을 해결해 나갈 수 있을 것입니다. 또한 당신의 모든 능력이 사람들로 하여금 인정을 받을 수 있으니 당신의 운은 최상을 달리고 있습니다. 물론 당신의 노력이 함께 해야지만 더 멋진 의미를 가져올 수 있습니다. 특히 다른 사람과 경쟁을 벌이고 있거나 시험에 도전하고 있는 등의 경우라면 당신의 능력에 하늘의 힘이 곁들여져서 좋은 결과를 맛볼 수 있을 것이니 자신감 있게 나서 보시기 바랍니다."},
 ]
 
 prompt5 = [
@@ -104,13 +106,13 @@ prompt7 = [
 prompt8 = [
     {"role": "system", "content": "Analyze the user's memo and create json format of the memo. please write korean and return only json format"},
     {"role": "system", "content": "{\"title\": \"메모에 대한 제목 생성\", \"content\":\"사용자 메모\"}"},
-    {"role": "user", "content": "01046306320"},
-    {"role": "system", "content": "{\"title\": \"전화번호\", \"content\":\"01046306320\"}"},
+    {"role": "user", "content": "곽서준, 01046306320"},
+    {"role": "system", "content": "{\"title\": \"곽서준님의 전화번호\", \"content\":\"01046306320\"}"},
     {"role": "user", "content": "컴퓨터 구조 책 다 읽고 정리하기"},
     {"role": "system", "content": "{\"title\": \"해야될 일\", \"content\":\"컴퓨터 구조 책 다 읽고 정리하기\"}"},
+    {"role": "user", "content": "https://aiconnect.kr/competition/detail/223/task/272/taskInfo"},
+    {"role": "system", "content": "{\"title\": \"링크\", \"content\":\"https://aiconnect.kr/competition/detail/223/task/272/taskInfo\"}"},
 ]
-
-
 
 
 async def send_gpt_request(prompt_num, messages_prompt, retries=3):
