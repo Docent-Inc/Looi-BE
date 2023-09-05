@@ -10,7 +10,7 @@ from app.feature.generate import generate_image, generate_diary_name, generate_r
 import datetime
 import pytz
 
-from app.schemas.request import UpdateDiaryRequest, CalenderRequest
+from app.schemas.request import UpdateDiaryRequest, CalenderRequest, ListRequest
 from app.schemas.response import User
 
 async def create_morning_diary(content: str, user: User, db: Session) -> int:
@@ -334,3 +334,43 @@ async def delete_calender(calender_id: int, user: User, db: Session):
 async def list_calender(user: User, db: Session):
     calenders = db.query(Calender).filter(Calender.User_id == user.id, Calender.is_deleted == False).all()
     return calenders
+
+async def dairy_list(list_request: ListRequest, current_user: User, db: Session):
+    page = list_request.page
+    diary_type = list_request.diary_type
+    limit = 6  # Number of records per page
+    offset = (page - 1) * limit
+
+    # 결과를 저장할 리스트
+    result = [None] * 8  # [MorningDiary, MorningDiary_count, NightDiary, NightDiary_count, Memo, Memo_count, Calender, Calender_count]
+
+    if diary_type == 0:
+        # 모든 다이어리 타입을 불러옵니다.
+        for idx, Model in enumerate([MorningDiary, NightDiary, Memo, Calender]):
+            if idx == 3:
+                data = db.query(Model).filter(Model.User_id == current_user.id, Model.is_deleted == False).order_by(
+                    Model.start_time.desc()).limit(limit).offset(offset).all()
+            else:
+                data = db.query(Model).filter(Model.User_id == current_user.id, Model.is_deleted == False).order_by(
+                    Model.create_date.desc()).limit(limit).offset(offset).all()
+            count = db.query(Model).filter(Model.User_id == current_user.id, Model.is_deleted == False).count()
+            result[idx * 2] = data
+            result[idx * 2 + 1] = count
+    elif diary_type in [1, 2, 3, 4]:
+        # 특정 다이어리 타입만 불러옵니다.
+        Model = [MorningDiary, NightDiary, Memo, Calender][diary_type - 1]
+        if diary_type == 4:
+            data = db.query(Model).filter(Model.User_id == current_user.id, Model.is_deleted == False).order_by(
+                Model.start_time.desc()).limit(limit).offset(offset).all()
+        else:
+            data = db.query(Model).filter(Model.User_id == current_user.id, Model.is_deleted == False).order_by(
+                Model.create_date.desc()).limit(limit).offset(offset).all()
+        count = db.query(Model).filter(Model.User_id == current_user.id, Model.is_deleted == False).count()
+        result[(diary_type - 1) * 2] = data
+        result[(diary_type - 1) * 2 + 1] = count
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=4000,
+        )
+    return result

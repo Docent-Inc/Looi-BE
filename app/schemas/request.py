@@ -47,3 +47,7 @@ class CalenderRequest(BaseModel):
     end_time: str
     title: str
     content: str
+
+class ListRequest(BaseModel):
+    page: int
+    diary_type: int

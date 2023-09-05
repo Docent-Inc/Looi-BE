@@ -2,11 +2,11 @@ from fastapi import APIRouter, Depends
 
 from app.feature.diary import create_night_diary, create_morning_diary, read_morning_diary, read_night_diary, \
     update_morning_diary, delete_morning_diary, update_night_diary, delete_night_diary, create_memo, list_morning_diary, \
-    list_night_diary, create_calender, update_calender, read_calender, delete_calender
+    list_night_diary, create_calender, update_calender, read_calender, delete_calender, dairy_list
 from app.db.database import get_db
 from sqlalchemy.orm import Session
 from app.core.security import get_current_user
-from app.schemas.request import CreateDiaryRequest, UpdateDiaryRequest, CalenderRequest, MemoRequest
+from app.schemas.request import CreateDiaryRequest, UpdateDiaryRequest, CalenderRequest, MemoRequest, ListRequest
 from app.schemas.response import User, ApiResponse
 
 router = APIRouter(prefix="/diary")
@@ -342,18 +342,22 @@ async def calender_delete(
     await delete_calender(calender_id, current_user, db)
     return ApiResponse()
 
-# @router.get("/calender/list", response_model=ApiResponse, tags=["Calender"])
-# async def calender_list(
-#     current_user: User = Depends(get_current_user),
-#     db: Session = Depends(get_db),
-# ) -> ApiResponse:
-#     '''
-#     캘린더 목록 조회 API
-#
-#     :param current_user: 로그인한 사용자의 정보를 가져오는 의존성 주입
-#     :param db: 데이터베이스 세션을 가져오는 의존성 주입
-#     '''
-#     calender_list = await list_calender(current_user, db)
-#     return ApiResponse(
-#         data={"calender_list": calender_list}
-#     )
+@router.post("/list", response_model=ApiResponse, tags=["Diary"])
+async def list(
+    list_request: ListRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> ApiResponse:
+    data = await dairy_list(list_request, current_user, db)
+    return ApiResponse(
+        data={
+            "MorningDiary": data[0],
+            "MorningDiary_count": data[1],
+            "NightDiary": data[2],
+            "NightDiary_count": data[3],
+            "Memo": data[4],
+            "Memo_count": data[5],
+            "Calender": data[6],
+            "Calender_count": data[7],
+        }
+    )
