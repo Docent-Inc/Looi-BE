@@ -1,7 +1,8 @@
 import asyncio
 import json
-
+from aiohttp import ClientSession
 from fastapi import HTTPException
+from bs4 import BeautifulSoup
 from sqlalchemy.orm import Session
 from starlette import status
 from app.db.models import NightDiary, MorningDiary, Memo, Calender, Chat
@@ -219,8 +220,19 @@ async def list_night_diary(page: int, user: User, db: Session):
     diaries = db.query(NightDiary).filter(NightDiary.User_id == user.id, NightDiary.is_deleted == False).order_by(NightDiary.create_date.desc()).limit(5).offset((page-1)*5).all()
     return diaries
 async def create_memo(content: str, user: User, db: Session) -> int:
+    async def fetch_content_from_url(session: ClientSession, url: str) -> str:
+        async with session.get(url) as response:
+            return await response.text()
     # 메모를 생성합니다.
-    data = await send_gpt_request(6, content)
+    if content.startswith('http://') or content.startswith('https://'):
+        async with ClientSession() as session:
+            html_content = await fetch_content_from_url(session, content)
+            soup = BeautifulSoup(html_content, 'html.parser')
+            title = soup.title.string if soup.title else "No title"
+            enriched_content = f"Title: {title}, URL: {content}"
+    else:
+        enriched_content = content
+    data = await send_gpt_request(6, enriched_content)
     data = json.loads(data)
     memo = Memo(
         title=data['title'],
