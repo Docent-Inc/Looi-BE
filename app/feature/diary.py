@@ -229,11 +229,14 @@ async def create_memo(content: str, user: User, db: Session) -> int:
             html_content = await fetch_content_from_url(session, content)
             soup = BeautifulSoup(html_content, 'html.parser')
             title = soup.title.string if soup.title else "No title"
-            enriched_content = f"Title: {title}, URL: {content}"
+            if title == "No title":
+                data = {"title": "URL 주소", "content": content}
+                print(data)
+            else:
+                data = {"title": title, "content": content}
     else:
-        enriched_content = content
-    data = await send_gpt_request(6, enriched_content)
-    data = json.loads(data)
+        data = await send_gpt_request(6, content)
+        data = json.loads(data)
     memo = Memo(
         title=data['title'],
         content=data['content'],
