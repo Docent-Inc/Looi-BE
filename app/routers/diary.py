@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 
 from app.feature.diary import create_night_diary, create_morning_diary, read_morning_diary, read_night_diary, \
     update_morning_diary, delete_morning_diary, update_night_diary, delete_night_diary, create_memo, list_morning_diary, \
-    list_night_diary, create_calender, update_calender, read_calender, delete_calender, dairy_list
+    list_night_diary, create_calender, update_calender, read_calender, delete_calender, dairy_list, read_memo
 from app.db.database import get_db
 from sqlalchemy.orm import Session
 from app.core.security import get_current_user
@@ -209,42 +209,42 @@ async def night_list(
 '''
 memo diary crud
 '''
-# @router.post("/memo/create", response_model=ApiResponse, tags=["Memo"])
-# async def memo_create(
-#     body: MemoRequest,
-#     current_user: User = Depends(get_current_user),
-#     db: Session = Depends(get_db),
-# ) -> ApiResponse:
-#     '''
-#     메모 생성 API, 사용자가 입력한 텍스트를 기반으로 메모를 생성합니다.
-#
-#     :param body: 사용자가 입력한 텍스트
-#     :param current_user: 로그인한 사용자의 정보를 가져오는 의존성 주입
-#     :param db: 데이터베이스 세션을 가져오는 의존성 주입
-#     :return 메모 생성 결과
-#     '''
-#     memo_id = await create_memo(body.content, current_user, db)
-#     return ApiResponse(
-#         data={"id": memo_id}
-#     )
+@router.post("/memo/create", response_model=ApiResponse, tags=["Memo"])
+async def memo_create(
+    body: MemoRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> ApiResponse:
+    '''
+    메모 생성 API, 사용자가 입력한 텍스트를 기반으로 메모를 생성합니다.
 
-# @router.get("/memo/read", response_model=ApiResponse, tags=["Memo"])
-# async def memo_read(
-#     memo_id: int,
-#     current_user: User = Depends(get_current_user),
-#     db: Session = Depends(get_db),
-# ) -> ApiResponse:
-#     '''
-#     메모 조회 API, 사용자가 입력한 텍스트를 기반으로 메모를 조회합니다.
-#
-#     :param memo_id: 조회할 메모의 id
-#     :param current_user: 로그인한 사용자의 정보를 가져오는 의존성 주입
-#     :param db: 데이터베이스 세션을 가져오는 의존성 주입
-#     '''
-#     memo = await read_memo(memo_id, current_user, db)
-#     return ApiResponse(
-#         data={"memo": memo}
-#     )
+    :param body: 사용자가 입력한 텍스트
+    :param current_user: 로그인한 사용자의 정보를 가져오는 의존성 주입
+    :param db: 데이터베이스 세션을 가져오는 의존성 주입
+    :return 메모 생성 결과
+    '''
+    memo_id = await create_memo(body.content, current_user, db)
+    return ApiResponse(
+        data={"id": memo_id}
+    )
+
+@router.get("/memo/read", response_model=ApiResponse, tags=["Memo"])
+async def memo_read(
+    memo_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> ApiResponse:
+    '''
+    메모 조회 API, 사용자가 입력한 텍스트를 기반으로 메모를 조회합니다.
+
+    :param memo_id: 조회할 메모의 id
+    :param current_user: 로그인한 사용자의 정보를 가져오는 의존성 주입
+    :param db: 데이터베이스 세션을 가져오는 의존성 주입
+    '''
+    memo = await read_memo(memo_id, current_user, db)
+    return ApiResponse(
+        data={"memo": memo}
+    )
 
 # @router.post("/memo/update", response_model=ApiResponse, tags=["Memo"])
 # async def memo_update(

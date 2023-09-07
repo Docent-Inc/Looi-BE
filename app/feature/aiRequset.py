@@ -110,8 +110,12 @@ prompt8 = [
     {"role": "system", "content": "{\"title\": \"곽서준님의 전화번호\", \"content\":\"01046306320\"}"},
     {"role": "user", "content": "컴퓨터 구조 책 다 읽고 정리하기"},
     {"role": "system", "content": "{\"title\": \"해야될 일\", \"content\":\"컴퓨터 구조 책 다 읽고 정리하기\"}"},
-    {"role": "user", "content": "https://aiconnect.kr/competition/detail/223/task/272/taskInfo"},
-    {"role": "system", "content": "{\"title\": \"링크\", \"content\":\"https://aiconnect.kr/competition/detail/223/task/272/taskInfo\"}"},
+    {"role": "user", "content": "Title: 2천만원짜리 엔비디아 A100 그래픽카드 들어간 GPU서버 - YouTube, URL: https://www.youtube.com/watch?v=Ji3C5971h3A&t=253s"},
+    {"role": "system", "content": "{\"title\": \"2천만원짜리 엔비디아 A100 그래픽카드 들어간 GPU서버 - YouTube\", \"content\":\"https://www.youtube.com/watch?v=Ji3C5971h3A&t=253s\"}"},
+    {"role": "user", "content": "Title: [논문요약] 효율적인 Architecture - EfficientNet(2019), URL: https://kmhana.tistory.com/26"},
+    {"role": "system", "content": "{\"title\": \"[논문요약] 효율적인 Architecture - EfficientNet(2019)\", \"content\":\"https://kmhana.tistory.com/26\"}"},
+    {"role": "user", "content": "Title: No title, URL: https://arxiv.org/abs/1905.11946"},
+    {"role": "system", "content": "{\"title\": \"URL 주소\", \"content\":\"https://arxiv.org/abs/1905.11946\"}"},
 ]
 
 
