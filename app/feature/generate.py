@@ -81,53 +81,47 @@ async def generate_image(image_model: int, message: str):
     return [blob.public_url, upper_dominant_color, lower_dominant_color]
 
 async def generate_schedule(text: str, user: User, db: Session) -> str:
-    retries = 2
-    for i in range(retries):
-        schedule = await send_gpt_request(4, text)
-        try:
-            schedule = json.loads(schedule)
-            calender = Calender(
-                User_id=user.id,
-                title=schedule['title'],
-                start_time=schedule['start_time'],
-                end_time=schedule['end_time'],
-                content=schedule['description'],
-            )
-            db.add(calender)
-            db.commit()
+    schedule = await send_gpt_request(4, text)
+    try:
+        calender = Calender(
+            User_id=user.id,
+            title=schedule['title'],
+            start_time=schedule['start_time'],
+            end_time=schedule['end_time'],
+            content=schedule['description'],
+        )
+        db.add(calender)
+        db.commit()
 
-            chat = Chat(
-                User_id=user.id,
-                content=text,
-                create_date=datetime.now(pytz.timezone('Asia/Seoul')),
-                is_chatbot=False,
-                is_deleted=False
-            )
-            db.add(chat)
-            db.commit()
+        chat = Chat(
+            User_id=user.id,
+            content=text,
+            create_date=datetime.now(pytz.timezone('Asia/Seoul')),
+            is_chatbot=False,
+            is_deleted=False
+        )
+        db.add(chat)
+        db.commit()
 
-            chat = Chat(
-                User_id=user.id,
-                content_type=4,
-                Calender_id=calender.id,
-                content=schedule['title'],
-                event_time=schedule['start_time'],
-                is_chatbot=True,
-                create_date=datetime.now(pytz.timezone('Asia/Seoul')),
-                is_deleted=False
-            )
-            db.add(chat)
-            db.commit()
+        chat = Chat(
+            User_id=user.id,
+            content_type=4,
+            Calender_id=calender.id,
+            content=schedule['title'],
+            event_time=schedule['start_time'],
+            is_chatbot=True,
+            create_date=datetime.now(pytz.timezone('Asia/Seoul')),
+            is_deleted=False
+        )
+        db.add(chat)
+        db.commit()
 
-            return calender.id
-        except:
-            if i < retries - 1:
-                continue
-            else:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=4014
-                )
+        return calender.id
+    except:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=4014
+        )
 
 async def generate_luck(user: User, db: Session):
     # db에서 오늘 날짜의 MorningDiary, NightDiary, Calendar를 불러옵니다
@@ -180,10 +174,7 @@ async def generate_report(user: User, db: Session) -> str:
                 Report.is_deleted == False
             ).first()
     if report:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=4018
-        )
+        return json.loads(report)
     try:
         morning = db.query(MorningDiary).filter(
                     MorningDiary.User_id == user.id,
@@ -228,7 +219,7 @@ async def generate_report(user: User, db: Session) -> str:
     try:
         mental_report = Report(
             User_id=user.id,
-            content=report,
+            content=str(report),
             create_date=today,
             is_deleted=False,
         )
@@ -239,4 +230,4 @@ async def generate_report(user: User, db: Session) -> str:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=5000
         )
-    return json.loads(report)
+    return report
