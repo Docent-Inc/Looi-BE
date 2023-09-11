@@ -236,7 +236,6 @@ async def create_memo(content: str, user: User, db: Session) -> int:
                 data = {"title": title, "content": content}
     else:
         data = await send_gpt_request(6, content)
-        data = json.loads(data)
     memo = Memo(
         title=data['title'],
         content=data['content'],

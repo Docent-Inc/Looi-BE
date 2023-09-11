@@ -1,4 +1,6 @@
 import asyncio
+import json
+
 import openai
 from aiohttp import ClientSession
 from dotenv import load_dotenv
@@ -140,7 +142,10 @@ async def send_gpt_request(prompt_num, messages_prompt, retries=3):
     for i in range(retries):
         try:
             chat = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=prompt)
-            return chat.choices[0].message.content
+            if prompt_num == 4 or prompt_num == 6:
+                return json.loads(chat.choices[0].message.content)
+            else:
+                return chat.choices[0].message.content
         except Exception as e:
             print(f"GPT API Error {e}")
             if i < retries - 1:
@@ -172,7 +177,10 @@ async def send_gpt4_request(prompt_num, messages_prompt, retries=3):
     for i in range(retries):
         try:
             chat = openai.ChatCompletion.create(model="gpt-4", messages=prompt)
-            return chat.choices[0].message.content
+            if prompt_num == 3:
+                return json.load(chat.choices[0].message.content)
+            else:
+                return chat.choices[0].message.content
         except Exception as e:
             print(f"GPT API Error {e}")
             if i < retries - 1:
