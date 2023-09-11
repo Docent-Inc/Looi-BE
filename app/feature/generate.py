@@ -169,8 +169,8 @@ async def generate_luck(user: User, db: Session):
 async def generate_report(user: User, db: Session) -> str:
     text = "user name: " + user.nickname + "\n"
     today = datetime.now(pytz.timezone('Asia/Seoul'))
-    one_week_ago = today - timedelta(days=7)
-    six_days_ago = today - timedelta(days=6)
+    one_week_ago = today - timedelta(days=21)
+    six_days_ago = today - timedelta(days=21)
     total_count = 0
     # 6일 이내의 데이터가 있으면 에러 반환
     report = db.query(Report).filter(
