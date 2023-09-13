@@ -100,10 +100,10 @@ prompt6 = [
 
 prompt7 = [
     {"role": "system", "content": "Analyze the user's dreams, diary, and schedule to create a about 3000-character Concrete 'Mental State Report'. Please write korean but each title is Engilsh."},
-    {"role": "system", "content": "1. Mental State 2. Extroverted Activities 3. Introverted Activities 4. Positives 5. Negatives 6. Recommendations 7. Statistics"},
+    {"role": "system", "content": "1. mental_state 2. extroverted_activities 3. introverted_activities 4. positives 5. negatives 6. recommendations 7. statistics"},
     {"role": "system", "content": "Provide detailed analysis for 'Mental State'. For items 1, total coment about report and include user name with out last name(ex 서준님은 ~). For items 2-5, list 3 each. For item 6, list 5 recommendations."},
     {"role": "system", "content": "For item 7, provide a list 1 detail ratio dictionary for Extroversion, Introversion, and the five keyword list that you choose. The first ratio dictionary's total should add up to 100. In the second list . For example, [{\"외향\": 50, \"내향\": 50}, [\"열정\"]]"},
-    {"role": "system", "content": "Return the only json format of the report with out number and Enter(ex {\"Mental State\":\"content(korean)\", \"Extroverted Activities\":\"[each conent]\"} ."},
+    {"role": "system", "content": "Return the only json format of the report with out number and Enter(ex {\"mental_state\":\"content(korean)\", \"extroverted_activities\":\"[each conent]\"} ."},
     {"role": "system", "content": "공손한 말투로 만들어주세요."},
 ]
 
@@ -177,10 +177,11 @@ async def send_gpt4_request(prompt_num, messages_prompt, retries=3):
     for i in range(retries):
         try:
             chat = openai.ChatCompletion.create(model="gpt-4", messages=prompt)
+            content = chat.choices[0].message.content
             if prompt_num == 3:
-                return json.load(chat.choices[0].message.content)
+                return json.loads(content)
             else:
-                return chat.choices[0].message.content
+                return content
         except Exception as e:
             print(f"GPT API Error {e}")
             if i < retries - 1:
