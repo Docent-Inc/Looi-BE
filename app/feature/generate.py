@@ -174,7 +174,7 @@ async def generate_report(user: User, db: Session) -> str:
                 Report.is_deleted == False
             ).first()
     if report:
-        return json.loads(report)
+        return json.loads(report.content)
     try:
         morning = db.query(MorningDiary).filter(
                     MorningDiary.User_id == user.id,
@@ -219,7 +219,7 @@ async def generate_report(user: User, db: Session) -> str:
     try:
         mental_report = Report(
             User_id=user.id,
-            content=str(report),
+            content=json.dumps(report),
             create_date=today,
             is_deleted=False,
         )
