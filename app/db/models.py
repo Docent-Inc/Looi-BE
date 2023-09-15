@@ -14,6 +14,7 @@ class User(Base):
     age_range = Column(String(10), nullable=True)
     mbti = Column(String(4), nullable=True)
     is_deleted = Column(Boolean, default=False)
+    is_admin = Column(Boolean, default=False)
     subscription_status = Column(Boolean, default=False)
     image_model = Column(Integer, nullable=True)
     language_id = Column(Integer, nullable=True)

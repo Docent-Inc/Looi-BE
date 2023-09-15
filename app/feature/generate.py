@@ -219,7 +219,7 @@ async def generate_report(user: User, db: Session) -> str:
     try:
         mental_report = Report(
             User_id=user.id,
-            content=json.dumps(report),
+            content=json.dumps(report, ensure_ascii=False),
             create_date=today,
             is_deleted=False,
         )

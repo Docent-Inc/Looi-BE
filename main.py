@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse
-from app.routers import auth, generate, diary, kakao_chatbot, today
+from app.routers import auth, generate, diary, kakao_chatbot, today, admin
 from app.schemas.response import ApiResponse
 from app.core.middleware import TimingMiddleware
 from fastapi.middleware.cors import CORSMiddleware
@@ -29,6 +29,7 @@ CUSTOM_EXCEPTIONS = {
     4019: "마음 보고서를 만들기 위한 기록이 부족합니다.",
 
     4220: "jwt 토큰이 필요합니다.",
+    4401: "유저 정보를 불러올 수 없습니다.",
     4500: "이미지 정보를 불러오는데 실패했습니다.",
     4501: "Chat GPT API 호출에 실패했습니다.",
     4502: "NaverClova API 호출에 실패했습니다.",
@@ -46,6 +47,7 @@ app.include_router(generate.router)
 app.include_router(diary.router)
 app.include_router(today.router)
 # app.include_router(kakao_chatbot.router)
+app.include_router(admin.router)
 app.add_middleware(TimingMiddleware)
 
 app.add_middleware(
