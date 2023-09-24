@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends
+from sqlalchemy import desc
 
 from app.feature.diary import create_night_diary, create_morning_diary, read_morning_diary, read_night_diary, \
     update_morning_diary, delete_morning_diary, update_night_diary, delete_night_diary, create_memo, list_morning_diary, \
@@ -349,15 +350,4 @@ async def list(
     db: Session = Depends(get_db),
 ) -> ApiResponse:
     data = await dairy_list(list_request, current_user, db)
-    return ApiResponse(
-        data={
-            "MorningDiary": data[0],
-            "MorningDiary_count": data[1],
-            "NightDiary": data[2],
-            "NightDiary_count": data[3],
-            "Memo": data[4],
-            "Memo_count": data[5],
-            "Calender": data[6],
-            "Calender_count": data[7],
-        }
-    )
+    return ApiResponse(data=data)

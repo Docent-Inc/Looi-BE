@@ -1,9 +1,13 @@
 import asyncio
 import json
+from sqlalchemy import desc, literal
+from sqlalchemy import null
+from sqlalchemy import text
 from aiohttp import ClientSession
 from fastapi import HTTPException
 from bs4 import BeautifulSoup
 from sqlalchemy.orm import Session
+from sqlalchemy import union_all
 from starlette import status
 from app.db.models import NightDiary, MorningDiary, Memo, Calender, Chat
 from app.feature.aiRequset import send_gpt_request
@@ -349,42 +353,79 @@ async def list_calender(user: User, db: Session):
     calenders = db.query(Calender).filter(Calender.User_id == user.id, Calender.is_deleted == False).all()
     return calenders
 
+
 async def dairy_list(list_request: ListRequest, current_user: User, db: Session):
     page = list_request.page
     diary_type = list_request.diary_type
-    limit = 6  # Number of records per page
+    limit = 12  # 페이지당 레코드 수
     offset = (page - 1) * limit
 
-    # 결과를 저장할 리스트
-    result = [None] * 8  # [MorningDiary, MorningDiary_count, NightDiary, NightDiary_count, Memo, Memo_count, Calender, Calender_count]
+    # 모델의 열을 명시적으로 나열합니다.
+    morning_diary_columns = [
+        MorningDiary.id, MorningDiary.User_id, MorningDiary.diary_name, MorningDiary.content,
+        MorningDiary.resolution, MorningDiary.image_url, MorningDiary.background_color,
+        MorningDiary.create_date, MorningDiary.modify_date, MorningDiary.is_deleted
+    ]
+
+    night_diary_columns = [
+        NightDiary.id, NightDiary.User_id, NightDiary.diary_name, NightDiary.content,
+        null().label('resolution'), NightDiary.image_url, NightDiary.background_color,
+        NightDiary.create_date, NightDiary.modify_date, NightDiary.is_deleted
+    ]
+
+    memo_columns = [
+        Memo.id, Memo.User_id, Memo.title, Memo.content,
+        null().label('resolution'), null().label('image_url'), null().label('background_color'),
+        Memo.create_date, Memo.modify_date, Memo.is_deleted
+    ]
+
+    morning_diary_columns.append(literal(1).label('diary_type'))
+    night_diary_columns.append(literal(2).label('diary_type'))
+    memo_columns.append(literal(3).label('diary_type'))
+
+    columns_list = [morning_diary_columns, night_diary_columns, memo_columns]
+    all_items = []
 
     if diary_type == 0:
         # 모든 다이어리 타입을 불러옵니다.
-        for idx, Model in enumerate([MorningDiary, NightDiary, Memo, Calender]):
-            if idx == 3:
-                data = db.query(Model).filter(Model.User_id == current_user.id, Model.is_deleted == False).order_by(
-                    Model.start_time.desc()).limit(limit).offset(offset).all()
-            else:
-                data = db.query(Model).filter(Model.User_id == current_user.id, Model.is_deleted == False).order_by(
-                    Model.create_date.desc()).limit(limit).offset(offset).all()
-            count = db.query(Model).filter(Model.User_id == current_user.id, Model.is_deleted == False).count()
-            result[idx * 2] = data
-            result[idx * 2 + 1] = count
-    elif diary_type in [1, 2, 3, 4]:
+        queries = []
+        for idx, Model in enumerate([MorningDiary, NightDiary, Memo]):
+            query = db.query(*columns_list[idx]).filter(Model.User_id == current_user.id, Model.is_deleted == False)
+            query = query.order_by(Model.create_date.desc()).limit(limit)
+            queries.append(query)
+
+        # 모든 쿼리를 union 하고 결과를 정렬합니다.
+        unioned_queries = union_all(*queries).alias('unioned_queries')
+        final_query = db.query(unioned_queries).order_by(desc(unioned_queries.c.MorningDiary_create_date)).limit(limit)
+        data_rows = db.execute(final_query).fetchall()
+
+        for row in data_rows:
+            parsed_row = {}
+            for column, value in zip(unioned_queries.c, row):
+                # 'diary_type'는 그대로 보존, 나머지 컬럼 이름에서 첫번째 밑줄 (_) 이후의 이름만 가져옵니다.
+                key = column.key if column.key == 'diary_type' else column.key.split('_', 1)[-1]
+                parsed_row[key] = value
+            all_items.append(parsed_row)
+
+
+
+    elif diary_type in [1, 2, 3]:
         # 특정 다이어리 타입만 불러옵니다.
-        Model = [MorningDiary, NightDiary, Memo, Calender][diary_type - 1]
-        if diary_type == 4:
-            data = db.query(Model).filter(Model.User_id == current_user.id, Model.is_deleted == False).order_by(
-                Model.start_time.desc()).limit(limit).offset(offset).all()
-        else:
-            data = db.query(Model).filter(Model.User_id == current_user.id, Model.is_deleted == False).order_by(
-                Model.create_date.desc()).limit(limit).offset(offset).all()
-        count = db.query(Model).filter(Model.User_id == current_user.id, Model.is_deleted == False).count()
-        result[(diary_type - 1) * 2] = data
-        result[(diary_type - 1) * 2 + 1] = count
+        Model = [MorningDiary, NightDiary, Memo][diary_type - 1]
+        data_rows = db.query(Model).filter(Model.User_id == current_user.id, Model.is_deleted == False).order_by(
+            Model.create_date.desc()).limit(limit).offset(offset).all()
+
+        for item in data_rows:
+            if hasattr(item, 'as_dict'):
+                all_items.append(item.as_dict())
+
     else:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=4000,
         )
-    return result
+
+    return {
+        "list": all_items,
+        "count": len(all_items)
+    }
