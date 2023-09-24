@@ -34,6 +34,10 @@ class MorningDiary(Base):
     modify_date = Column(DateTime, nullable=False)
     is_deleted = Column(Boolean, default=False, index=True)
 
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
+
 class NightDiary(Base):
     __tablename__ = "NightDiary"
 
@@ -48,6 +52,10 @@ class NightDiary(Base):
     modify_date = Column(DateTime, nullable=False)
     is_deleted = Column(Boolean, default=False, index=True)
 
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
+
 class Memo(Base):
     __tablename__ = "Memo"
 
@@ -59,6 +67,9 @@ class Memo(Base):
     create_date = Column(DateTime, nullable=False)
     modify_date = Column(DateTime, nullable=False)
     is_deleted = Column(Boolean, default=False, index=True)
+
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 class Calender(Base):
     __tablename__ = "Calender"
