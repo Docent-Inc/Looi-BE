@@ -15,7 +15,7 @@ from app.feature.generate import generate_image, generate_diary_name, generate_r
 import datetime
 import pytz
 
-from app.schemas.request import UpdateDiaryRequest, CalenderRequest, ListRequest
+from app.schemas.request import UpdateDiaryRequest, CalenderRequest, ListRequest, CalenderListRequest
 from app.schemas.response import User
 
 async def create_morning_diary(content: str, user: User, db: Session) -> int:
@@ -429,3 +429,15 @@ async def dairy_list(list_request: ListRequest, current_user: User, db: Session)
         "list": all_items,
         "count": len(all_items)
     }
+
+async def dairy_list_calender(list_request: CalenderListRequest, current_user: User, db: Session):
+    year = list_request.year
+    month = list_request.month
+    # year와 month를 받아서 해당 달의 일정을 모두 불러옵니다.
+    calenders = db.query(Calender).filter(
+        Calender.User_id == current_user.id,
+        Calender.is_deleted == False,
+        Calender.start_time >= datetime.datetime(year, month, 1),
+        Calender.start_time < datetime.datetime(year, month + 1, 1)
+    ).all()
+    return calenders
