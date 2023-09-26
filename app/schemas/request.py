@@ -51,3 +51,7 @@ class CalenderRequest(BaseModel):
 class ListRequest(BaseModel):
     page: int
     diary_type: int
+
+class CalenderListRequest(BaseModel):
+    year: int
+    month: int
