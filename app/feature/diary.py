@@ -417,7 +417,9 @@ async def dairy_list(list_request: ListRequest, current_user: User, db: Session)
 
         for item in data_rows:
             if hasattr(item, 'as_dict'):
-                all_items.append(item.as_dict())
+                item_dict = item.as_dict()
+                item_dict['diary_type'] = diary_type
+                all_items.append(item_dict)
 
     else:
         raise HTTPException(
