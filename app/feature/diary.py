@@ -442,4 +442,9 @@ async def dairy_list_calender(list_request: CalenderListRequest, current_user: U
         Calender.start_time >= datetime.datetime(year, month, 1),
         Calender.start_time < datetime.datetime(year, month + 1, 1)
     ).all()
+
+    for cal in calenders:
+        cal.diary_name = cal.title
+        delattr(cal, 'title')  # 이 줄은 title 속성을 완전히 제거합니다. 필요에 따라 주석 처리하거나 제거하세요.
+
     return calenders
