@@ -18,6 +18,28 @@ import pytz
 from app.schemas.request import UpdateDiaryRequest, CalenderRequest, ListRequest, CalenderListRequest
 from app.schemas.response import User
 
+
+def transform_calendar(cal):
+    return {
+        'id': cal.id,
+        'User_id': cal.User_id,
+        'start_time': cal.start_time,
+        'end_time': cal.end_time,
+        'diary_name': cal.title,
+        'content': cal.content,
+        'is_deleted': cal.is_deleted
+    }
+def transform_memo(memo):
+    return {
+        'id': memo.id,
+        'User_id': memo.User_id,
+        'diary_name': memo.title,
+        'content': memo.content,
+        'create_date': memo.create_date,
+        'modify_date': memo.modify_date,
+        'is_deleted': memo.is_deleted
+    }
+
 async def create_morning_diary(content: str, user: User, db: Session) -> int:
     try:
         chat = Chat(
@@ -420,6 +442,8 @@ async def dairy_list(list_request: ListRequest, current_user: User, db: Session)
                 item_dict = item.as_dict()
                 item_dict['diary_type'] = diary_type
                 all_items.append(item_dict)
+        if diary_type == 3:
+            all_items = [transform_memo(cal) for cal in data_rows]
 
     else:
         raise HTTPException(
@@ -433,18 +457,26 @@ async def dairy_list(list_request: ListRequest, current_user: User, db: Session)
     }
 
 async def dairy_list_calender(list_request: CalenderListRequest, current_user: User, db: Session):
-    year = list_request.year
-    month = list_request.month
-    # year와 month를 받아서 해당 달의 일정을 모두 불러옵니다.
-    calenders = db.query(Calender).filter(
-        Calender.User_id == current_user.id,
-        Calender.is_deleted == False,
-        Calender.start_time >= datetime.datetime(year, month, 1),
-        Calender.start_time < datetime.datetime(year, month + 1, 1)
-    ).all()
+    if list_request.day is None:
+        year = list_request.year
+        month = list_request.month
+        # year와 month를 받아서 해당 달의 일정을 모두 불러옵니다.
+        calenders = db.query(Calender).filter(
+            Calender.User_id == current_user.id,
+            Calender.is_deleted == False,
+            Calender.start_time >= datetime.datetime(year, month, 1),
+            Calender.start_time < datetime.datetime(year, month + 1, 1)
+        ).all()
+    else:
+        year = list_request.year
+        month = list_request.month
+        day = list_request.day
+        # year와 month를 받아서 해당 달의 일정을 모두 불러옵니다.
+        calenders = db.query(Calender).filter(
+            Calender.User_id == current_user.id,
+            Calender.is_deleted == False,
+            Calender.start_time == datetime.datetime(year, month, day),
+        ).all()
 
-    for cal in calenders:
-        cal.diary_name = cal.title
-        delattr(cal, 'title')  # 이 줄은 title 속성을 완전히 제거합니다. 필요에 따라 주석 처리하거나 제거하세요.
-
-    return calenders
+    calenders_transformed = [transform_calendar(cal) for cal in calenders]
+    return calenders_transformed
