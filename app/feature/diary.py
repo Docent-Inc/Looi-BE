@@ -35,6 +35,7 @@ def transform_memo(memo):
         'User_id': memo.User_id,
         'diary_name': memo.title,
         'content': memo.content,
+        'diary_type': memo.diary_type,
         'create_date': memo.create_date,
         'modify_date': memo.modify_date,
         'is_deleted': memo.is_deleted
@@ -442,6 +443,7 @@ async def dairy_list(list_request: ListRequest, current_user: User, db: Session)
                 item_dict = item.as_dict()
                 item_dict['diary_type'] = diary_type
                 all_items.append(item_dict)
+
         if diary_type == 3:
             all_items = [transform_memo(cal) for cal in data_rows]
 
@@ -475,7 +477,8 @@ async def dairy_list_calender(list_request: CalenderListRequest, current_user: U
         calenders = db.query(Calender).filter(
             Calender.User_id == current_user.id,
             Calender.is_deleted == False,
-            Calender.start_time == datetime.datetime(year, month, day),
+            Calender.start_time >= datetime.datetime(year, month, day),
+            Calender.start_time < datetime.datetime(year, month, day + 1)
         ).all()
 
     calenders_transformed = [transform_calendar(cal) for cal in calenders]
