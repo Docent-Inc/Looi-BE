@@ -5,7 +5,7 @@ import pytz
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 import extcolors
-from app.db.models import MorningDiary, NightDiary, Calender, Report, Luck, Chat
+from app.db.models import MorningDiary, NightDiary, Calender, Report, Luck, Chat, Prompt
 from app.feature.aiRequset import send_gpt_request, send_dalle2_request, \
     send_stable_deffusion_request, send_karlo_request, send_gpt4_request
 import uuid
@@ -30,8 +30,15 @@ async def generate_resolution_gpt(text: str) -> str:
 async def generate_diary_name(message: str) -> str:
     dreamName = await send_gpt_request(2, message)
     return dreamName
-async def generate_image(image_model: int, message: str):
+async def generate_image(image_model: int, message: str, db: Session):
     prompt = await send_gpt_request(3, message)
+
+    save_promt = Prompt(
+        text=message,
+        prompt=prompt,
+    )
+    db.add(save_promt)
+    db.commit()
 
     if image_model == 1:
         dream_image_url = await send_dalle2_request(prompt)

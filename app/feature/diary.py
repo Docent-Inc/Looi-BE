@@ -37,7 +37,7 @@ async def create_morning_diary(content: str, user: User, db: Session) -> int:
     mbti_content = content if user.mbti is None else user.mbti + ", " + content
 
     L, diary_name, resolution = await asyncio.gather(
-        generate_image(user.image_model, content),
+        generate_image(user.image_model, content, db),
         generate_diary_name(content),
         generate_resolution_gpt(mbti_content)
     )
@@ -139,7 +139,7 @@ async def create_night_diary(content: str, user: User, db: Session):
         )
     # 그림과 일기의 제목을 생성합니다.
     L, diary_name = await asyncio.gather(
-        generate_image(user.image_model, content),
+        generate_image(user.image_model, content, db),
         generate_diary_name(content)
     )
 
