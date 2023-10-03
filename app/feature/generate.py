@@ -33,19 +33,20 @@ async def generate_diary_name(message: str) -> str:
 async def generate_image(image_model: int, message: str, db: Session):
     prompt = await send_gpt_request(3, message)
 
-    save_promt = Prompt(
-        text=message,
-        prompt=prompt,
-    )
-    db.add(save_promt)
-    db.commit()
-
     if image_model == 1:
         dream_image_url = await send_dalle2_request(prompt)
     elif image_model == 2:
         dream_image_url = await send_stable_deffusion_request(prompt)
     elif image_model == 3:
         dream_image_url = await send_karlo_request(prompt)
+
+    save_promt = Prompt(
+        text=message,
+        prompt=prompt,
+    )
+    db.add(save_promt)
+    db.commit()
+    db.refresh(save_promt)
 
     try:
         response = await asyncio.to_thread(requests.get, dream_image_url)

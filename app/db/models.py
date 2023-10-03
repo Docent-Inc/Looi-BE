@@ -131,7 +131,7 @@ class Prompt(Base):
 
     id = Column(Integer, primary_key=True)
     text = Column(Text, nullable=False)
-    promt = Column(Text, nullable=False)
+    prompt = Column(Text, nullable=False)
 
 def get_Base():
     return Base
