@@ -126,5 +126,12 @@ class Luck(Base):
     create_date = Column(DateTime, nullable=False)
     is_deleted = Column(Boolean, default=False, index=True)
 
+class Prompt(Base):
+    __tablename__ = "Prompt"
+
+    id = Column(Integer, primary_key=True)
+    text = Column(Text, nullable=False)
+    promt = Column(Text, nullable=False)
+
 def get_Base():
     return Base
