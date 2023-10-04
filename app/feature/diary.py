@@ -441,7 +441,6 @@ async def dairy_list(list_request: ListRequest, current_user: User, db: Session)
                 item_dict = item.as_dict()
                 item_dict['diary_type'] = diary_type
                 all_items.append(item_dict)
-        print(all_items)
         if diary_type == 3:
             all_items = [transform_memo(cal) for cal in all_items]
 
