@@ -31,14 +31,14 @@ def transform_calendar(cal):
     }
 def transform_memo(memo):
     return {
-        'id': memo.id,
-        'User_id': memo.User_id,
-        'diary_name': memo.title,
-        'content': memo.content,
-        'diary_type': memo.diary_type,
-        'create_date': memo.create_date,
-        'modify_date': memo.modify_date,
-        'is_deleted': memo.is_deleted
+        'id': memo['id'],
+        'User_id': memo['User_id'],
+        'diary_name': memo['title'],
+        'content': memo['content'],
+        'diary_type': memo['diary_type'],
+        'create_date': memo['create_date'],
+        'modify_date': memo['modify_date'],
+        'is_deleted': memo['is_deleted']
     }
 
 async def create_morning_diary(content: str, user: User, db: Session) -> int:
@@ -430,8 +430,6 @@ async def dairy_list(list_request: ListRequest, current_user: User, db: Session)
                 parsed_row[key] = value
             all_items.append(parsed_row)
 
-
-
     elif diary_type in [1, 2, 3]:
         # 특정 다이어리 타입만 불러옵니다.
         Model = [MorningDiary, NightDiary, Memo][diary_type - 1]
@@ -443,9 +441,9 @@ async def dairy_list(list_request: ListRequest, current_user: User, db: Session)
                 item_dict = item.as_dict()
                 item_dict['diary_type'] = diary_type
                 all_items.append(item_dict)
-
+        print(all_items)
         if diary_type == 3:
-            all_items = [transform_memo(cal) for cal in data_rows]
+            all_items = [transform_memo(cal) for cal in all_items]
 
     else:
         raise HTTPException(
