@@ -48,7 +48,7 @@ async def generate_chat(
         data={"text_type": text_type, "diary_id": diary_id}
     )
 
-@router.post("/chat/list", tags=["Generate"])
+@router.get("/chat/list", tags=["Generate"])
 async def generate_chat_list(
     page: int,
     current_user: User = Depends(get_current_user),
