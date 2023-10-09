@@ -80,7 +80,6 @@ async def luck(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> ApiResponse:
-
     luck = await generate_luck(current_user, db)
     return ApiResponse(
         data={"luck": luck}
