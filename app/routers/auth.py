@@ -81,7 +81,7 @@ async def refresh_token(
             detail=4004,
         )
     email: str = payload.get("sub") # 이메일을 가져옵니다.
-    user = await get_user_by_email(db, email=email) # 이메일로 사용자를 조회합니다.
+    user = get_user_by_email(db, email=email) # 이메일로 사용자를 조회합니다.
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
