@@ -41,7 +41,7 @@ CUSTOM_EXCEPTIONS = {
     5000: "서버에 문제가 발생했습니다.",
 }
 
-app = FastAPI(docs_url=None, redoc_url=None)
+app = FastAPI(docs_url=None, redoc_url=None, openapi_url="/api/openapi.json")
 
 app.include_router(auth.router)
 app.include_router(generate.router)
@@ -59,7 +59,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 @app.get("/docs", response_class=HTMLResponse)
-async def custom_swagger_ui_html(request: Request):
+async def custom_swagger_ui_html():
     return """
     <!DOCTYPE html>
     <html>
@@ -74,7 +74,7 @@ async def custom_swagger_ui_html(request: Request):
     <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@4/swagger-ui-bundle.js"></script>
     <script>
     const ui = SwaggerUIBundle({
-        url: '""" + str(request.url_for("openapi_schema")).replace("/docs", "/openapi.json") + """',  # JavaScript가 올바른 경로를 참조하도록 수정
+        url: '/api/openapi.json',  # 직접 정의된 openapi_url을 사용합니다.
         "dom_id": "#swagger-ui",
         "layout": "BaseLayout",
         "deepLinking": true,
@@ -90,6 +90,7 @@ async def custom_swagger_ui_html(request: Request):
     </body>
     </html>
     """
+
 @app.exception_handler(HTTPException)
 async def custom_http_exception_handler(request: Request, exc: HTTPException):
     if exc.detail not in CUSTOM_EXCEPTIONS:
