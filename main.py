@@ -6,7 +6,6 @@ from app.core.middleware import TimingMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse
-from starlette.middleware.base import BaseHTTPMiddleware
 
 CUSTOM_EXCEPTIONS = {
     4000: "알 수 없는 에러가 발생했습니다.",
@@ -42,7 +41,7 @@ CUSTOM_EXCEPTIONS = {
     5000: "서버에 문제가 발생했습니다.",
 }
 
-app = FastAPI(openapi_url="/openapi.json")
+app = FastAPI(docs_url=None, redoc_url=None)
 
 app.include_router(auth.router)
 app.include_router(generate.router)
@@ -59,26 +58,38 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-class RewriteSwaggerMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        response = await call_next(request)
-
-        # 응답이 HTMLResponse (즉, 스트리밍이 아닌 응답)인지 확인합니다.
-        if request.url.path == "/docs" and isinstance(response, HTMLResponse):
-            try:
-                # HTML 내용을 가져오고 수정합니다.
-                html_content = response.body.decode()
-                modified_html_content = html_content.replace(
-                    'url: "/openapi.json",',
-                    f'url: "{request.url_for("openapi_schema")}",'  # 올바른 OpenAPI JSON URL을 사용합니다.
-                )
-                return HTMLResponse(content=modified_html_content)
-            except Exception as e:
-                # 오류 로깅
-                print(e)
-        return response
-
-app.add_middleware(RewriteSwaggerMiddleware)
+@app.get("/docs", response_class=HTMLResponse)
+async def custom_swagger_ui_html(request: Request):
+    return """
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <link type="text/css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@4/swagger-ui.css">
+    <link rel="shortcut icon" href="https://fastapi.tiangolo.com/img/favicon.png">
+    <title>FastAPI - Swagger UI</title>
+    </head>
+    <body>
+    <div id="swagger-ui">
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@4/swagger-ui-bundle.js"></script>
+    <script>
+    const ui = SwaggerUIBundle({
+        url: '""" + str(request.url_for("openapi_schema")).replace("/docs", "/openapi.json") + """',  # JavaScript가 올바른 경로를 참조하도록 수정
+        "dom_id": "#swagger-ui",
+        "layout": "BaseLayout",
+        "deepLinking": true,
+        "showExtensions": true,
+        "showCommonExtensions": true,
+        oauth2RedirectUrl: window.location.origin + '/docs/oauth2-redirect',
+        presets: [
+            SwaggerUIBundle.presets.apis,
+            SwaggerUIBundle.SwaggerUIStandalonePreset
+        ],
+    })
+    </script>
+    </body>
+    </html>
+    """
 @app.exception_handler(HTTPException)
 async def custom_http_exception_handler(request: Request, exc: HTTPException):
     if exc.detail not in CUSTOM_EXCEPTIONS:
