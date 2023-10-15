@@ -44,9 +44,9 @@ CUSTOM_EXCEPTIONS = {
 app = FastAPI(title="Docent API",
               description="도슨트 서비스 API 문서입니다.",
               version="0.2.0",
-              docs_url='/api/docs',
-              redoc_url='/api/redoc',
-              openapi_url='/api/openapi.json')
+              docs_url='/docs',
+              redoc_url='/redoc',
+              openapi_url='/openapi.json')
 
 app.include_router(auth.router)
 app.include_router(generate.router)
