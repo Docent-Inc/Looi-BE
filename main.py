@@ -46,7 +46,7 @@ app = FastAPI(title="Docent API",
               version="0.2.0",
               docs_url='/docs',
               redoc_url='/redoc',
-              openapi_url='/api/openapi.json')
+              openapi_url='/openapi.json')
 
 app.include_router(auth.router)
 app.include_router(generate.router)
