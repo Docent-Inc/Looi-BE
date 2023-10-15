@@ -58,3 +58,7 @@ class CalenderListRequest(BaseModel):
     year: int
     month: int
     day: Optional[int] = None
+
+class LookieChatRequest(BaseModel):
+    text: str
+    type: int
