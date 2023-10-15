@@ -5,6 +5,8 @@ from app.schemas.response import ApiResponse
 from app.core.middleware import TimingMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
+from fastapi.responses import HTMLResponse
+from starlette.middleware.base import BaseHTTPMiddleware
 
 CUSTOM_EXCEPTIONS = {
     4000: "알 수 없는 에러가 발생했습니다.",
@@ -57,7 +59,20 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+class RewriteSwaggerMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        if request.url.path == "/docs":
+            # Swagger UI의 HTML을 수정합니다.
+            html_content = response.body.decode()
+            modified_html_content = html_content.replace(
+                'url: "/openapi.json",',
+                f'url: "{request.url_for("openapi_schema")}",',  # 올바른 OpenAPI JSON URL을 사용합니다.
+            )
+            return HTMLResponse(content=modified_html_content)
+        return response
 
+app.add_middleware(RewriteSwaggerMiddleware)
 @app.exception_handler(HTTPException)
 async def custom_http_exception_handler(request: Request, exc: HTTPException):
     if exc.detail not in CUSTOM_EXCEPTIONS:
