@@ -41,7 +41,12 @@ CUSTOM_EXCEPTIONS = {
     5000: "서버에 문제가 발생했습니다.",
 }
 
-app = FastAPI(docs_url=None, redoc_url=None, openapi_url="/api/openapi.json")
+app = FastAPI(title="Docent API",
+              description="도슨트 서비스 API 문서입니다.",
+              version="0.2.0",
+              docs_url='/api/docs',
+              redoc_url='/api/redoc',
+              openapi_url='/api/openapi.json')
 
 app.include_router(auth.router)
 app.include_router(generate.router)
@@ -58,38 +63,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-@app.get("/docs", response_class=HTMLResponse)
-async def custom_swagger_ui_html():
-    return """
-    <!DOCTYPE html>
-    <html>
-    <head>
-    <link type="text/css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@4/swagger-ui.css">
-    <link rel="shortcut icon" href="https://fastapi.tiangolo.com/img/favicon.png">
-    <title>FastAPI - Swagger UI</title>
-    </head>
-    <body>
-    <div id="swagger-ui">
-    </div>
-    <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@4/swagger-ui-bundle.js"></script>
-    <script>
-    const ui = SwaggerUIBundle({
-        url: '/api/openapi.json',  # 직접 정의된 openapi_url을 사용합니다.
-        "dom_id": "#swagger-ui",
-        "layout": "BaseLayout",
-        "deepLinking": true,
-        "showExtensions": true,
-        "showCommonExtensions": true,
-        oauth2RedirectUrl: window.location.origin + '/docs/oauth2-redirect',
-        presets: [
-            SwaggerUIBundle.presets.apis,
-            SwaggerUIBundle.SwaggerUIStandalonePreset
-        ],
-    })
-    </script>
-    </body>
-    </html>
-    """
 
 @app.exception_handler(HTTPException)
 async def custom_http_exception_handler(request: Request, exc: HTTPException):
@@ -103,7 +76,6 @@ async def custom_http_exception_handler(request: Request, exc: HTTPException):
         ).dict(),
         status_code=exc.status_code
     )
-
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     return JSONResponse(
