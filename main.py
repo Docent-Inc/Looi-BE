@@ -62,14 +62,20 @@ app.add_middleware(
 class RewriteSwaggerMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         response = await call_next(request)
-        if request.url.path == "/docs":
-            # Swagger UI의 HTML을 수정합니다.
-            html_content = response.body.decode()
-            modified_html_content = html_content.replace(
-                'url: "/openapi.json",',
-                f'url: "{request.url_for("openapi_schema")}",',  # 올바른 OpenAPI JSON URL을 사용합니다.
-            )
-            return HTMLResponse(content=modified_html_content)
+
+        # 응답이 HTMLResponse (즉, 스트리밍이 아닌 응답)인지 확인합니다.
+        if request.url.path == "/docs" and isinstance(response, HTMLResponse):
+            try:
+                # HTML 내용을 가져오고 수정합니다.
+                html_content = response.body.decode()
+                modified_html_content = html_content.replace(
+                    'url: "/openapi.json",',
+                    f'url: "{request.url_for("openapi_schema")}",'  # 올바른 OpenAPI JSON URL을 사용합니다.
+                )
+                return HTMLResponse(content=modified_html_content)
+            except Exception as e:
+                # 오류 로깅
+                print(e)
         return response
 
 app.add_middleware(RewriteSwaggerMiddleware)
