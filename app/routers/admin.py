@@ -18,6 +18,9 @@ async def get_user_info(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    """
+    [API detail](https://docs.google.com/spreadsheets/d/17lnN82TlJjLV46Fdh3mooUOFEw_R6EtDG6938KgIshA/edit#gid=531870320)
+    """
     if not user_id:
         user_id = current_user.id
 
@@ -59,7 +62,7 @@ async def lookie_chat(
             detail=4402,
         )
 
-@router.get("/lookie/chat/list", response_model=ApiResponse, tags=["Admin"])
+@router.get("/looki/chat/list", response_model=ApiResponse, tags=["Admin"])
 async def lookie_chat(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -73,7 +76,7 @@ async def lookie_chat(
             detail=4402,
         )
 
-@router.delete("/lookie/chat", response_model=ApiResponse, tags=["Admin"])
+@router.delete("/looki/chat", response_model=ApiResponse, tags=["Admin"])
 async def lookie_chat(
     lookie_chat_id: int,
     current_user: User = Depends(get_current_user),
