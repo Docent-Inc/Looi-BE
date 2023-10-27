@@ -382,6 +382,11 @@ async def dairy_list(list_request: ListRequest, current_user: User, db: Session)
     diary_type = list_request.diary_type
     limit = 12  # 페이지당 레코드 수
     offset = (page - 1) * limit
+    
+    MorningDiary_count = db.query(MorningDiary).filter(MorningDiary.User_id == current_user.id, MorningDiary.is_deleted == False).count()
+    NightDiary_count = db.query(NightDiary).filter(NightDiary.User_id == current_user.id, NightDiary.is_deleted == False).count()
+    Memo_count = db.query(Memo).filter(Memo.User_id == current_user.id, Memo.is_deleted == False).count()
+
 
     # 모델의 열을 명시적으로 나열합니다.
     morning_diary_columns = [
@@ -452,7 +457,10 @@ async def dairy_list(list_request: ListRequest, current_user: User, db: Session)
 
     return {
         "list": all_items,
-        "count": len(all_items)
+        "count": len(all_items),
+        "total_MorningDiary_count": MorningDiary_count,
+        "total_NightDiary_count": NightDiary_count,
+        "total_Memo_count": Memo_count,
     }
 
 async def dairy_list_calender(list_request: CalenderListRequest, current_user: User, db: Session):
