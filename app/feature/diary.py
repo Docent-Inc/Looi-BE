@@ -380,7 +380,7 @@ async def list_calender(user: User, db: Session):
 async def dairy_list(list_request: ListRequest, current_user: User, db: Session):
     page = list_request.page
     diary_type = list_request.diary_type
-    limit = 12  # 페이지당 레코드 수
+    limit = 8  # 페이지당 레코드 수
     offset = (page - 1) * limit
     
     MorningDiary_count = db.query(MorningDiary).filter(MorningDiary.User_id == current_user.id, MorningDiary.is_deleted == False).count()
