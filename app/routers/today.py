@@ -1,8 +1,10 @@
 import json
 from datetime import datetime, timedelta
+from random import random
 
 import pytz
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core.security import get_current_user
@@ -68,4 +70,21 @@ async def get_report(
     ).order_by(Report.create_date.desc()).first()
     return ApiResponse(
         data={"create_date": report.create_date, "content": json.loads(report.content)}
+    )
+
+@router.get("/history", tags=["Today"])
+async def get_record(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> ApiResponse:
+    # db에서 지금까지 만들어진 이미지를 랜덤으로 3개 가져옵니다.
+    random_morning_diaries = db.query(MorningDiary).filter(MorningDiary.is_deleted == False, MorningDiary.User_id == current_user.id).order_by(func.random()).limit(2).all()
+    random_night_diaries = db.query(NightDiary).filter(NightDiary.is_deleted == False, NightDiary.User_id == current_user.id).order_by(func.random()).limit(2).all()
+
+    data = {
+        "MoringDiary": [diary.as_dict() for diary in random_morning_diaries],
+        "NightDiary": [diary.as_dict() for diary in random_night_diaries]
+    }
+    return ApiResponse(
+        data=data
     )
