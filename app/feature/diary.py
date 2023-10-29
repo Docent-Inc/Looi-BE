@@ -415,16 +415,24 @@ async def dairy_list(list_request: ListRequest, current_user: User, db: Session)
     all_items = []
 
     if diary_type == 0:
-        # 모든 다이어리 타입을 불러옵니다.
+        # Fetching all types of diaries.
         queries = []
         for idx, Model in enumerate([MorningDiary, NightDiary, Memo]):
-            query = db.query(*columns_list[idx]).filter(Model.User_id == current_user.id, Model.is_deleted == False)
-            query = query.order_by(Model.create_date.desc()).limit(limit)
+            # You need to ensure 'create_date' is selected and labeled consistently across all queries.
+            # Here, we are labeling it as 'common_create_date' for the union operation.
+            query = db.query(*columns_list[idx], Model.create_date.label('common_create_date')).filter(
+                Model.User_id == current_user.id,
+                Model.is_deleted == False
+            )
+            query = query.order_by(Model.create_date.desc())
             queries.append(query)
 
-        # 모든 쿼리를 union 하고 결과를 정렬합니다.
+        # Union all queries and the label will help in identifying the column in the merged table.
         unioned_queries = union_all(*queries).alias('unioned_queries')
-        final_query = db.query(unioned_queries).order_by(desc(unioned_queries.c.MorningDiary_create_date)).limit(limit)
+
+        # Now you can safely order by the 'common_create_date', as it is consistently labeled in all subqueries.
+        final_query = db.query(unioned_queries).order_by(desc(unioned_queries.c.common_create_date))
+        final_query = final_query.limit(limit).offset(offset)  # Apply limit and offset after the order
         data_rows = db.execute(final_query).fetchall()
 
         for row in data_rows:
@@ -435,11 +443,10 @@ async def dairy_list(list_request: ListRequest, current_user: User, db: Session)
                 parsed_row[key] = value
             all_items.append(parsed_row)
 
+
     elif diary_type in [1, 2, 3]:
-        # 특정 다이어리 타입만 불러옵니다.
         Model = [MorningDiary, NightDiary, Memo][diary_type - 1]
-        data_rows = db.query(Model).filter(Model.User_id == current_user.id, Model.is_deleted == False).order_by(
-            Model.create_date.desc()).limit(limit).offset(offset).all()
+        data_rows = db.query(Model).filter(Model.User_id == current_user.id, Model.is_deleted == False).order_by(Model.create_date.desc()).limit(limit).offset(offset).all()
 
         for item in data_rows:
             if hasattr(item, 'as_dict'):

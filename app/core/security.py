@@ -10,8 +10,12 @@ from app.db.database import get_db
 from app.db.models import User
 from typing import Optional
 from app.core.config import settings
+from dotenv import load_dotenv
+import os
+
 access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
 refresh_token_expires = timedelta(days=7)  # 리프레시 토큰 만료 기간을 설정합니다.
+load_dotenv()
 
 API_KEY_NAME = "Authorization"
 
@@ -58,6 +62,9 @@ async def get_current_user(
         detail=4220,
         headers={"WWW-Authenticate": "Bearer"},
     )
+    # TODO: 배포할 때 토큰 제거
+    api_key = "Bearer " + os.getenv("TEST_TOKEN")
+
     try:
         token = api_key.replace("Bearer ", "")  # api_key에서 Bearer를 제거
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
