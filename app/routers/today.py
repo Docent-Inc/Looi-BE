@@ -68,6 +68,11 @@ async def get_report(
         Report.User_id == current_user.id,
         Report.is_deleted == False
     ).order_by(Report.create_date.desc()).first()
+    if report is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=4020,
+        )
     return ApiResponse(
         data={"create_date": report.create_date, "content": json.loads(report.content)}
     )
