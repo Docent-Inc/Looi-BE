@@ -63,7 +63,7 @@ async def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
     # TODO: 배포할 때 토큰 제거
-    api_key = "Bearer " + os.getenv("TEST_TOKEN")
+    # api_key = "Bearer " + os.getenv("TEST_TOKEN")
 
     try:
         token = api_key.replace("Bearer ", "")  # api_key에서 Bearer를 제거
