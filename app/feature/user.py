@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from app.core.security import verify_password, get_password_hash
-from app.schemas.request import UserCreate, UserUpdateRequest
+from app.schemas.request import UserCreate, UserUpdateRequest, PushUpdateRequest
 from typing import Optional
 from app.core.security import get_user_by_email, get_user_by_nickname
 from app.db.models import User
@@ -103,6 +103,15 @@ async def changeMbti(mbti: str, user: User, db: Session):
             detail=5000,
         )
 
+async def updatePush(request: PushUpdateRequest, current_user: User, db: Session):
+    if request.type =="morning":
+        current_user.push_morning = request.value
+    elif request.type =="night":
+        current_user.push_night = request.value
+    elif request.type =="report":
+        current_user.push_report = request.value
+    db.add(current_user)
+    db.commit()
 
 async def deleteUser(current_user: User, db: Session):
     # 사용자의 삭제 상태를 변경합니다.
