@@ -5,6 +5,7 @@ from app.feature.kakaoOAuth2 import KAKAO_AUTH_URL, get_user_kakao, KAKAO_AUTH_U
 from app.db.database import get_db
 from sqlalchemy.orm import Session
 from app.core.security import decode_access_token, create_token
+from app.feature.lineOAuth2 import LINE_AUTH_URL, LINE_AUTH_URL_TEST, get_user_line, get_user_line_test
 from app.schemas.response import TokenData, ApiResponse, KakaoTokenData
 from app.schemas.request import TokenRefresh, UserUpdateRequest
 from app.feature.user import get_user_by_email, create_user, authenticate_user, changeNickName, changePassword, \
@@ -137,6 +138,24 @@ async def delete_user(
     await deleteUser(current_user, db)
     return ApiResponse()
 
+@router.post("/update", response_model=ApiResponse, tags=["Auth"])
+async def update_user(
+    request: UserUpdateRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    # 사용자 정보를 수정합니다.
+    await updateUser(request, current_user, db)
+    return ApiResponse()
+
+@router.get("/info", response_model=ApiResponse, tags=["Auth"])
+async def me(
+    current_user: User = Depends(get_current_user),
+):
+    current_user.hashed_password = None
+    # 사용자 정보를 반환합니다.
+    return ApiResponse(data=current_user)
+
 @router.get("/kakao", response_model=ApiResponse, tags=["Auth"])
 async def kakao():
     # 카카오 인증을 위한 URL을 반환합니다.
@@ -191,13 +210,59 @@ async def kakao_callback(
         )
     )
 
-@router.post("/update", response_model=ApiResponse, tags=["Auth"])
-async def update_user(
-    request: UserUpdateRequest,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+@router.get("/line", response_model=ApiResponse, tags=["Auth"])
+async def kakao():
+    # 라인 인증을 위한 URL을 반환합니다.
+    return ApiResponse(data={"url": LINE_AUTH_URL})
+
+@router.get("/line/test", response_model=ApiResponse, tags=["Auth"])
+async def kakao_test():
+    # 라인 인증을 위한 URL을 반환합니다.
+    return ApiResponse(data={"url": LINE_AUTH_URL_TEST})
+
+@router.get("/line/callback", response_model=ApiResponse, tags=["Auth"])
+async def kakao_callback(
+        code: str,
+        db: Session = Depends(get_db),
 ):
-    # 사용자 정보를 수정합니다.
-    await updateUser(request, current_user, db)
-    return ApiResponse()
+    # 카카오 로그인 콜백을 처리합니다.
+    data = await get_user_line(code)
+    user, is_sign_up = await user_line(data, db)
+    expires_in, refresh_expires_in, access_token, refresh_token = await create_token(user.email) # 토큰을 생성합니다.
+    return ApiResponse(
+        success=True,
+        data=KakaoTokenData(
+            user_name=user.nickname,
+            access_token=access_token,
+            expires_in=expires_in,
+            refresh_token=refresh_token,
+            refresh_expires_in=refresh_expires_in,
+            token_type="Bearer",
+            is_signup=is_sign_up,
+        )
+    )
+
+@router.get("/line/callback/test", response_model=ApiResponse, tags=["Auth"])
+async def kakao_callback(
+        code: str,
+        db: Session = Depends(get_db),
+):
+    # 카카오 로그인 콜백을 처리합니다.
+    data = await get_user_line_test(code)
+    print(data)
+    # user, is_sign_up = await user_line(data, db)
+    # expires_in, refresh_expires_in, access_token, refresh_token = await create_token(user.email)  # 토큰을 생성합니다.
+    # return ApiResponse(
+    #     success=True,
+    #     data=KakaoTokenData(
+    #         user_name=user.nickname,
+    #         access_token=access_token,
+    #         expires_in=expires_in,
+    #         refresh_token=refresh_token,
+    #         refresh_expires_in=refresh_expires_in,
+    #         token_type="Bearer",
+    #         is_signup=is_sign_up,
+    #     )
+    # )
+
 
