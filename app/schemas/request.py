@@ -24,7 +24,6 @@ class TokenRefresh(BaseModel):
 class UserUpdateRequest(BaseModel):
     nickname: str
     mbti: str
-    age: str
     gender: str
     birth: str
 
