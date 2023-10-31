@@ -151,7 +151,8 @@ async def user_kakao(kakao_data: dict, db: Session) -> Optional[User]:
             age_range=str(age_range),
             image_model=1,
             language_id=1,
-            mbti=str(0)
+            mbti=str(0),
+            Oauth="kakao",
         )
         is_sign_up = True
         try:
@@ -166,6 +167,56 @@ async def user_kakao(kakao_data: dict, db: Session) -> Optional[User]:
     elif user.nickname == user.email[:user.email.find("@")] or user.mbti == 0:
         is_sign_up = True
     return user, is_sign_up
+
+# async def user_line(kakao_data: dict, db: Session) -> Optional[User]:
+#     # 카카오에서 전달받은 사용자 정보를 변수에 저장합니다.
+#     try:
+#         kakao_id = str(kakao_data["id"])
+#         kakao_email = kakao_data["kakao_account"]["email"]
+#         kakao_nickname = kakao_email.split("@")[0]
+#     except:
+#         raise HTTPException(
+#             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#             detail=4010,
+#         )
+#     try:
+#         gender = kakao_data["kakao_account"]["gender"]
+#     except:
+#         gender = "0"
+#     try:
+#         age_range = kakao_data["kakao_account"]["age_range"]
+#     except:
+#         age_range = "0"
+#
+#     # 카카오에서 전달받은 사용자 정보로 사용자를 조회합니다.
+#     user = get_user_by_email(db, email=kakao_email)
+#     is_sign_up = False
+#     # 사용자가 존재하지 않으면 새로운 사용자를 생성합니다.
+#     if not user:
+#         user = User(
+#             email=kakao_email,
+#             nickname=kakao_nickname,
+#             hashed_password=get_password_hash(kakao_id),
+#             gender=str(gender),
+#             age_range=str(age_range),
+#             image_model=1,
+#             language_id=1,
+#             mbti=str(0),
+#             Oauth="kakao",
+#         )
+#         is_sign_up = True
+#         try:
+#             db.add(user)
+#             db.commit()
+#             db.refresh(user)
+#         except:
+#             raise HTTPException(
+#                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#                 detail=5000,
+#             )
+#     elif user.nickname == user.email[:user.email.find("@")] or user.mbti == 0:
+#         is_sign_up = True
+#     return user, is_sign_up
 
 async def updateUser(request: UserUpdateRequest, current_user: User, db: Session):
     try:
