@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Text, ForeignKey, String, Boolean, DateTime, func, JSON
+from sqlalchemy import Column, Integer, Text, ForeignKey, String, Boolean, DateTime, func, JSON, Date
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -18,6 +18,13 @@ class User(Base):
     subscription_status = Column(Boolean, default=False)
     image_model = Column(Integer, nullable=True)
     language_id = Column(Integer, nullable=True)
+    Oauth_from = Column(String(10), nullable=True)
+    birth = Column(Date, nullable=True, default=func.now())
+    push_token = Column(String(100), nullable=True)
+    push_morning = Column(Boolean, default=True)
+    push_night = Column(Boolean, default=True)
+    push_report = Column(Boolean, default=True)
+
 
 class MorningDiary(Base):
     __tablename__ = "MorningDiary"
