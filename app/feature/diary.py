@@ -479,18 +479,18 @@ async def dairy_list_calender(list_request: CalenderListRequest, current_user: U
             Calender.User_id == current_user.id,
             Calender.is_deleted == False,
             Calender.start_time >= datetime.datetime(year, month, 1),
-            Calender.start_time < datetime.datetime(year, month + 1, 1)
+            Calender.start_time < datetime.datetime(year, month , 1) + datetime.timedelta(months=1)
         ).all()
     else:
         year = list_request.year
         month = list_request.month
         day = list_request.day
-        # year와 month를 받아서 해당 달의 일정을 모두 불러옵니다.
+        # year와 month를 받아서 해당 일의 일정을 모두 불러옵니다.
         calenders = db.query(Calender).filter(
             Calender.User_id == current_user.id,
             Calender.is_deleted == False,
             Calender.start_time >= datetime.datetime(year, month, day),
-            Calender.start_time < datetime.datetime(year, month, day + 1)
+            Calender.start_time < datetime.datetime(year, month, day) + datetime.timedelta(days=1)
         ).all()
 
     calenders_transformed = [transform_calendar(cal) for cal in calenders]
