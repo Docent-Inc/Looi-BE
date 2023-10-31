@@ -28,6 +28,10 @@ class UserUpdateRequest(BaseModel):
     gender: str
     birth: str
 
+class PushUpdateRequest(BaseModel):
+    type: str
+    value: bool
+
 
 '''
 Diary 관련 Response

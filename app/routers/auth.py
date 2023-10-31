@@ -7,9 +7,9 @@ from sqlalchemy.orm import Session
 from app.core.security import decode_access_token, create_token
 from app.feature.lineOAuth2 import LINE_AUTH_URL, LINE_AUTH_URL_TEST, get_user_line, get_user_line_test
 from app.schemas.response import TokenData, ApiResponse, KakaoTokenData
-from app.schemas.request import TokenRefresh, UserUpdateRequest
+from app.schemas.request import TokenRefresh, UserUpdateRequest, PushUpdateRequest
 from app.feature.user import get_user_by_email, create_user, authenticate_user, changeNickName, changePassword, \
-    deleteUser, user_kakao, changeMbti, updateUser
+    deleteUser, user_kakao, changeMbti, updateUser, updatePush
 from app.schemas.request import UserCreate, PasswordChangeRequest, NicknameChangeRequest, \
     MbtiChangeRequest
 from app.core.security import get_current_user, get_user_by_nickname
@@ -99,7 +99,7 @@ async def refresh_token(
         )
     )
 
-@router.post("/change/password", response_model=ApiResponse, tags=["Auth"])
+@router.post("/update/password", response_model=ApiResponse, tags=["Auth"])
 async def change_password(
     request: PasswordChangeRequest,
     current_user: User = Depends(get_current_user),
@@ -109,7 +109,7 @@ async def change_password(
     changePassword(request.current_password, request.new_password, current_user, db)
     return ApiResponse()
 
-@router.post("/change/nickname", response_model=ApiResponse, tags=["Auth"])
+@router.post("/update/nickname", response_model=ApiResponse, tags=["Auth"])
 async def change_nickname(
     nickname_change_request: NicknameChangeRequest,
     current_user: User = Depends(get_current_user),
@@ -119,7 +119,7 @@ async def change_nickname(
     await changeNickName(nickname_change_request.nickname, current_user, db)
     return ApiResponse()
 
-@router.post("/change/mbti", response_model=ApiResponse, tags=["Auth"])
+@router.post("/update/mbti", response_model=ApiResponse, tags=["Auth"])
 async def change_mbti(
     body: MbtiChangeRequest,
     current_user: User = Depends(get_current_user),
@@ -127,6 +127,16 @@ async def change_mbti(
 ):
     # 사용자 정보를 수정합니다.
     await changeMbti(body.mbti, current_user, db)
+    return ApiResponse()
+
+@router.post("/update/push", response_model=ApiResponse, tags=["Auth"])
+async def update_push(
+    request: PushUpdateRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    # 푸시 알림 설정을 변경합니다.
+    await updatePush(request, current_user, db)
     return ApiResponse()
 
 @router.delete("/delete", response_model=ApiResponse, tags=["Auth"])
