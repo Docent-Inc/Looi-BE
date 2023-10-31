@@ -26,6 +26,7 @@ class UserUpdateRequest(BaseModel):
     mbti: str
     age: str
     gender: str
+    birth: str
 
 
 '''
