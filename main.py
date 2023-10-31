@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse
-from app.routers import auth, generate, diary, kakao_chatbot, today, admin
+from app.routers import auth, generate, diary, kakao_chatbot, today, admin, chat
 from app.core.status_code import CUSTOM_EXCEPTIONS
 from app.schemas.response import ApiResponse
 from app.core.middleware import TimingMiddleware
@@ -16,6 +16,7 @@ app = FastAPI(title="Docent API",
               openapi_url='/openapi.json')
 
 app.include_router(auth.router)
+app.include_router(chat.router)
 app.include_router(generate.router)
 app.include_router(diary.router)
 app.include_router(today.router)

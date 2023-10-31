@@ -79,6 +79,18 @@ async def get_current_user(
         raise credentials_exception
     return user # 토큰을 복호화하여 유저 정보를 가져온다.
 
+async def get_current_user_is_admin(
+    User: User = Depends(get_current_user),
+) -> User:
+    if User.is_admin == False:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, # 401 에러
+            detail=4402,
+        )
+    return User
+
+
+
 async def create_refresh_token(data: dict, expires_delta: timedelta = None) -> str:
     to_encode = data.copy() # data를 복사
     if expires_delta: # 만료시간이 설정되어 있으면

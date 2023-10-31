@@ -140,8 +140,16 @@ class Prompt(Base):
     text = Column(Text, nullable=False)
     prompt = Column(Text, nullable=False)
 
-class LookieChat(Base):
-    __tablename__ = "LookieChat"
+class WelcomeChat(Base):
+    __tablename__ = "WelcomeChat"
+
+    id = Column(Integer, primary_key=True)
+    text = Column(String(200), nullable=True)
+    type = Column(Integer, nullable=True)
+    is_deleted = Column(Boolean, default=False, index=True)
+
+class HelperChat(Base):
+    __tablename__ = "HelperChat"
 
     id = Column(Integer, primary_key=True)
     text = Column(String(200), nullable=True)

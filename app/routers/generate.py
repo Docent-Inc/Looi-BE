@@ -7,54 +7,12 @@ from app.feature.generate import generate_image, generate_schedule, generate_rep
 from app.core.security import get_current_user
 from app.db.database import get_db
 from sqlalchemy.orm import Session
+import random
 
 from app.schemas.request import ChatRequest
 from app.schemas.response import ApiResponse, User
 
 router = APIRouter(prefix="/generate")
-
-@router.post("/chat", tags=["Generate"])
-async def generate_chat(
-    body: ChatRequest,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-) -> ApiResponse:
-    '''
-    사용자의 택스트를 4가지 카테고리로 분류합니다.
-    '''
-    try:
-        text = body.content
-        number = await send_gpt4_request(1, text)
-        text_type = int(number.strip())
-        if text_type == 1:
-            diary_id = await create_morning_diary(body.content, current_user, db)
-            content = db.query(MorningDiary).filter(MorningDiary.id == diary_id).first()
-        elif text_type == 2:
-            diary_id = await create_night_diary(body.content, current_user, db)
-            content = db.query(NightDiary).filter(NightDiary.id == diary_id).first()
-        elif text_type == 3:
-            diary_id = await create_memo(body.content, current_user, db)
-            content = db.query(Memo).filter(Memo.id == diary_id).first()
-        elif text_type == 4:
-            diary_id = await generate_schedule(body.content, current_user, db)
-            content = db.query(Calender).filter(Calender.id == diary_id).first()
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=4013
-            )
-    except:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=4013
-        )
-    return ApiResponse(
-        data={
-            "text_type": text_type,
-            "diary_id": diary_id,
-            "content": content
-        }
-    )
 
 @router.get("/chat/list", tags=["Generate"])
 async def generate_chat_list(
@@ -83,6 +41,7 @@ async def report(
     return ApiResponse(
         data=report
     )
+
 @router.get("/luck", tags=["Generate"])
 async def luck(
     current_user: User = Depends(get_current_user),
