@@ -3,6 +3,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 import random
+
+from app.core.api_detail import ApiDetail
 from app.core.security import get_current_user
 from app.db.database import get_db
 from app.db.models import MorningDiary, NightDiary, Memo, Calender, WelcomeChat, HelperChat, Chat
@@ -20,9 +22,6 @@ async def chat(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> ApiResponse:
-    '''
-    사용자의 택스트를 4가지 카테고리로 분류합니다.
-    '''
     try:
         text = body.content
         number = await send_gpt4_request(1, text)
@@ -56,14 +55,14 @@ async def chat(
             "content": content
         }
     )
+chat.__doc__ = f"[API detail]({ApiDetail.chat})"
 
-@router.get("/list", tags=["Generate"])
+@router.get("/list", tags=["Chat"])
 async def generate_chat_list(
     page: int,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> ApiResponse:
-    # db에서 사용자의 채팅 리스트를 가져옵니다.
     chat = db.query(Chat).filter(Chat.User_id == current_user.id, Chat.is_deleted == False).order_by(Chat.id.desc()).offset((page-1) * 10).limit(10).all()
     total_counts = db.query(Chat).filter(Chat.User_id == current_user.id, Chat.is_deleted == False).count()
     return ApiResponse(
@@ -72,6 +71,7 @@ async def generate_chat_list(
             "total_counts": total_counts,
             "list": chat
     })
+generate_chat_list.__doc__ = f"[API detail]({ApiDetail.generate_chat_list})"
 
 @router.get("/welcome", tags=["Chat"])
 async def get_welcome(
@@ -85,9 +85,10 @@ async def get_welcome(
     return ApiResponse(
         data=random_chat
     )
+get_welcome.__doc__ = f"[API detail]({ApiDetail.get_welcome})"
 
 @router.get("/helper", tags=["Chat"])
-async def get_tip(
+async def get_helper(
     type: int,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -97,3 +98,4 @@ async def get_tip(
     return ApiResponse(
         data=random_chat
     )
+get_helper.__doc__ = f"[API detail]({ApiDetail.get_helper})"

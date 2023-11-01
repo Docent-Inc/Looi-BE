@@ -1,4 +1,6 @@
 from fastapi import APIRouter, Depends
+
+from app.core.api_detail import ApiDetail
 from app.feature.generate import generate_report, generate_luck
 from app.core.security import get_current_user
 from app.db.database import get_db
@@ -12,9 +14,7 @@ async def report(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> ApiResponse:
-    # db에서 최근 7일간의 MorningDiary, NightDiary, Calendar를 불러옵니다
     report = await generate_report(current_user, db)
-    # 그리고 그것을 바탕으로 사용자의 리포트를 생성합니다.
     return ApiResponse(
         data=report
     )
@@ -28,3 +28,7 @@ async def luck(
     return ApiResponse(
         data={"luck": luck}
     )
+
+
+report.__doc__ = f"[API detail]({ApiDetail.generate_report})"
+luck.__doc__ = f"[API detail]({ApiDetail.generate_luck})"
