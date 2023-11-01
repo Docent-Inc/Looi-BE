@@ -1,6 +1,6 @@
 import json
-from datetime import datetime, timedelta
-from random import random
+from datetime import datetime
+from random import randint
 
 import pytz
 import redis as redis
@@ -70,7 +70,7 @@ async def get_record(
         cached_data = json.loads(cached_data_json)
         return ApiResponse(data=cached_data)
 
-    n = random.randint(1, 2)
+    n = randint(1, 2)
     if n == 1:
         count_morning = 1
         count_night = 2
