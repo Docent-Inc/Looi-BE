@@ -168,61 +168,59 @@ async def generate_luck(user: User, db: Session):
 
 
 async def generate_report(user: User, db: Session) -> str:
-    text = "user name: " + user.nickname + "\n"
+    text = f"nickname: {user.nickname}\n"
     today = datetime.now(pytz.timezone('Asia/Seoul'))
-    one_week_ago = today - timedelta(days=6)
-    six_days_ago = today - timedelta(days=6)
+    one_week_ago = today - timedelta(days=30)
     total_count = 0
+
     # 6일 이내의 데이터가 있으면 에러 반환
     report = db.query(Report).filter(
-                Report.User_id == user.id,
-                Report.create_date <= today,
-                Report.create_date >= six_days_ago.date(),
-                Report.is_deleted == False
-            ).first()
+        Report.User_id == user.id,
+        Report.create_date <= today,
+        Report.create_date >= one_week_ago.date(),
+        Report.is_deleted == False
+    ).first()
+
     if report:
         return json.loads(report.content)
-    try:
-        morning = db.query(MorningDiary).filter(
-                    MorningDiary.User_id == user.id,
-                    MorningDiary.create_date <= today,
-                    MorningDiary.create_date >= one_week_ago.date(),
-                    MorningDiary.is_deleted == False
-                ).all()
-        text += "Dreams of the last week : \n"
-        for diary in morning:
-            total_count += 1
-            text += diary.content + "\n"
-        night = db.query(NightDiary).filter(
-                    NightDiary.User_id == user.id,
-                    NightDiary.create_date <= today,
-                    NightDiary.create_date >= one_week_ago.date(),
-                    NightDiary.is_deleted == False
-                ).all()
-        text += "\nDiary for the last week : \n"
-        for diary in night:
-            total_count += 1
-            text += diary.content + "\n"
-        if total_count < 5:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=4019
-            )
-        calender = db.query(Calender).filter(
-                    Calender.User_id == user.id,
-                    Calender.start_time <= today,
-                    Calender.start_time >= one_week_ago.date(),
-                    Calender.is_deleted == False
-                ).all()
-        text += "\nSchedule for the last week : \n"
-        for content in calender:
-            text += content.title + "\n"
-        report = await send_gpt4_request(3, text)
-    except:
+
+    # Process Morning Diary
+    morning_diaries = db.query(MorningDiary).filter(
+        MorningDiary.User_id == user.id,
+        MorningDiary.create_date.between(one_week_ago.date(), today),
+        MorningDiary.is_deleted == False
+    ).all()
+
+    text += "Dreams of the last week:\n" + "\n".join(diary.content for diary in morning_diaries)
+    total_count += len(morning_diaries)
+
+    # Process Night Diary
+    night_diaries = db.query(NightDiary).filter(
+        NightDiary.User_id == user.id,
+        NightDiary.create_date.between(one_week_ago.date(), today),
+        NightDiary.is_deleted == False
+    ).all()
+
+    text += "\nDiary for the last week:\n" + "\n".join(diary.content for diary in night_diaries)
+    total_count += len(night_diaries)
+
+    if total_count < 5:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=4017
+            detail=4019
         )
+
+    # Process Calender
+    calenders = db.query(Calender).filter(
+        Calender.User_id == user.id,
+        Calender.start_time.between(one_week_ago.date(), today),
+        Calender.is_deleted == False
+    ).all()
+
+    text += "\nSchedule for the last week:\n" + "\n".join(content.title for content in calenders)
+
+    report = await send_gpt4_request(3, text)
+
     try:
         mental_report = Report(
             User_id=user.id,

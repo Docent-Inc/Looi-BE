@@ -99,11 +99,14 @@ prompt6 = [
 ]
 
 prompt7 = [
-    {"role": "system", "content": "Analyze the user's dreams, diary, and schedule to create a about 3000-character Concrete 'Mental State Report'. Please write korean but each title is Engilsh."},
-    {"role": "system", "content": "1. mental_state 2. extroverted_activities 3. introverted_activities 4. positives 5. negatives 6. recommendations 7. statistics"},
-    {"role": "system", "content": "Provide detailed analysis for 'Mental State'. For items 1, total coment about report and include user name with out last name(ex 서준님은 ~). For items 2-5, list 3 each. For item 6, list 5 recommendations."},
+    {"role": "system", "content": "Analyze the user's dreams, diary, and schedule to create a about 3500-character Concrete 'Mental State Report'. Please write korean but each title is Engilsh."},
+    {"role": "system", "content": "1. mental_state 2. positives  3. negatives  4. extroverted_activities 5. introverted_activities  6. recommendations 7. statistics"},
+    {"role": "system", "content": "Provide detailed analysis for 'Mental State'. For items 1, total summary about report and include user nickname. about 200-character" },
+    {"role": "system", "content": "For item 2-3, provide some comments about the user's extroverted and introverted activities. about 120-character."},
+    {"role": "system", "content": "For items 4-5, list 3 each. For item 6, list 5 recommendations."},
     {"role": "system", "content": "For item 7, provide a list 1 detail ratio dictionary for Extroversion, Introversion, and the five keyword list that you choose. The first ratio dictionary's total should add up to 100. In the second list . For example, [{\"외향\": 50, \"내향\": 50}, [\"열정\"]]"},
-    {"role": "system", "content": "Return the only json format of the report with out number and Enter(ex {\"mental_state\":\"content(korean)\", \"extroverted_activities\":\"[each conent]\"} ."},
+    {"role": "system", "content": "Return the only json format of the report"},
+    {"role": "system", "content": "{\"mental_state\":\"content(korean)\", \"positives\": \"{\"comment\": \"content\", \"main_keyword\": \"(phrase in comment)\"}\"... \"extroverted_activities\":[...] ... }."},
     {"role": "system", "content": "공손한 말투로 만들어주세요."},
 ]
 
@@ -114,6 +117,12 @@ prompt8 = [
     {"role": "system", "content": "{\"title\": \"곽서준님의 전화번호\", \"content\":\"01046306320\"}"},
     {"role": "user", "content": "컴퓨터 구조 책 다 읽고 정리하기"},
     {"role": "system", "content": "{\"title\": \"해야될 일\", \"content\":\"컴퓨터 구조 책 다 읽고 정리하기\"}"}
+]
+
+prompt9 = [
+    {"role": "system", "content": "Analyze this text and select one main keyword from the text."},
+    {"role": "system", "content": "1. main_keyword"},
+
 ]
 
 
