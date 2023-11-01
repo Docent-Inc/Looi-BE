@@ -15,6 +15,8 @@ class ApiDetail:
     change_mbti = "https://www.notion.so/docent-ai/MBTI-6f18467fdd284331a7577c909f5e1489?pvs=4"
     update_push = "https://www.notion.so/docent-ai/Push-7be41cc02e684fb1a468b075ec0961f5?pvs=4"
     delete_user = "https://www.notion.so/docent-ai/09b2e62eb34e479baba596b4e7c17f01?pvs=4"
+    get_calender = "https://www.notion.so/docent-ai/85d560a91a7c401896eb367abd8e164b?pvs=4"
+
 
 
 

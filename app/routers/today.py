@@ -3,12 +3,14 @@ from datetime import datetime, timedelta
 from random import random
 
 import pytz
+import redis as redis
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from app.core.api_detail import ApiDetail
 from app.core.security import get_current_user
-from app.db.database import get_db
+from app.db.database import get_db, get_redis_client
 from app.db.models import Calender, MorningDiary, NightDiary, Report
 from app.schemas.response import User, ApiResponse
 
@@ -19,51 +21,22 @@ async def get_calender(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> ApiResponse:
-    # db에서 사용자의 오늘의 일정을 가져옵니다.
     today = datetime.now(pytz.timezone('Asia/Seoul'))
-    calender = db.query(Calender).filter(
+    upcoming_events = db.query(Calender).filter(
         Calender.User_id == current_user.id,
-        Calender.start_time >= today.date(),
-        Calender.start_time < today.date() + timedelta(days=1),
+        Calender.start_time >= today,
         Calender.is_deleted == False
-    ).all()
+    ).order_by(Calender.start_time).limit(5).all()
     return ApiResponse(
-        data=calender
+        data=upcoming_events
     )
-
-@router.get("/record", tags=["Today"])
-async def get_record(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-) -> ApiResponse:
-     # db에서 오늘 사용자의 기록을 가져옵니다.
-    today = datetime.now(pytz.timezone('Asia/Seoul'))
-    # Morning
-    morning = db.query(MorningDiary).filter(
-        MorningDiary.User_id == current_user.id,
-        MorningDiary.create_date >= today.date(),
-        MorningDiary.create_date < today.date() + timedelta(days=1),
-        MorningDiary.is_deleted == False
-    ).first()
-    night = db.query(NightDiary).filter(
-        NightDiary.User_id == current_user.id,
-        NightDiary.create_date >= today.date(),
-        NightDiary.create_date < today.date() + timedelta(days=1),
-        NightDiary.is_deleted == False
-    ).first()
-    return ApiResponse(
-        data={
-            "morning": morning,
-            "night": night
-        }
-    )
+get_calender.__doc__ = f"[API detail]({ApiDetail.get_calender})"
 
 @router.get("/report", tags=["Today"])
 async def get_report(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> ApiResponse:
-    # db에서 가장 최근의 마음 보고서를 가져옵니다.
     report = db.query(Report).filter(
         Report.User_id == current_user.id,
         Report.is_deleted == False
@@ -77,19 +50,50 @@ async def get_report(
         data={"create_date": report.create_date, "content": json.loads(report.content)}
     )
 
+def default_converter(o):
+    if isinstance(o, datetime):
+        return o.isoformat()
+    raise TypeError(f"Object of type {o.__class__.__name__} is not JSON serializable")
+
 @router.get("/history", tags=["Today"])
 async def get_record(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user),
+        db: Session = Depends(get_db),
+        redis: redis.Redis = Depends(get_redis_client),
 ) -> ApiResponse:
-    # db에서 지금까지 만들어진 이미지를 랜덤으로 3개 가져옵니다.
-    random_morning_diaries = db.query(MorningDiary).filter(MorningDiary.is_deleted == False, MorningDiary.User_id == current_user.id).order_by(func.random()).limit(2).all()
-    random_night_diaries = db.query(NightDiary).filter(NightDiary.is_deleted == False, NightDiary.User_id == current_user.id).order_by(func.random()).limit(2).all()
+    today_str = datetime.now().strftime('%Y-%m-%d')
+    redis_key = f"history:{today_str}:user_{current_user.id}"
+
+    cached_data_json = redis.get(redis_key)
+
+    if cached_data_json:
+        cached_data = json.loads(cached_data_json)
+        return ApiResponse(data=cached_data)
+
+    n = random.randint(1, 2)
+    if n == 1:
+        count_morning = 1
+        count_night = 2
+    else:
+        count_morning = 2
+        count_night = 1
+
+    random_morning_diaries = db.query(MorningDiary).filter(
+        MorningDiary.is_deleted == False,
+        MorningDiary.User_id == current_user.id
+    ).order_by(func.random()).limit(count_morning).all()
+    random_night_diaries = db.query(NightDiary).filter(
+        NightDiary.is_deleted == False,
+        NightDiary.User_id == current_user.id
+    ).order_by(func.random()).limit(count_night).all()
 
     data = {
-        "MoringDiary": [diary.as_dict() for diary in random_morning_diaries],
+        "MorningDiary": [diary.as_dict() for diary in random_morning_diaries],
         "NightDiary": [diary.as_dict() for diary in random_night_diaries]
     }
-    return ApiResponse(
-        data=data
-    )
+
+    ttl = (datetime.now().replace(hour=23, minute=59, second=59) - datetime.now()).seconds
+    data_json = json.dumps(data, default=default_converter)
+    redis.setex(redis_key, ttl, data_json)
+
+    return ApiResponse(data=data)
