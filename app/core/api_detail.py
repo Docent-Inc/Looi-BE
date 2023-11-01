@@ -7,5 +7,5 @@ class ApiDetail:
     get_welcome = "https://www.notion.so/docent-ai/8de29a869e4e4424b2357e5fcdf7eeb6?pvs=4"
     get_helper = "https://www.notion.so/docent-ai/9c2d985112e347e3bab1d27c9934565f?pvs=4"
     login = "https://www.notion.so/docent-ai/26c58885fce246e1b92ece4d82ee5b82?pvs=4"
-    callback = ""
+    callback = "https://www.notion.so/docent-ai/Callback-5ef5d698f2844296807d4470b76634a1?pvs=4"
 
