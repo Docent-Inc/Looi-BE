@@ -8,7 +8,7 @@ DB_USER = 'docent'
 DB_PASSWORD = 'cocone0331!'
 # DB_NAME = 'docent'
 DB_NAME = 'docent_test'
-REDIS_HOST = 'localhost'
+REDIS_HOST = '172.17.0.4'
 REDIS_PORT = 6379
 REDIS_DB = 0
 redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB, decode_responses=True)
