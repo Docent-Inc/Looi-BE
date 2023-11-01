@@ -1,5 +1,7 @@
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse
+
+from app.core.api_detail import ApiDetail
 from app.routers import auth, generate, diary, kakao_chatbot, today, admin, chat
 from app.core.status_code import CUSTOM_EXCEPTIONS
 from app.schemas.response import ApiResponse
@@ -8,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 
 app = FastAPI(title="Look API",
-              description="[Error Status](https://www.notion.so/docent-ai/status_code-78cb968f64224515a56bcad6233e98c0?pvs=4)",
+              description=f"[Error Status]({ApiDetail.error_status})",
               version="0.2.0",
               docs_url='/docs',
               redoc_url='/redoc',
