@@ -61,7 +61,7 @@ async def get_record(
         db: Session = Depends(get_db),
         redis: redis.Redis = Depends(get_redis_client),
 ) -> ApiResponse:
-    today_str = datetime.now().strftime('%Y-%m-%d')
+    today_str = datetime.now(pytz.timezone('Asia/Seoul')).strftime('%Y-%m-%d')
     redis_key = f"history:{today_str}:user_{current_user.id}"
 
     cached_data_json = redis.get(redis_key)
@@ -92,7 +92,7 @@ async def get_record(
         "NightDiary": [diary.as_dict() for diary in random_night_diaries]
     }
 
-    ttl = (datetime.now().replace(hour=23, minute=59, second=59) - datetime.now()).seconds
+    ttl = (datetime.now(pytz.timezone('Asia/Seoul')).replace(hour=23, minute=59, second=59) - datetime.now(pytz.timezone('Asia/Seoul'))).seconds
     data_json = json.dumps(data, default=default_converter)
     redis.setex(redis_key, ttl, data_json)
 
