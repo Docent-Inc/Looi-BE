@@ -131,7 +131,6 @@ async def generate_schedule(text: str, user: User, db: Session) -> str:
         )
 
 async def generate_luck(user: User, db: Session):
-    # db에서 오늘 날짜의 MorningDiary, NightDiary, Calendar를 불러옵니다
     today = datetime.now(pytz.timezone('Asia/Seoul'))
     # 매일 오전 9시에 한번만 호출되도록 설정
     if today.hour < 9:

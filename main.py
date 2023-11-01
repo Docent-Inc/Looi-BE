@@ -7,8 +7,8 @@ from app.core.middleware import TimingMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 
-app = FastAPI(title="Docent API",
-              description="도슨트 서비스 API 문서입니다.",
+app = FastAPI(title="Look API",
+              description="[Error Status](https://www.notion.so/docent-ai/status_code-78cb968f64224515a56bcad6233e98c0?pvs=4)",
               version="0.2.0",
               docs_url='/docs',
               redoc_url='/redoc',
