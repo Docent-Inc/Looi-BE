@@ -494,6 +494,13 @@ async def dairy_list_calender(list_request: CalenderListRequest, current_user: U
             Calender.start_time >= datetime.datetime(year, month, day),
             Calender.start_time < datetime.datetime(year, month, day) + datetime.timedelta(days=1)
         ).all()
+    today = datetime.datetime.now(pytz.timezone('Asia/Seoul'))
+    today_count = db.query(Calender).filter(
+        Calender.User_id == current_user.id,
+        Calender.is_deleted == False,
+        Calender.start_time >= datetime.datetime(today.year, today.month, today.day),
+        Calender.start_time < datetime.datetime(today.year, today.month, today.day) + datetime.timedelta(days=1)
+    ).count()
 
     calenders_transformed = [transform_calendar(cal) for cal in calenders]
-    return calenders_transformed
+    return today_count, calenders_transformed
