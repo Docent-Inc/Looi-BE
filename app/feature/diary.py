@@ -2,6 +2,7 @@ import asyncio
 import json
 from sqlalchemy import desc, literal
 from sqlalchemy import null
+from dateutil.relativedelta import relativedelta
 from sqlalchemy import text
 from aiohttp import ClientSession
 from fastapi import HTTPException
@@ -18,7 +19,8 @@ import pytz
 from app.schemas.request import UpdateDiaryRequest, CalenderRequest, ListRequest, CalenderListRequest
 from app.schemas.response import User
 
-
+def add_one_month(original_date):
+    return original_date + relativedelta(months=1)
 def transform_calendar(cal):
     return {
         'id': cal.id,
@@ -479,7 +481,7 @@ async def dairy_list_calender(list_request: CalenderListRequest, current_user: U
             Calender.User_id == current_user.id,
             Calender.is_deleted == False,
             Calender.start_time >= datetime.datetime(year, month, 1),
-            Calender.start_time < datetime.datetime(year, month , 1) + datetime.timedelta(months=1)
+            Calender.start_time < add_one_month(datetime.datetime(year, month, 1))
         ).all()
     else:
         year = list_request.year
