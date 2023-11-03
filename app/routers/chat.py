@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 import random
 
 from app.core.apiDetail import ApiDetail
-from app.core.security import get_current_user
+from app.core.security import get_current_user, text_length
 from app.db.database import get_db
 from app.db.models import MorningDiary, NightDiary, Memo, Calender, WelcomeChat, HelperChat, Chat
 from app.feature.aiRequset import send_gpt4_request
@@ -22,8 +22,8 @@ async def chat(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> ApiResponse:
+    text = await text_length(body.content, 500) # 500자 이하인지 확인
     try:
-        text = body.content
         number = await send_gpt4_request(1, text)
         text_type = int(number.strip())
         if text_type == 1:
