@@ -106,3 +106,12 @@ async def create_token(email):
     refresh_expires_in_seconds = int((refresh_expires_in - datetime.utcnow()).total_seconds()) + 1
 
     return expires_in_seconds, refresh_expires_in_seconds, access_token, refresh_token
+
+async def text_length(text: str, max_length: int):
+    min_length = 5
+    if len(text) < min_length or len(text) > max_length:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=4221,
+        )
+    return text
