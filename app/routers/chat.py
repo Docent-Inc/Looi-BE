@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 import random
 
-from app.core.api_detail import ApiDetail
+from app.core.apiDetail import ApiDetail
 from app.core.security import get_current_user
 from app.db.database import get_db
 from app.db.models import MorningDiary, NightDiary, Memo, Calender, WelcomeChat, HelperChat, Chat

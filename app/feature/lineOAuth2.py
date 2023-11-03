@@ -1,16 +1,12 @@
 import requests
-from dotenv import load_dotenv
-import os
 import random
-
 from fastapi import HTTPException, status
 from httpx_oauth.errors import GetIdEmailError
+from app.core.config import settings
 
-load_dotenv()
-
-LINE_CHANNEL_ID = os.getenv("LINE_CHANNEL_ID")
 REDIRECT_URI = "https://docent.zip/line"
-LINE_SECRET = os.getenv("LINE_SECRET")
+LINE_CHANNEL_ID = settings.LINE_CHANNEL_ID
+LINE_SECRET = settings.LINE_SECRET
 PROFILE_ENDPOINT = "https://api.line.me/v2/profile"
 REDIRECT_URI_TEST = "http://localhost:3000/line"
 LINE_AUTH_URL = f"https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id={LINE_CHANNEL_ID}&redirect_uri={REDIRECT_URI}&state={random.randint(1000000000, 9999999999)}&scope=profile%20openid%20email"

@@ -1,20 +1,13 @@
 import asyncio
 import json
-
 import openai
 from aiohttp import ClientSession
-from dotenv import load_dotenv
-import os
 from fastapi import HTTPException, status
 import datetime
 import pytz
-load_dotenv()
-openai.api_key = os.getenv("GPT_API_KEY")
-stable_diffusion_api_key = os.getenv("STABLE_DIFFUSION")
-hyperclova_api_key = os.getenv("HYPER_CLOVA_KEY")
-hyperclova_api_gateway = os.getenv("HYPER_CLOVA_GATEWAY")
-hyperclova_request_id = os.getenv("HYPER_CLOVA_REQUEST_ID")
-kakao_api_key = os.getenv("KAKAO_API_KEY")
+from app.core.config import settings
+
+openai.api_key = settings.GPT_API_KEY
 
 days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
@@ -119,12 +112,6 @@ prompt8 = [
     {"role": "system", "content": "{\"title\": \"해야될 일\", \"content\":\"컴퓨터 구조 책 다 읽고 정리하기\"}"}
 ]
 
-prompt9 = [
-    {"role": "system", "content": "Analyze this text and select one main keyword from the text."},
-    {"role": "system", "content": "1. main_keyword"},
-
-]
-
 
 async def send_gpt_request(prompt_num, messages_prompt, retries=3):
     '''
@@ -200,125 +187,6 @@ async def send_gpt4_request(prompt_num, messages_prompt, retries=3):
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail=4501,
-                )
-
-
-# async def send_hyperclova_request(prompt_num, messages_prompt, retries=3):
-#     '''
-#     주어진 프롬프트로 Hyperclova API에 요청을 보내고, 실패할 경우 3번까지 재시도합니다.
-#     '''
-#     if prompt_num == 1: # 오늘의 운세
-#         prompt = prompt4.format(messages_prompt)
-#     for i in range(retries):
-#         try:
-#             url = "https://clovastudio.apigw.ntruss.com/serviceapp/v1/tasks/x56n5fyu/completions/LK-D2"
-#
-#             request_data = {
-#                 'text': prompt,
-#                 'maxTokens': 1000,
-#                 'temperature': 0.75,
-#                 'topK': 0,
-#                 'topP': 0.8,
-#                 'repeatPenalty': 6,
-#                 'start': '###클로바:',
-#                 'restart': '',
-#                 'stopBefore': ['###꿈 내용:'],
-#                 'includeTokens': True,
-#                 'includeAiFilters': True,
-#                 'includeProbs': False
-#             }
-#
-#             headers = {
-#                 'Content-Type': 'application/json; charset=utf-8',
-#                 "X-NCP-CLOVASTUDIO-API-KEY": hyperclova_api_key,
-#                 "X-NCP-APIGW-API-KEY": hyperclova_api_gateway,
-#             }
-#
-#             async with ClientSession() as session:
-#                 async with session.post(url, headers=headers, json=request_data) as response:
-#                     result = await response.json()
-#                     print(result)
-#                     return result['result']['text'].replace("###클로바:", "").lstrip()
-#         except Exception as e:
-#             print(f"Hypercolva API Error: {e}")
-#             if i < retries - 1:
-#                 print(f"Retrying {i + 1} of {retries}...")
-#             else:
-#                 print("Failed to get response after maximum retries")
-#                 raise HTTPException(
-#                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-#                     detail=4502,
-#                 )
-async def send_stable_deffusion_request(messages_prompt, retries=3):
-    for i in range(retries):
-        try:
-            url = "https://stablediffusionapi.com/api/v3/text2img"
-
-            data = {
-                "key": stable_diffusion_api_key,
-                "prompt": messages_prompt[:300],
-                "negative_prompt": None,
-                "width": "512",
-                "height": "512",
-                "samples": "1",
-                "num_inference_steps": "20",
-                "safety_checker": "yes",
-                "enhance_prompt": "yes",
-                "seed": None,
-                "guidance_scale": 7.5,
-                "webhook": None,
-                "track_id": None
-            }
-
-            headers = {"Content-Type": "application/json"}
-
-            async with ClientSession() as session:
-                async with session.post(url, headers=headers, json=data) as response:
-                    result = await response.json()
-                    return result["output"][0]
-        except Exception as e:
-            print(f"Stable Diffusion API Error{e}")
-            if i < retries - 1:
-                print(f"Retrying {i + 1} of {retries}...")
-            else:
-                print("Failed to get response after maximum retries")
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=4503,
-                )
-
-
-async def send_karlo_request(messages_prompt, retries=3):
-    for i in range(retries):
-        try:
-            url = "https://api.kakaobrain.com/v2/inference/karlo/t2i"
-
-            data = {
-                'prompt': messages_prompt[:255],
-                'prior_guidance_scale': 5,
-                'width': '512',
-                'height': '512',
-                'nsfw_checker': True,
-            }
-
-            headers = {
-                'Authorization': f'KakaoAK {kakao_api_key}',
-                'Content-Type': 'application/json'
-            }
-
-            async with ClientSession() as session:
-                async with session.post(url, headers=headers, json=data) as response:
-                    result = await response.json()
-                    return result['images'][0]['image']
-        except Exception as e:
-            print(f"Karlo API Error{e}")
-            if i < retries - 1:
-                print(f"Retrying {i + 1} of {retries}...")
-            else:
-                print("Failed to get response after maximum retries")
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=4504,
                 )
 
 async def send_dalle2_request(messages_prompt, retries=3):

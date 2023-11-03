@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from app.core.api_detail import ApiDetail
+from app.core.apiDetail import ApiDetail
 from app.core.security import get_current_user
 from app.db.database import get_db, get_redis_client
 from app.db.models import Calender, MorningDiary, NightDiary, Report

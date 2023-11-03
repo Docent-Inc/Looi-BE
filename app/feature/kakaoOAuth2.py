@@ -1,12 +1,10 @@
 import requests
 from fastapi import HTTPException, status
 from httpx_oauth.errors import GetIdEmailError
-from dotenv import load_dotenv
-import os
+from app.core.config import settings
 
-load_dotenv()
-CLIENT_ID = os.getenv("KAKAO_API_KEY")
-CLIENT_SECRET = os.getenv("KAKAO_API_SECRET")
+CLIENT_ID = settings.KAKAO_API_KEY
+CLIENT_SECRET = settings.KAKAO_CLIENT_SECRET
 REDIRECT_URI = "https://docent.zip/callback"
 REDIRECT_URI_TEST = "http://localhost:3000/callback"
 KAKAO_AUTH_URL_TEST = f"https://kauth.kakao.com/oauth/authorize?client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI_TEST}&response_type=code"

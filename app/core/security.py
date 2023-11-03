@@ -10,25 +10,15 @@ from app.db.database import get_db
 from app.db.models import User
 from typing import Optional
 from app.core.config import settings
-from dotenv import load_dotenv
-import os
-
 access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-refresh_token_expires = timedelta(days=7)  # 리프레시 토큰 만료 기간을 설정합니다.
-load_dotenv()
-
+refresh_token_expires = timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
 API_KEY_NAME = "Authorization"
-
 api_key_header_auth = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
-
 SECRET_KEY = settings.SECRET_KEY
 ALGORITHM = settings.ALGORITHM
 ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
-
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto") # 암호화 방식
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login") # tokenUrl은 로그인 url
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
@@ -58,33 +48,32 @@ async def get_current_user(
     db: Session = Depends(get_db),
 ) -> User:
     credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED, # 401 에러
+        status_code=status.HTTP_401_UNAUTHORIZED,
         detail=4220,
         headers={"WWW-Authenticate": "Bearer"},
     )
-    # TODO: 배포할 때 토큰 제거
-    # api_key = "Bearer " + os.getenv("TEST_TOKEN")
-
+    if settings.TEST_TOKEN != "test":
+        api_key = settings.TEST_TOKEN
     try:
-        token = api_key.replace("Bearer ", "")  # api_key에서 Bearer를 제거
+        token = api_key.replace("Bearer ", "")
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email: str = payload.get("sub") # 토큰에서 email을 가져온다.
+        email: str = payload.get("sub")
         if email is None:
             raise credentials_exception
     except:
         raise credentials_exception
 
-    user = get_user_by_email(db, email=email) # email을 통해 유저를 가져온다.
-    if user is None or user.is_deleted == True: # 유저가 없거나 삭제된 유저면
+    user = get_user_by_email(db, email=email)
+    if user is None or user.is_deleted == True:
         raise credentials_exception
-    return user # 토큰을 복호화하여 유저 정보를 가져온다.
+    return user
 
 async def get_current_user_is_admin(
     User: User = Depends(get_current_user),
 ) -> User:
     if User.is_admin == False:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, # 401 에러
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail=4402,
         )
     return User
