@@ -1,20 +1,20 @@
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse
-
 from app.core.apiDetail import ApiDetail
-from app.routers import auth, generate, diary, kakao_chatbot, today, admin, chat
+from app.routers import auth, generate, diary, today, admin, chat
 from app.core.status_code import CUSTOM_EXCEPTIONS
 from app.schemas.response import ApiResponse
 from app.core.middleware import TimingMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
+from app.core.config import settings
 
 app = FastAPI(title="Look API",
               description=f"[Error Status]({ApiDetail.error_status})",
               version="0.2.0",
               docs_url='/docs',
               redoc_url='/redoc',
-              # root_path="/api",
+              root_path=settings.ROOT_PATH,
               openapi_url='/openapi.json')
 
 app.include_router(auth.router)
@@ -22,7 +22,6 @@ app.include_router(chat.router)
 app.include_router(generate.router)
 app.include_router(diary.router)
 app.include_router(today.router)
-# app.include_router(kakao_chatbot.router)
 app.include_router(admin.router)
 app.add_middleware(TimingMiddleware)
 
