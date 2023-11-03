@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy import desc
 
-from app.core.api_detail import ApiDetail
+from app.core.apiDetail import ApiDetail
 from app.feature.diary import create_night_diary, create_morning_diary, read_morning_diary, read_night_diary, \
     update_morning_diary, delete_morning_diary, update_night_diary, delete_night_diary, create_memo, list_morning_diary, \
     list_night_diary, create_calender, update_calender, read_calender, delete_calender, dairy_list, read_memo, \

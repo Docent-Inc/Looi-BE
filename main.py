@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse
 
-from app.core.api_detail import ApiDetail
+from app.core.apiDetail import ApiDetail
 from app.routers import auth, generate, diary, kakao_chatbot, today, admin, chat
 from app.core.status_code import CUSTOM_EXCEPTIONS
 from app.schemas.response import ApiResponse
@@ -14,7 +14,7 @@ app = FastAPI(title="Look API",
               version="0.2.0",
               docs_url='/docs',
               redoc_url='/redoc',
-              root_path="/api",
+              # root_path="/api",
               openapi_url='/openapi.json')
 
 app.include_router(auth.router)

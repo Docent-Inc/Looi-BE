@@ -19,6 +19,3 @@ class ApiDetail:
     list_calender = "https://www.notion.so/docent-ai/Calender-list-3a20a53c2a424bc19c68060483b25b4a?pvs=4"
 
 
-
-
-

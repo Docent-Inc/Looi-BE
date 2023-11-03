@@ -1,12 +1,11 @@
 from datetime import datetime, timedelta
-
 import pytz
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 import extcolors
+from app.core.config import settings
 from app.db.models import MorningDiary, NightDiary, Calender, Report, Luck, Chat, Prompt
-from app.feature.aiRequset import send_gpt_request, send_dalle2_request, \
-    send_stable_deffusion_request, send_karlo_request, send_gpt4_request
+from app.feature.aiRequset import send_gpt_request, send_dalle2_request, send_gpt4_request
 import uuid
 from io import BytesIO
 import asyncio
@@ -15,13 +14,8 @@ from PIL import Image
 from google.cloud import storage
 from google.oauth2 import service_account
 import json
-from dotenv import load_dotenv
-import os
-
 from app.schemas.response import User
-
-load_dotenv()
-SERVICE_ACCOUNT_INFO = json.loads(os.getenv('GOOGLE_APPLICATION_CREDENTIALS_JSON'))
+SERVICE_ACCOUNT_INFO = json.loads(settings.GOOGLE_APPLICATION_CREDENTIALS_JSON)
 
 async def generate_resolution_gpt(text: str) -> str:
     dream_resolution = await send_gpt4_request(2, text)
@@ -34,10 +28,6 @@ async def generate_image(image_model: int, message: str, db: Session):
 
     if image_model == 1:
         dream_image_url = await send_dalle2_request(prompt)
-    elif image_model == 2:
-        dream_image_url = await send_stable_deffusion_request(prompt)
-    elif image_model == 3:
-        dream_image_url = await send_karlo_request(prompt)
 
     save_promt = Prompt(
         text=message,

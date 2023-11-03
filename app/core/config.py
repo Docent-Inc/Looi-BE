@@ -1,11 +1,25 @@
 from pydantic import BaseSettings
 
 class Settings(BaseSettings):
-    SECRET_KEY: str = "YOUR_SECRET_KEY"
-    ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
-
-    class Config: # .env 파일에 저장된 secret key정보를 가져옴
-        env_file = ".env"
+    SECRET_KEY: str
+    ALGORITHM: str
+    ACCESS_TOKEN_EXPIRE_MINUTES: int
+    REFRESH_TOKEN_EXPIRE_DAYS: int
+    GPT_API_KEY: str
+    GOOGLE_APPLICATION_CREDENTIALS_JSON: str
+    LINE_CHANNEL_ID: str
+    LINE_SECRET: str
+    TEST_TOKEN: str
+    DB_ADDRESS: str
+    DB_USER: str
+    DB_PASSWORD: str
+    DB_NAME: str
+    REDIS_HOST: str
+    REDIS_PORT: int
+    REDIS_DB: int
+    KAKAO_API_KEY: str
+    KAKAO_CLIENT_SECRET: str
+    class Config:
+        env_file = ".env-dev"
 
 settings = Settings()

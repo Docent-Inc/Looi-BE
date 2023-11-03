@@ -1,9 +1,6 @@
 from typing import Optional
-
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
-
-from app.core.api_detail import ApiDetail
+from app.core.apiDetail import ApiDetail
 from app.feature.kakaoOAuth2 import KAKAO_AUTH_URL, get_user_kakao, KAKAO_AUTH_URL_TEST, \
     get_user_kakao_test
 from app.db.database import get_db
@@ -16,7 +13,7 @@ from app.feature.user import get_user_by_email, create_user, authenticate_user, 
     deleteUser, user_kakao, changeMbti, updateUser, updatePush, user_line
 from app.schemas.request import UserCreate, PasswordChangeRequest, NicknameChangeRequest, \
     MbtiChangeRequest
-from app.core.security import get_current_user, get_user_by_nickname
+from app.core.security import get_current_user
 from app.schemas.response import User
 
 router = APIRouter(prefix="/auth")

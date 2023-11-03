@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 
-from app.core.api_detail import ApiDetail
+from app.core.apiDetail import ApiDetail
 from app.feature.generate import generate_report, generate_luck
 from app.core.security import get_current_user
 from app.db.database import get_db
