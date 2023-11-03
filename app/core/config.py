@@ -19,7 +19,8 @@ class Settings(BaseSettings):
     REDIS_DB: int
     KAKAO_API_KEY: str
     KAKAO_CLIENT_SECRET: str
+    ROOT_PATH: str
     class Config:
-        env_file = ".env-dev"
+        env_file = ".env"
 
 settings = Settings()
