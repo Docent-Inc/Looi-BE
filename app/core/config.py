@@ -20,6 +20,8 @@ class Settings(BaseSettings):
     KAKAO_API_KEY: str
     KAKAO_CLIENT_SECRET: str
     ROOT_PATH: str
+    MAX_LENGTH: int
+    MAX_CALL: int
     class Config:
         env_file = ".env"
 

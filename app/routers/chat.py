@@ -1,12 +1,12 @@
-
-
+import redis as redis
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 import random
 
 from app.core.apiDetail import ApiDetail
-from app.core.security import get_current_user, text_length
-from app.db.database import get_db
+from app.core.config import settings
+from app.core.security import get_current_user, text_length, time_now
+from app.db.database import get_db, get_redis_client
 from app.db.models import MorningDiary, NightDiary, Memo, Calender, WelcomeChat, HelperChat, Chat
 from app.feature.aiRequset import send_gpt4_request
 from app.feature.diary import create_morning_diary, create_night_diary, create_memo
@@ -21,8 +21,17 @@ async def chat(
     body: ChatRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
+    redis: redis.Redis = Depends(get_redis_client),
 ) -> ApiResponse:
-    text = await text_length(body.content, 500) # 500자 이하인지 확인
+    text = await text_length(body.content, settings.MAX_LENGTH) # 500자 이하인지 확인
+    now = await time_now()
+    chat_count_key = f"chat_count:{current_user.id}:{now.day}"
+    current_count = redis.get(chat_count_key) or 0
+    if int(current_count) > settings.MAX_CALL:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=4404
+        )
     try:
         number = await send_gpt4_request(1, text)
         text_type = int(number.strip())
@@ -48,8 +57,10 @@ async def chat(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=4013
         )
+    redis.set(chat_count_key, int(current_count) + 1, ex=86400)  # 하루 동안 유효한 카운트
     return ApiResponse(
         data={
+            "calls_left": settings.MAX_CALL - int(current_count) - 1,
             "text_type": text_type,
             "diary_id": diary_id,
             "content": content
