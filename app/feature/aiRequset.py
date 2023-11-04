@@ -173,7 +173,7 @@ async def send_gpt4_request(prompt_num, messages_prompt, retries=3):
     prompt.append({"role": "user", "content": messages_prompt})
     for i in range(retries):
         try:
-            # chat = openai.ChatCompletion.create(model="gpt-4", messages=prompt)
+            chat = openai.ChatCompletion.create(model="gpt-4", messages=prompt)
             content = chat.choices[0].message.content
             if prompt_num == 3:
                 return json.loads(content)
