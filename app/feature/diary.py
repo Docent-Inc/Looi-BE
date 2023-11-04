@@ -469,9 +469,9 @@ async def dairy_list(list_request: ListRequest, current_user: User, db: Session)
     return {
         "list": all_items,
         "count": len(all_items),
-        "MoriningDiary_ratio": MorningDiary_count / (MorningDiary_count + NightDiary_count + Memo_count),
-        "NightDiary_ratio": NightDiary_count / (MorningDiary_count + NightDiary_count + Memo_count),
-        "Memo_ratio": Memo_count / (MorningDiary_count + NightDiary_count + Memo_count),
+        "MoriningDiary_ratio": (MorningDiary_count / (MorningDiary_count + NightDiary_count + Memo_count)) * 100,
+        "NightDiary_ratio": (NightDiary_count / (MorningDiary_count + NightDiary_count + Memo_count)) * 100,
+        "Memo_ratio": (Memo_count / (MorningDiary_count + NightDiary_count + Memo_count)) * 100,
         "total_MorningDiary_count": MorningDiary_count,
         "total_NightDiary_count": NightDiary_count,
         "total_Memo_count": Memo_count,
