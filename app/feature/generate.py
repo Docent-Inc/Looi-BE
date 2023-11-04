@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 import extcolors
 from app.core.config import settings
+from app.core.security import time_now
 from app.db.models import MorningDiary, NightDiary, Calender, Report, Luck, Chat, Prompt
 from app.feature.aiRequset import send_gpt_request, send_dalle2_request, send_gpt4_request
 import uuid
@@ -121,24 +122,13 @@ async def generate_schedule(text: str, user: User, db: Session) -> str:
         )
 
 async def generate_luck(user: User, db: Session):
-    today = datetime.now(pytz.timezone('Asia/Seoul'))
-    # 매일 오전 9시에 한번만 호출되도록 설정
-    if today.hour < 9:
-        today = today - timedelta(days=1)
-    luck = db.query(Luck).filter(
-            Luck.User_id == user.id,
-            Luck.create_date == today.date(),
-            Luck.is_deleted == False
-    ).first()
-    if luck:
-        return luck.content
+    today = await time_now()
     text = ""
     morning = db.query(MorningDiary).filter(
                 MorningDiary.User_id == user.id,
                 MorningDiary.create_date >= today.date() - timedelta(days=1),
                 MorningDiary.is_deleted == False
             ).first()
-    # db에 데이터가 없으면 빈 문자열 넘겨줌
     if not morning:
         text = ""
     else:
@@ -153,8 +143,6 @@ async def generate_luck(user: User, db: Session):
     db.add(luck)
     db.commit()
     return data
-
-
 
 async def generate_report(user: User, db: Session) -> str:
     text = f"nickname: {user.nickname}\n"
