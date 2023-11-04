@@ -9,7 +9,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core.apiDetail import ApiDetail
-from app.core.security import get_current_user
+from app.core.security import get_current_user, time_now
 from app.db.database import get_db, get_redis_client
 from app.db.models import Calender, MorningDiary, NightDiary, Report
 from app.schemas.response import User, ApiResponse
@@ -21,7 +21,7 @@ async def get_calender(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> ApiResponse:
-    today = datetime.now(pytz.timezone('Asia/Seoul'))
+    today = await time_now()
     upcoming_events = db.query(Calender).filter(
         Calender.User_id == current_user.id,
         Calender.start_time >= today,
@@ -61,7 +61,8 @@ async def get_record(
         db: Session = Depends(get_db),
         redis: redis.Redis = Depends(get_redis_client),
 ) -> ApiResponse:
-    today_str = datetime.now(pytz.timezone('Asia/Seoul')).strftime('%Y-%m-%d')
+    now = await time_now()
+    today_str = now.strftime('%Y-%m-%d')
     redis_key = f"history:{today_str}:user_{current_user.id}"
 
     cached_data_json = redis.get(redis_key)
@@ -92,7 +93,7 @@ async def get_record(
         "NightDiary": [diary.as_dict() for diary in random_night_diaries]
     }
 
-    ttl = (datetime.now(pytz.timezone('Asia/Seoul')).replace(hour=23, minute=59, second=59) - datetime.now(pytz.timezone('Asia/Seoul'))).seconds
+    ttl = (now.replace(hour=23, minute=59, second=59) - now).seconds
     data_json = json.dumps(data, default=default_converter)
     redis.setex(redis_key, ttl, data_json)
 

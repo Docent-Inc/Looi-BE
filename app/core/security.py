@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Any, Union
+
+import pytz
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
@@ -115,3 +117,6 @@ async def text_length(text: str, max_length: int):
             detail=4221,
         )
     return text
+
+async def time_now():
+    return datetime.now(pytz.timezone('Asia/Seoul'))
