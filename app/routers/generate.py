@@ -19,16 +19,8 @@ async def report(
         data=report
     )
 
-@router.get("/luck", tags=["Generate"])
-async def luck(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-) -> ApiResponse:
-    luck = await generate_luck(current_user, db)
-    return ApiResponse(
-        data={"luck": luck}
-    )
+
 
 
 report.__doc__ = f"[API detail]({ApiDetail.generate_report})"
-luck.__doc__ = f"[API detail]({ApiDetail.generate_luck})"
+

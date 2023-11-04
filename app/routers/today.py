@@ -12,6 +12,7 @@ from app.core.apiDetail import ApiDetail
 from app.core.security import get_current_user, time_now
 from app.db.database import get_db, get_redis_client
 from app.db.models import Calender, MorningDiary, NightDiary, Report
+from app.feature.generate import generate_luck
 from app.schemas.response import User, ApiResponse
 
 router = APIRouter(prefix="/today")
@@ -98,3 +99,25 @@ async def get_record(
     redis.setex(redis_key, ttl, data_json)
 
     return ApiResponse(data=data)
+get_record.__doc__ = f"[API detail]({ApiDetail.get_record})"
+
+@router.get("/luck", tags=["Today"])
+async def luck(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    redis: redis.Redis = Depends(get_redis_client),  # Redis 클라이언트 추가
+) -> ApiResponse:
+    now = await time_now()
+    today = now.date()
+    redis_key = f"luck:{today}:user_{current_user.id}"
+
+    cached_luck = redis.get(redis_key)
+    if cached_luck:
+        return ApiResponse(data={"luck": cached_luck})
+
+    luck_content = await generate_luck(current_user, db)
+    ttl = (now.replace(hour=23, minute=59, second=59) - now).seconds
+    redis.setex(redis_key, ttl, luck_content)
+
+    return ApiResponse(data={"luck": luck_content})
+luck.__doc__ = f"[API detail]({ApiDetail.generate_luck})"
