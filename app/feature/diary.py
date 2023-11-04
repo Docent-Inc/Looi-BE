@@ -10,6 +10,8 @@ from bs4 import BeautifulSoup
 from sqlalchemy.orm import Session
 from sqlalchemy import union_all
 from starlette import status
+
+from app.core.security import time_now
 from app.db.models import NightDiary, MorningDiary, Memo, Calender, Chat
 from app.feature.aiRequset import send_gpt_request
 from app.feature.generate import generate_image, generate_diary_name, generate_resolution_gpt
@@ -76,8 +78,8 @@ async def create_morning_diary(content: str, user: User, db: Session) -> int:
         background_color=upper_lower_color,
         diary_name=diary_name,
         resolution=resolution,
-        create_date=datetime.datetime.now(pytz.timezone('Asia/Seoul')),
-        modify_date=datetime.datetime.now(pytz.timezone('Asia/Seoul')),
+        create_date=await time_now(),
+        modify_date=await time_now(),
     )
     try:
         db.add(diary)
@@ -119,7 +121,7 @@ async def update_morning_diary(diary_id: int, content: UpdateDiaryRequest, user:
     try:
         diary.diary_name = content.diary_name
         diary.content = content.diary_content
-        diary.modify_date = datetime.datetime.now(pytz.timezone('Asia/Seoul'))
+        diary.modify_date = await time_now()
         db.commit()
     except:
         raise HTTPException(
@@ -152,7 +154,7 @@ async def create_night_diary(content: str, user: User, db: Session):
         chat = Chat(
             User_id=user.id,
             is_chatbot=False,
-            create_date=datetime.datetime.now(pytz.timezone('Asia/Seoul')),
+            create_date=await time_now(),
             content=content,
         )
         db.add(chat)
@@ -177,8 +179,8 @@ async def create_night_diary(content: str, user: User, db: Session):
         image_url=L[0],
         background_color=upper_lower_color,
         diary_name=diary_name,
-        create_date=datetime.datetime.now(pytz.timezone('Asia/Seoul')),
-        modify_date=datetime.datetime.now(pytz.timezone('Asia/Seoul')),
+        create_date=await time_now(),
+        modify_date=await time_now(),
     )
     try:
         db.add(diary)
@@ -187,7 +189,7 @@ async def create_night_diary(content: str, user: User, db: Session):
             User_id=user.id,
             is_chatbot=True,
             NightDiary_id=diary.id,
-            create_date=datetime.datetime.now(pytz.timezone('Asia/Seoul')),
+            create_date=await time_now(),
             content_type=2,
             content=diary_name,
             image_url=L[0],
@@ -220,7 +222,7 @@ async def update_night_diary(diary_id: int, content: UpdateDiaryRequest, user: U
     try:
         diary.diary_name = content.diary_name
         diary.content = content.diary_content
-        diary.modify_date = datetime.datetime.now(pytz.timezone('Asia/Seoul'))
+        diary.modify_date = await time_now()
         db.commit()
     except:
         raise HTTPException(
@@ -269,8 +271,8 @@ async def create_memo(content: str, user: User, db: Session) -> int:
         title=data['title'],
         content=data['content'],
         User_id=user.id,
-        create_date=datetime.datetime.now(pytz.timezone('Asia/Seoul')),
-        modify_date=datetime.datetime.now(pytz.timezone('Asia/Seoul')),
+        create_date=await time_now(),
+        modify_date=await time_now(),
     )
     try:
         db.add(memo)
@@ -280,7 +282,7 @@ async def create_memo(content: str, user: User, db: Session) -> int:
             User_id=user.id,
             content=content,
             is_chatbot=False,
-            create_date=datetime.datetime.now(pytz.timezone('Asia/Seoul')),
+            create_date=await time_now(),
         )
         db.add(chat)
         db.commit()
@@ -288,7 +290,7 @@ async def create_memo(content: str, user: User, db: Session) -> int:
             User_id=user.id,
             is_chatbot=True,
             Memo_id=memo.id,
-            create_date=datetime.datetime.now(pytz.timezone('Asia/Seoul')),
+            create_date=await time_now(),
             content_type=3,
             content=data['title'],
         )
@@ -494,7 +496,7 @@ async def dairy_list_calender(list_request: CalenderListRequest, current_user: U
             Calender.start_time >= datetime.datetime(year, month, day),
             Calender.start_time < datetime.datetime(year, month, day) + datetime.timedelta(days=1)
         ).all()
-    today = datetime.datetime.now(pytz.timezone('Asia/Seoul'))
+    today = await time_now()
     today_count = db.query(Calender).filter(
         Calender.User_id == current_user.id,
         Calender.is_deleted == False,
