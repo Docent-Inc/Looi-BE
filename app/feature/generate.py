@@ -87,6 +87,7 @@ async def generate_schedule(text: str, user: User, db: Session) -> str:
             start_time=schedule['start_time'],
             end_time=schedule['end_time'],
             content=schedule['description'],
+            create_date=await time_now(),
         )
         db.add(calender)
         db.commit()

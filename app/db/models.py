@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Text, ForeignKey, String, Boolean, DateTime, func, JSON, Date
+from sqlalchemy import Column, Integer, Text, ForeignKey, String, Boolean, DateTime, func, JSON, Date, FLOAT
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -24,6 +24,8 @@ class User(Base):
     push_morning = Column(Boolean, default=True)
     push_night = Column(Boolean, default=True)
     push_report = Column(Boolean, default=True)
+    create_date = Column(DateTime, nullable=False)
+    deleted_date = Column(DateTime, nullable=True)
 
 
 class MorningDiary(Base):
@@ -89,6 +91,7 @@ class Calender(Base):
     title = Column(Text, nullable=False)
     content = Column(Text, nullable=False)
     is_deleted = Column(Boolean, default=False, index=True)
+    create_date = Column(DateTime, nullable=False)
 
 
 class Chat(Base):
@@ -171,6 +174,18 @@ class ApiRequestLog(Base):
     model = Column(String(50), nullable=False)
     create_date = Column(DateTime, nullable=False)
 
+class Dashboard(Base):
+    __tablename__ = "Dashboard"
+
+    id = Column(Integer, primary_key=True)
+    today_user = Column(Integer, nullable=False)
+    today_chat = Column(Integer, nullable=False)
+    today_cost = Column(FLOAT, nullable=False)
+    today_morning_diary = Column(Integer, nullable=False)
+    today_night_diary = Column(Integer, nullable=False)
+    today_calender = Column(Integer, nullable=False)
+    today_memo = Column(Integer, nullable=False)
+    create_date = Column(DateTime, nullable=False)
 
 def get_Base():
     return Base

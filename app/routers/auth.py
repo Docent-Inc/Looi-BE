@@ -7,6 +7,7 @@ from app.db.database import get_db
 from sqlalchemy.orm import Session
 from app.core.security import decode_access_token, create_token
 from app.feature.lineOAuth2 import LINE_AUTH_URL, LINE_AUTH_URL_TEST, get_user_line, get_user_line_test
+from app.feature.slackBot import slack_bot
 from app.schemas.response import TokenData, ApiResponse, KakaoTokenData
 from app.schemas.request import TokenRefresh, UserUpdateRequest, PushUpdateRequest
 from app.feature.user import get_user_by_email, create_user, authenticate_user, changeNickName, changePassword, \
@@ -110,6 +111,7 @@ async def callback(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=4403)
 
     expires_in, refresh_expires_in, access_token, refresh_token = await create_token(user.email)
+    await slack_bot(f"회원가입: {user.nickname}({user.email})")
     return ApiResponse(
         success=True,
         data=TokenData(
