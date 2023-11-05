@@ -28,7 +28,7 @@ async def generate():
     finally:
         db.close()
 
-cron_task = aiocron.crontab('0 0 * * 1', func=generate, tz=pytz.timezone('Asia/Seoul'))
+cron_task = aiocron.crontab('0 19 * * 0', func=generate, tz=pytz.timezone('Asia/Seoul'))
 
 def validate_report_structure(report_data):
     try:
@@ -186,5 +186,3 @@ async def list_report(page:int, user: User, db: Session) -> list:
                 "is_read": report.is_read
             } for report in reports
         ]
-
-
