@@ -18,17 +18,17 @@ import json
 from app.schemas.response import User
 SERVICE_ACCOUNT_INFO = json.loads(settings.GOOGLE_APPLICATION_CREDENTIALS_JSON)
 
-async def generate_resolution_gpt(text: str) -> str:
-    dream_resolution = await send_gpt4_request(2, text)
+async def generate_resolution_gpt(text: str, user: User, db: Session) -> str:
+    dream_resolution = await send_gpt4_request(2, text, user, db)
     return dream_resolution
-async def generate_diary_name(message: str) -> str:
-    dreamName = await send_gpt_request(2, message)
+async def generate_diary_name(message: str, user: User, db: Session) -> str:
+    dreamName = await send_gpt_request(2, message, user, db)
     return dreamName
-async def generate_image(image_model: int, message: str, db: Session):
-    prompt = await send_gpt_request(3, message)
+async def generate_image(image_model: int, message: str, user: User, db: Session):
+    prompt = await send_gpt_request(3, message, user, db)
 
     if image_model == 1:
-        dream_image_url = await send_dalle2_request(prompt)
+        dream_image_url = await send_dalle2_request(prompt, user, db)
 
     save_promt = Prompt(
         text=message,
@@ -79,7 +79,7 @@ async def generate_image(image_model: int, message: str, db: Session):
     return [blob.public_url, upper_dominant_color, lower_dominant_color]
 
 async def generate_schedule(text: str, user: User, db: Session) -> str:
-    schedule = await send_gpt_request(4, text)
+    schedule = await send_gpt_request(4, text, user, db)
     try:
         calender = Calender(
             User_id=user.id,
@@ -134,7 +134,7 @@ async def generate_luck(user: User, db: Session):
     else:
         if morning:
             text += morning.content
-    data = await send_gpt_request(5, text)
+    data = await send_gpt_request(5, text, user, db)
     luck = Luck(
         User_id=user.id,
         content=data,
@@ -143,73 +143,3 @@ async def generate_luck(user: User, db: Session):
     db.add(luck)
     db.commit()
     return data
-
-async def generate_report(user: User, db: Session) -> str:
-    text = f"nickname: {user.nickname}\n"
-    today = datetime.now(pytz.timezone('Asia/Seoul'))
-    one_week_ago = today - timedelta(days=30)
-    total_count = 0
-
-    # 6일 이내의 데이터가 있으면 에러 반환
-    report = db.query(Report).filter(
-        Report.User_id == user.id,
-        Report.create_date <= today,
-        Report.create_date >= one_week_ago.date(),
-        Report.is_deleted == False
-    ).first()
-
-    if report:
-        return json.loads(report.content)
-
-    # Process Morning Diary
-    morning_diaries = db.query(MorningDiary).filter(
-        MorningDiary.User_id == user.id,
-        MorningDiary.create_date.between(one_week_ago.date(), today),
-        MorningDiary.is_deleted == False
-    ).all()
-
-    text += "Dreams of the last week:\n" + "\n".join(diary.content for diary in morning_diaries)
-    total_count += len(morning_diaries)
-
-    # Process Night Diary
-    night_diaries = db.query(NightDiary).filter(
-        NightDiary.User_id == user.id,
-        NightDiary.create_date.between(one_week_ago.date(), today),
-        NightDiary.is_deleted == False
-    ).all()
-
-    text += "\nDiary for the last week:\n" + "\n".join(diary.content for diary in night_diaries)
-    total_count += len(night_diaries)
-
-    if total_count < 5:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=4019
-        )
-
-    # Process Calender
-    calenders = db.query(Calender).filter(
-        Calender.User_id == user.id,
-        Calender.start_time.between(one_week_ago.date(), today),
-        Calender.is_deleted == False
-    ).all()
-
-    text += "\nSchedule for the last week:\n" + "\n".join(content.title for content in calenders)
-
-    report = await send_gpt4_request(3, text)
-
-    try:
-        mental_report = Report(
-            User_id=user.id,
-            content=json.dumps(report, ensure_ascii=False),
-            create_date=today,
-            is_deleted=False,
-        )
-        db.add(mental_report)
-        db.commit()
-    except:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=5000
-        )
-    return report

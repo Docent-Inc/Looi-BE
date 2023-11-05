@@ -33,24 +33,6 @@ async def get_calender(
     )
 get_calender.__doc__ = f"[API detail]({ApiDetail.get_calender})"
 
-@router.get("/report", tags=["Today"])
-async def get_report(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-) -> ApiResponse:
-    report = db.query(Report).filter(
-        Report.User_id == current_user.id,
-        Report.is_deleted == False
-    ).order_by(Report.create_date.desc()).first()
-    if report is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=4020,
-        )
-    return ApiResponse(
-        data={"create_date": report.create_date, "content": json.loads(report.content)}
-    )
-
 def default_converter(o):
     if isinstance(o, datetime):
         return o.isoformat()

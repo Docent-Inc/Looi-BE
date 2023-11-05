@@ -23,7 +23,7 @@ async def chat(
     db: Session = Depends(get_db),
     redis: redis.Redis = Depends(get_redis_client),
 ) -> ApiResponse:
-    text = await text_length(body.content, settings.MAX_LENGTH) # 500자 이하인지 확인
+    text = await text_length(body.content, settings.MAX_LENGTH)
     now = await time_now()
     chat_count_key = f"chat_count:{current_user.id}:{now.day}"
     current_count = redis.get(chat_count_key) or 0
@@ -33,7 +33,7 @@ async def chat(
             detail=4404
         )
     try:
-        number = await send_gpt4_request(1, text)
+        number = await send_gpt4_request(1, text, current_user, db)
         text_type = int(number.strip())
         if text_type == 1:
             diary_id = await create_morning_diary(body.content, current_user, db)

@@ -120,8 +120,10 @@ class Report(Base):
     User = relationship('User', backref='reports')
     User_id = Column(Integer, ForeignKey('User.id'), nullable=False, index=True)
     content = Column(Text, nullable=False)
+    image_url = Column(String(100), nullable=True)
     create_date = Column(DateTime, nullable=False)
     is_deleted = Column(Boolean, default=False, index=True)
+    is_read = Column(Boolean, default=False, index=True)
 
 class Luck(Base):
     __tablename__ = "Luck"
@@ -155,6 +157,20 @@ class HelperChat(Base):
     text = Column(String(200), nullable=True)
     type = Column(Integer, nullable=True)
     is_deleted = Column(Boolean, default=False, index=True)
+
+class ApiRequestLog(Base):
+    __tablename__ = "ApiRequestLog"
+
+    id = Column(Integer, primary_key=True)
+    User_id = Column(Integer, ForeignKey('User.id'), nullable=False, index=True)
+    is_success = Column(Boolean, nullable=False)
+    request_type = Column(String(50), nullable=False)
+    request_token = Column(Integer, nullable=False)
+    response_token = Column(Integer, nullable=False)
+    response_time_ms = Column(Integer, nullable=False)
+    model = Column(String(50), nullable=False)
+    create_date = Column(DateTime, nullable=False)
+
 
 def get_Base():
     return Base

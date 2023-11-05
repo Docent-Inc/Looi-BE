@@ -1,9 +1,7 @@
 import asyncio
-import json
 from sqlalchemy import desc, literal
 from sqlalchemy import null
 from dateutil.relativedelta import relativedelta
-from sqlalchemy import text
 from aiohttp import ClientSession
 from fastapi import HTTPException
 from bs4 import BeautifulSoup
@@ -64,9 +62,9 @@ async def create_morning_diary(content: str, user: User, db: Session) -> int:
     mbti_content = content if user.mbti is None else user.mbti + ", " + content
 
     L, diary_name, resolution = await asyncio.gather(
-        generate_image(user.image_model, content, db),
-        generate_diary_name(content),
-        generate_resolution_gpt(mbti_content)
+        generate_image(user.image_model, content, user, db),
+        generate_diary_name(content, user, db),
+        generate_resolution_gpt(mbti_content, user, db)
     )
 
     upper_lower_color = "[\"" + str(L[1]) + "\", \"" + str(L[2]) + "\"]"
@@ -88,7 +86,7 @@ async def create_morning_diary(content: str, user: User, db: Session) -> int:
             User_id=user.id,
             is_chatbot=True,
             MorningDiary_id=diary.id,
-            create_date=datetime.datetime.now(pytz.timezone('Asia/Seoul')),
+            create_date=await time_now(),
             content_type=1,
             content=diary_name,
             image_url=L[0],
@@ -166,8 +164,8 @@ async def create_night_diary(content: str, user: User, db: Session):
         )
     # 그림과 일기의 제목을 생성합니다.
     L, diary_name = await asyncio.gather(
-        generate_image(user.image_model, content, db),
-        generate_diary_name(content)
+        generate_image(user.image_model, content, user, db),
+        generate_diary_name(content, user, db)
     )
 
     upper_lower_color = "[\"" + str(L[1]) + "\", \"" + str(L[2]) + "\"]"
@@ -266,7 +264,7 @@ async def create_memo(content: str, user: User, db: Session) -> int:
             else:
                 data = {"title": title, "content": content}
     else:
-        data = await send_gpt_request(6, content)
+        data = await send_gpt_request(6, content, user, db)
     memo = Memo(
         title=data['title'],
         content=data['content'],
