@@ -111,7 +111,6 @@ async def callback(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=4403)
 
     expires_in, refresh_expires_in, access_token, refresh_token = await create_token(user.email)
-    await slack_bot(f"회원가입: {user.nickname}({user.email})")
     return ApiResponse(
         success=True,
         data=TokenData(
