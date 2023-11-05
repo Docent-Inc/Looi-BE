@@ -18,6 +18,7 @@ class ApiDetail:
     get_calender = "https://www.notion.so/docent-ai/85d560a91a7c401896eb367abd8e164b?pvs=4"
     list_calender = "https://www.notion.so/docent-ai/Calender-list-3a20a53c2a424bc19c68060483b25b4a?pvs=4"
     get_record = "https://www.notion.so/docent-ai/66ec3be5fe914464908dfd2939160d91?pvs=4"
-    get_report_list = ""
+    get_report_list = "https://www.notion.so/docent-ai/list-e2b427297e1e467b9754c7ff3c418335?pvs=4"
+
 
 

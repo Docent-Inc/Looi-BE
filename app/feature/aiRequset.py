@@ -178,7 +178,7 @@ async def send_gpt_request(prompt_num: int , messages_prompt: str, current_user:
                     detail=4501,
                 )
 async def send_gpt4_request(prompt_num: int, messages_prompt: str, current_user: User, db: Session, retries=3):
-    prompt_dict = {1: "텍스트 분류", 2: "해몽", 3: "마음상태 보고서"}
+    prompt_dict = {1: "텍스트 분류", 2: "해몽", 3: "한 주 돌아보기"}
     if prompt_num == 1:
         prompt = prompt1.copy()
         messages_prompt = f"{datetime.datetime.now(pytz.timezone('Asia/Seoul'))}, {messages_prompt}"
@@ -207,10 +207,7 @@ async def send_gpt4_request(prompt_num: int, messages_prompt: str, current_user:
                 db=db
             )
             content = chat.choices[0].message.content
-            if prompt_num == 3:
-                return json.loads(content)
-            else:
-                return content
+            return content
         except Exception as e:
             print(f"GPT API Error {e}")
             if i < retries - 1:

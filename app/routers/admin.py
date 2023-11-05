@@ -18,9 +18,6 @@ async def get_user_info(
     current_user: User = Depends(get_current_user_is_admin),
     db: Session = Depends(get_db),
 ):
-    """
-    [API detail](https://docs.google.com/spreadsheets/d/17lnN82TlJjLV46Fdh3mooUOFEw_R6EtDG6938KgIshA/edit#gid=531870320)
-    """
     user = db.query(User).filter(User.id == user_id).first()
     if user:
         user.hashed_password = None
