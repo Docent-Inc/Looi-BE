@@ -1,6 +1,6 @@
 import time
 from datetime import timedelta
-
+import asyncio
 import aiocron
 import pytz
 from fastapi import HTTPException, status, Depends
@@ -10,9 +10,9 @@ import json
 from app.core.security import time_now
 from app.db.database import get_SessionLocal
 from app.db.models import Report, MorningDiary, NightDiary, Calender
-from app.feature.aiRequset import send_gpt4_request
+from app.feature.aiRequset import send_gpt4_request, send_gpt_request, send_dalle2_request
 from app.db.models import User
-
+from app.feature.generate import generate_image
 async def generate():
     SessionLocal = get_SessionLocal()
     db = SessionLocal()
@@ -28,9 +28,13 @@ async def generate():
     finally:
         db.close()
 
-cron_task = aiocron.crontab('0 0 * * *', func=generate, tz=pytz.timezone('Asia/Seoul'))
+cron_task = aiocron.crontab('0 0 * * 1', func=generate, tz=pytz.timezone('Asia/Seoul'))
 
 def validate_report_structure(report_data):
+    try:
+        report_data = json.loads(report_data)
+    except:
+        return False
     required_keys = {
         "mental_state": str,
         "positives": dict,
@@ -99,16 +103,26 @@ async def generate_report(user: User, db: Session) -> str:
 
     text += "\nSchedule for the last week:\n" + "\n".join(content.title for content in calenders)
 
-    report_data = await send_gpt4_request(3, text, user, db)
-    parsed_report_data = json.loads(report_data)
-    if not validate_report_structure(parsed_report_data):
-        print(f"Invalid report structure for user {user.nickname}")
-        return False
+    retries = 0
+    is_success = False
+    MAX_RETRIES = 3
+    while is_success == False and retries < MAX_RETRIES:
+        report_data = await send_gpt_request(3, text, user, db)
+        if not validate_report_structure(report_data):
+            print(f"Invalid report structure for user {user.nickname}, retrying...{retries+1}")
+            retries += 1
+        else:
+            is_success = True
+
+    data = json.loads(report_data)
+    text = data["mental_state"]
+    L = await generate_image(1, text, user, db)
 
     mental_report = Report(
         User_id=user.id,
-        content=json.dumps(report, ensure_ascii=False),
+        content=json.dumps(report_data, ensure_ascii=False),
         create_date=today,
+        image_url=L[0],
         is_deleted=False,
     )
     db.add(mental_report)
