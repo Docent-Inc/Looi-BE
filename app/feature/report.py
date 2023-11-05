@@ -10,7 +10,7 @@ import json
 from app.core.security import time_now
 from app.db.database import get_SessionLocal
 from app.db.models import Report, MorningDiary, NightDiary, Calender
-from app.feature.aiRequset import send_gpt4_request, send_gpt_request, send_dalle2_request
+from app.feature.aiRequset import send_gpt_request, send_gpt4_request
 from app.db.models import User
 from app.feature.generate import generate_image
 async def generate():
@@ -19,12 +19,7 @@ async def generate():
     try:
         users = db.query(User).all()
         for user in users:
-            print(f"Generating report for {user.nickname}")
-            is_success = await generate_report(user, db)
-            if is_success:
-                print(f"Report generated for {user.nickname}")
-            else:
-                print(f"Report error for {user.nickname}")
+            await generate_report(user, db)
     finally:
         db.close()
 
@@ -105,9 +100,9 @@ async def generate_report(user: User, db: Session) -> str:
 
     retries = 0
     is_success = False
-    MAX_RETRIES = 3
+    MAX_RETRIES = 5
     while is_success == False and retries < MAX_RETRIES:
-        report_data = await send_gpt_request(3, text, user, db)
+        report_data = await send_gpt4_request(3, text, user, db)
         if not validate_report_structure(report_data):
             print(f"Invalid report structure for user {user.nickname}, retrying...{retries+1}")
             retries += 1
