@@ -1,6 +1,6 @@
 class ApiDetail:
     error_status = "https://www.notion.so/docent-ai/status_code-78cb968f64224515a56bcad6233e98c0?pvs=4"
-    generate_report = "https://www.notion.so/docent-ai/fe8df564b98944ba887239d719feac21?pvs=4"
+    get_report = "https://www.notion.so/docent-ai/fe8df564b98944ba887239d719feac21?pvs=4"
     generate_luck = "https://www.notion.so/docent-ai/8f8feda7cfa544839c61e457bf001edc?pvs=4"
     chat = "https://www.notion.so/docent-ai/Looki-533d741998e84ab385adda3118669421?pvs=4"
     generate_chat_list = "https://www.notion.so/docent-ai/8a89bc255c4c44869bcca8158217659f?pvs=4"
@@ -18,5 +18,6 @@ class ApiDetail:
     get_calender = "https://www.notion.so/docent-ai/85d560a91a7c401896eb367abd8e164b?pvs=4"
     list_calender = "https://www.notion.so/docent-ai/Calender-list-3a20a53c2a424bc19c68060483b25b4a?pvs=4"
     get_record = "https://www.notion.so/docent-ai/66ec3be5fe914464908dfd2939160d91?pvs=4"
+    get_report_list = ""
 
 

@@ -1,12 +1,14 @@
 import asyncio
 import json
 import openai
-from aiohttp import ClientSession
 from fastapi import HTTPException, status
 import datetime
 import pytz
+from sqlalchemy.orm import Session
+
 from app.core.config import settings
-from app.core.security import text_length
+from app.core.security import time_now
+from app.db.models import ApiRequestLog, User
 
 openai.api_key = settings.GPT_API_KEY
 
@@ -113,22 +115,33 @@ prompt8 = [
     {"role": "system", "content": "{\"title\": \"해야될 일\", \"content\":\"컴퓨터 구조 책 다 읽고 정리하기\"}"}
 ]
 
+async def api_log(request_type: str, request_token: int, response_token: int, response_time_ms: int, model: str, user_id: int, db: Session):
+    api_request_log = ApiRequestLog(
+        request_type=request_type,
+        request_token=request_token,
+        response_token=response_token,
+        response_time_ms=response_time_ms,
+        model=model,
+        is_success=True,
+        create_date=await time_now(),
+        User_id=user_id
+    )
+    db.add(api_request_log)
+    db.commit()
+    db.refresh(api_request_log)
 
-async def send_gpt_request(prompt_num, messages_prompt, retries=3):
-    '''
-    주어진 프롬프트로 GPT API에 요청을 보내고, 실패할 경우 3번까지 재시도합니다.
-    prompt_num: 2. 제목 만들기, 3. 프롬프트 만들기, 4. 일정 만들기
-    '''
-    if prompt_num == 2: # 제목 만들기
+async def send_gpt_request(prompt_num: int , messages_prompt: str, current_user: User, db: Session, retries=3):
+    prompt_dict = {2: "제목", 3: "이미지 프롬프트", 4: "일정", 5: "오늘의 운세", 6: "메모"}
+    if prompt_num == 2:
         prompt = prompt2.copy()
-    elif prompt_num == 3: # 프롬프트 만들기
+    elif prompt_num == 3:
         prompt = prompt3.copy()
-    elif prompt_num == 4: # 일정 만들기
+    elif prompt_num == 4:
         messages_prompt = f"local time: {datetime.datetime.now(pytz.timezone('Asia/Seoul'))} {days[datetime.datetime.now(pytz.timezone('Asia/Seoul')).weekday()]}, {messages_prompt}"
         prompt = prompt6.copy()
-    elif prompt_num == 5: # 오늘의 운세 만들기
+    elif prompt_num == 5:
         prompt = prompt4.copy()
-    elif prompt_num == 6: # 메모 만들기
+    elif prompt_num == 6:
         prompt = prompt8.copy()
     else:
         raise HTTPException(
@@ -138,7 +151,18 @@ async def send_gpt_request(prompt_num, messages_prompt, retries=3):
     prompt.append({"role": "user", "content": messages_prompt})
     for i in range(retries):
         try:
+            start_time = await time_now()
             chat = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=prompt)
+            end_time = await time_now()
+            await api_log(
+                user_id=current_user.id,
+                request_type=prompt_dict[prompt_num],
+                request_token=chat.usage.prompt_tokens,
+                response_token=chat.usage.completion_tokens,
+                response_time_ms=(end_time - start_time).microseconds // 100,
+                model=chat.model,
+                db=db
+            )
             if prompt_num == 4 or prompt_num == 6:
                 return json.loads(chat.choices[0].message.content)
             else:
@@ -153,17 +177,14 @@ async def send_gpt_request(prompt_num, messages_prompt, retries=3):
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail=4501,
                 )
-async def send_gpt4_request(prompt_num, messages_prompt, retries=3):
-    '''
-    주어진 프롬프트로 GPT4 API에 요청을 보내고, 실패할 경우 3번까지 재시도합니다.
-    prompt_num: 1. 택스트 분류 2. 해몽 3. 마음상태 보고서
-    '''
-    if prompt_num == 1: # 택스트 분류
+async def send_gpt4_request(prompt_num: int, messages_prompt: str, current_user: User, db: Session, retries=3):
+    prompt_dict = {1: "텍스트 분류", 2: "해몽", 3: "마음상태 보고서"}
+    if prompt_num == 1:
         prompt = prompt1.copy()
         messages_prompt = f"{datetime.datetime.now(pytz.timezone('Asia/Seoul'))}, {messages_prompt}"
-    elif prompt_num == 2: # 해몽
+    elif prompt_num == 2:
         prompt = prompt5.copy()
-    elif prompt_num == 3: # 마음상태 보고서
+    elif prompt_num == 3:
         prompt = prompt7.copy()
     else:
         raise HTTPException(
@@ -173,7 +194,18 @@ async def send_gpt4_request(prompt_num, messages_prompt, retries=3):
     prompt.append({"role": "user", "content": messages_prompt})
     for i in range(retries):
         try:
+            start_time = await time_now()
             chat = openai.ChatCompletion.create(model="gpt-4", messages=prompt)
+            end_time = await time_now()
+            await api_log(
+                user_id=current_user.id,
+                request_type=prompt_dict[prompt_num],
+                request_token=chat.usage.prompt_tokens,
+                response_token=chat.usage.completion_tokens,
+                response_time_ms=(end_time - start_time).microseconds//100,
+                model=chat.model,
+                db=db
+            )
             content = chat.choices[0].message.content
             if prompt_num == 3:
                 return json.loads(content)
@@ -190,15 +222,26 @@ async def send_gpt4_request(prompt_num, messages_prompt, retries=3):
                     detail=4501,
                 )
 
-async def send_dalle2_request(messages_prompt, retries=3):
+async def send_dalle2_request(messages_prompt: str, user: User, db: Session, retries=3):
     for i in range(retries):
         try:
+            start_time = await time_now()
             response = await asyncio.to_thread(
                 openai.Image.create,
                 prompt=messages_prompt[:255],
                 n=1,
                 size="512x512",
                 response_format="url"
+            )
+            end_time = await time_now()
+            await api_log(
+                user_id=user.id,
+                request_type="이미지 생성",
+                request_token=0,
+                response_token=0,
+                response_time_ms=(end_time - start_time).microseconds//100,
+                model="DaLLE-2",
+                db=db
             )
             return response['data'][0]['url']
         except Exception as e:
