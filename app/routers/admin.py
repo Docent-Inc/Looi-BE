@@ -94,3 +94,11 @@ async def delete_helper(
     db.delete(data)
     db.commit()
     return ApiResponse()
+
+@router.get("/user/list", response_model=ApiResponse, tags=["Admin"])
+async def get_user_list(
+    current_user: User = Depends(get_current_user_is_admin),
+    db: Session = Depends(get_db),
+):
+    data = db.query(User).all()
+    return ApiResponse(data=data)

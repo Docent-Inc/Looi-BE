@@ -1,8 +1,5 @@
-import aioredis
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse
-from fastapi_admin.providers.login import UsernamePasswordProvider
-
 from app.core.apiDetail import ApiDetail
 from app.routers import auth, report, diary, today, admin, chat
 from app.core.status_code import CUSTOM_EXCEPTIONS
@@ -11,7 +8,6 @@ from app.core.middleware import TimingMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from app.core.config import settings
-from fastapi_admin.app import app as admin_app
 
 app = FastAPI(title="Look API",
               description=f"[Error Status]({ApiDetail.error_status})",
@@ -21,7 +17,6 @@ app = FastAPI(title="Look API",
               root_path=settings.ROOT_PATH,
               openapi_url='/openapi.json')
 
-app.mount("/admin", admin_app)
 app.include_router(auth.router)
 app.include_router(today.router)
 app.include_router(chat.router)

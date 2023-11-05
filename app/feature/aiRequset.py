@@ -159,7 +159,7 @@ async def send_gpt_request(prompt_num: int , messages_prompt: str, current_user:
                 request_type=prompt_dict[prompt_num],
                 request_token=chat.usage.prompt_tokens,
                 response_token=chat.usage.completion_tokens,
-                response_time_ms=(end_time - start_time).microseconds // 100,
+                response_time_ms=int((end_time - start_time).total_seconds() * 1000),
                 model=chat.model,
                 db=db
             )
@@ -202,7 +202,7 @@ async def send_gpt4_request(prompt_num: int, messages_prompt: str, current_user:
                 request_type=prompt_dict[prompt_num],
                 request_token=chat.usage.prompt_tokens,
                 response_token=chat.usage.completion_tokens,
-                response_time_ms=(end_time - start_time).microseconds//100,
+                response_time_ms=int((end_time - start_time).total_seconds() * 1000),
                 model=chat.model,
                 db=db
             )
@@ -236,7 +236,7 @@ async def send_dalle2_request(messages_prompt: str, user: User, db: Session, ret
                 request_type="이미지 생성",
                 request_token=0,
                 response_token=0,
-                response_time_ms=(end_time - start_time).microseconds//100,
+                response_time_ms=int((end_time - start_time).total_seconds() * 1000),
                 model="DaLLE-2",
                 db=db
             )
