@@ -25,3 +25,5 @@ aiohttp==3.8.4
 beautifulsoup4==4.12.2
 redis==5.0.1
 python-dateutil==2.6.1
+aioredis==2.0.1
+fastapi-admin==1.0.4
