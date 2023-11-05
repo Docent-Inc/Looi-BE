@@ -22,6 +22,8 @@ class Settings(BaseSettings):
     ROOT_PATH: str
     MAX_LENGTH: int
     MAX_CALL: int
+    SLACK_ID: str
+    SLACK_BOT_TOKEN: str
     class Config:
         env_file = ".env"
 

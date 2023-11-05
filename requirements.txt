@@ -27,3 +27,4 @@ redis==5.0.1
 python-dateutil==2.6.1
 aioredis==2.0.1
 fastapi-admin==1.0.4
+slack_sdk==3.23.0

@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from app.core.security import verify_password, get_password_hash
+from app.core.security import verify_password, get_password_hash, time_now
 from app.schemas.request import UserCreate, UserUpdateRequest, PushUpdateRequest
 from typing import Optional
 from app.core.security import get_user_by_email, get_user_by_nickname
@@ -15,7 +15,8 @@ async def create_user(db: Session, user: UserCreate) -> User:
         email=user.email,
         hashed_password=hashed_password,
         image_model=1,
-        is_deleted=False
+        is_deleted=False,
+        create_date=await time_now(),
     )
     try:
         db.add(db_user)
@@ -162,6 +163,7 @@ async def user_kakao(kakao_data: dict, db: Session) -> Optional[User]:
             language_id=1,
             mbti=str(0),
             Oauth="kakao",
+            create_date=await time_now(),
         )
         is_sign_up = True
         try:
@@ -212,6 +214,7 @@ async def user_line(kakao_data: dict, db: Session) -> Optional[User]:
             language_id=1,
             mbti=str(0),
             Oauth="line",
+            create_date=await time_now(),
         )
         is_sign_up = True
         try:

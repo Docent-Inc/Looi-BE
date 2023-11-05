@@ -26,6 +26,8 @@ async def chat(
     text = await text_length(body.content, settings.MAX_LENGTH)
     now = await time_now()
     chat_count_key = f"chat_count:{current_user.id}:{now.day}"
+    total_count_key = f"chat_count:total"
+    total_count = redis.get(total_count_key) or 0
     current_count = redis.get(chat_count_key) or 0
     if int(current_count) > settings.MAX_CALL:
         raise HTTPException(
@@ -58,6 +60,7 @@ async def chat(
             detail=4013
         )
     redis.set(chat_count_key, int(current_count) + 1, ex=86400)  # 하루 동안 유효한 카운트
+    redis.set(total_count_key, int(total_count) + 1, ex=86400)  # 하루 동안 유효한 카운트
     return ApiResponse(
         data={
             "calls_left": settings.MAX_CALL - int(current_count) - 1,
