@@ -263,5 +263,5 @@ async def scheduled_task():
             await release_lock(redis_client, lock_key)
 
 # aiocron 스케줄러 설정
-cron_task = aiocron.crontab('59 19 * * *', func=scheduled_task, start=False, tz=pytz.timezone('Asia/Seoul'))
+cron_task = aiocron.crontab('59 23 * * *', func=scheduled_task, start=False, tz=pytz.timezone('Asia/Seoul'))
 cron_task.start()
