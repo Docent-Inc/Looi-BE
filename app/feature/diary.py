@@ -8,9 +8,11 @@ from bs4 import BeautifulSoup
 from sqlalchemy.orm import Session
 from sqlalchemy import union_all
 from starlette import status
+from fastapi import BackgroundTasks
 
 from app.core.security import time_now
-from app.db.models import NightDiary, MorningDiary, Memo, Calender, Chat
+from app.db.database import get_redis_client
+from app.db.models import NightDiary, MorningDiary, Memo, Calender
 from app.feature.aiRequset import send_gpt_request
 from app.feature.generate import generate_image, generate_diary_name, generate_resolution_gpt
 import datetime
@@ -43,28 +45,30 @@ def transform_memo(memo):
         'is_deleted': memo['is_deleted']
     }
 
-async def create_morning_diary(content: str, user: User, db: Session) -> int:
-    try:
-        chat = Chat(
-            User_id=user.id,
-            is_chatbot=False,
-            create_date=datetime.datetime.now(pytz.timezone('Asia/Seoul')),
-            content=content,
-        )
-        db.add(chat)
-        db.commit()
-    except:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=5000,  # 에러 메시지를 반환합니다.
-        )
+async def create_morning_diary(content: str, user: User, db: Session, background_tasks: BackgroundTasks) -> int:
+    # try:
+    #     chat = Chat(
+    #         User_id=user.id,
+    #         is_chatbot=False,
+    #         create_date=datetime.datetime.now(pytz.timezone('Asia/Seoul')),
+    #         content=content,
+    #     )
+    #     db.add(chat)
+    #     db.commit()
+    # except:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+    #         detail=5000,  # 에러 메시지를 반환합니다.
+    #     )
     # 그림과 일기의 제목과 해몽을 생성합니다.
     mbti_content = content if user.mbti is None else user.mbti + ", " + content
+    redis_client = await get_redis_client()
+    redis_key = "resolution:" + str(user.id)
+    background_tasks.add_task(generate_resolution_gpt, mbti_content, user, db, redis_key)
 
-    L, diary_name, resolution = await asyncio.gather(
+    L, diary_name = await asyncio.gather(
         generate_image(user.image_model, content, user, db),
         generate_diary_name(content, user, db),
-        generate_resolution_gpt(mbti_content, user, db)
     )
 
     upper_lower_color = "[\"" + str(L[1]) + "\", \"" + str(L[2]) + "\"]"
@@ -75,24 +79,25 @@ async def create_morning_diary(content: str, user: User, db: Session) -> int:
         image_url=L[0],
         background_color=upper_lower_color,
         diary_name=diary_name,
-        resolution=resolution,
+        resolution="잠시만 기다려주세요. 꿈을 분석 중이에요!",
         create_date=await time_now(),
         modify_date=await time_now(),
     )
     try:
         db.add(diary)
         db.commit()
-        chat = Chat(
-            User_id=user.id,
-            is_chatbot=True,
-            MorningDiary_id=diary.id,
-            create_date=await time_now(),
-            content_type=1,
-            content=diary_name,
-            image_url=L[0],
-        )
-        db.add(chat)
-        db.commit()
+        await redis_client.set(redis_key, diary.id)
+        # chat = Chat(
+        #     User_id=user.id,
+        #     is_chatbot=True,
+        #     MorningDiary_id=diary.id,
+        #     create_date=await time_now(),
+        #     content_type=1,
+        #     content=diary_name,
+        #     image_url=L[0],
+        # )
+        # db.add(chat)
+        # db.commit()
     except:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -148,20 +153,20 @@ async def list_morning_diary(page: int, user: User, db: Session):
     return diaries
 
 async def create_night_diary(content: str, user: User, db: Session):
-    try:
-        chat = Chat(
-            User_id=user.id,
-            is_chatbot=False,
-            create_date=await time_now(),
-            content=content,
-        )
-        db.add(chat)
-        db.commit()
-    except:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=5000,  # 에러 메시지를 반환합니다.
-        )
+    # try:
+    #     chat = Chat(
+    #         User_id=user.id,
+    #         is_chatbot=False,
+    #         create_date=await time_now(),
+    #         content=content,
+    #     )
+    #     db.add(chat)
+    #     db.commit()
+    # except:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+    #         detail=5000,  # 에러 메시지를 반환합니다.
+    #     )
     # 그림과 일기의 제목을 생성합니다.
     L, diary_name = await asyncio.gather(
         generate_image(user.image_model, content, user, db),
@@ -183,17 +188,17 @@ async def create_night_diary(content: str, user: User, db: Session):
     try:
         db.add(diary)
         db.commit()
-        chat = Chat(
-            User_id=user.id,
-            is_chatbot=True,
-            NightDiary_id=diary.id,
-            create_date=await time_now(),
-            content_type=2,
-            content=diary_name,
-            image_url=L[0],
-        )
-        db.add(chat)
-        db.commit()
+        # chat = Chat(
+        #     User_id=user.id,
+        #     is_chatbot=True,
+        #     NightDiary_id=diary.id,
+        #     create_date=await time_now(),
+        #     content_type=2,
+        #     content=diary_name,
+        #     image_url=L[0],
+        # )
+        # db.add(chat)
+        # db.commit()
     except:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -276,24 +281,24 @@ async def create_memo(content: str, user: User, db: Session) -> int:
         db.add(memo)
         db.commit()
         db.refresh(memo)
-        chat = Chat(
-            User_id=user.id,
-            content=content,
-            is_chatbot=False,
-            create_date=await time_now(),
-        )
-        db.add(chat)
-        db.commit()
-        chat = Chat(
-            User_id=user.id,
-            is_chatbot=True,
-            Memo_id=memo.id,
-            create_date=await time_now(),
-            content_type=3,
-            content=data['title'],
-        )
-        db.add(chat)
-        db.commit()
+        # chat = Chat(
+        #     User_id=user.id,
+        #     content=content,
+        #     is_chatbot=False,
+        #     create_date=await time_now(),
+        # )
+        # db.add(chat)
+        # db.commit()
+        # chat = Chat(
+        #     User_id=user.id,
+        #     is_chatbot=True,
+        #     Memo_id=memo.id,
+        #     create_date=await time_now(),
+        #     content_type=3,
+        #     content=data['title'],
+        # )
+        # db.add(chat)
+        # db.commit()
     except:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
