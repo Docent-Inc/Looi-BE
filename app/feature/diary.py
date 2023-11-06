@@ -49,7 +49,7 @@ async def create_morning_diary(content: str, user: User, db: Session, background
     mbti_content = content if user.mbti is None else user.mbti + ", " + content
     redis_client = await get_redis_client()
     now = await time_now()
-    redis_key = "resolution:" + str(user.id) + ":" + now
+    redis_key = f"resolution:{user.id}:{now.day}"
 
     background_tasks.add_task(generate_resolution_gpt, mbti_content, user, db, redis_key)
 
