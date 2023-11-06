@@ -162,7 +162,7 @@ async def user_kakao(kakao_data: dict, db: Session) -> Optional[User]:
             image_model=1,
             language_id=1,
             mbti=str(0),
-            Oauth="kakao",
+            Oauth_from="kakao",
             create_date=await time_now(),
         )
         is_sign_up = True
@@ -213,7 +213,7 @@ async def user_line(kakao_data: dict, db: Session) -> Optional[User]:
             image_model=1,
             language_id=1,
             mbti=str(0),
-            Oauth="line",
+            Oauth_from="line",
             create_date=await time_now(),
         )
         is_sign_up = True
