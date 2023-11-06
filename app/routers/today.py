@@ -2,6 +2,7 @@ import json
 from datetime import datetime
 from random import randint
 
+import aioredis
 import pytz
 import redis as redis
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, status
@@ -42,13 +43,13 @@ def default_converter(o):
 async def get_record(
         current_user: User = Depends(get_current_user),
         db: Session = Depends(get_db),
-        redis: redis.Redis = Depends(get_redis_client),
+        redis: aioredis.Redis = Depends(get_redis_client),
 ) -> ApiResponse:
     now = await time_now()
     today_str = now.strftime('%Y-%m-%d')
     redis_key = f"history:{today_str}:user_{current_user.id}"
 
-    cached_data_json = redis.get(redis_key)
+    cached_data_json = await redis.get(redis_key)
 
     if cached_data_json:
         cached_data = json.loads(cached_data_json)
@@ -78,7 +79,7 @@ async def get_record(
 
     ttl = (now.replace(hour=23, minute=59, second=59) - now).seconds
     data_json = json.dumps(data, default=default_converter)
-    redis.setex(redis_key, ttl, data_json)
+    await redis.setex(redis_key, ttl, data_json)
 
     return ApiResponse(data=data)
 get_record.__doc__ = f"[API detail]({ApiDetail.get_record})"
@@ -87,19 +88,19 @@ get_record.__doc__ = f"[API detail]({ApiDetail.get_record})"
 async def luck(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
-    redis: redis.Redis = Depends(get_redis_client),  # Redis 클라이언트 추가
+    redis: aioredis.Redis = Depends(get_redis_client),  # Redis 클라이언트 추가
 ) -> ApiResponse:
     now = await time_now()
     today = now.date()
     redis_key = f"luck:{today}:user_{current_user.id}"
 
-    cached_luck = redis.get(redis_key)
+    cached_luck = await redis.get(redis_key)
     if cached_luck:
         return ApiResponse(data={"luck": cached_luck})
 
     luck_content = await generate_luck(current_user, db)
     ttl = (now.replace(hour=23, minute=59, second=59) - now).seconds
-    redis.setex(redis_key, ttl, luck_content)
+    await redis.setex(redis_key, ttl, luck_content)
 
     return ApiResponse(data={"luck": luck_content})
 luck.__doc__ = f"[API detail]({ApiDetail.generate_luck})"
