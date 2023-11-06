@@ -1,12 +1,13 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import inspect
 from sqlalchemy.orm import Session
 from starlette import status
 
 from app.core.security import get_current_user, get_current_user_is_admin
 from app.db.database import get_db
-from app.db.models import User, WelcomeChat, HelperChat
+from app.db.models import User, WelcomeChat, HelperChat, Dashboard
 from app.schemas.request import WelcomeRequest, HelperRequest
 from app.schemas.response import ApiResponse
 
@@ -100,5 +101,20 @@ async def get_user_list(
     current_user: User = Depends(get_current_user_is_admin),
     db: Session = Depends(get_db),
 ):
-    data = db.query(User).all()
-    return ApiResponse(data=data)
+    users = db.query(User).all()
+    user_list = []
+    for user in users:
+        user_dict = {c.key: getattr(user, c.key) for c in inspect(user).mapper.column_attrs}
+        user_dict.pop("hashed_password", None)  # hashed_password 키를 제거합니다.
+        user_list.append(user_dict)
+
+    response_data = {"data": user_list}
+    return ApiResponse(**response_data)
+
+@router.get("/dashboard", response_model=ApiResponse, tags=["Admin"])
+async def get_dashboard(
+    current_user: User = Depends(get_current_user_is_admin),
+    db: Session = Depends(get_db),
+):
+    dashboard = db.query(Dashboard).all()
+    return ApiResponse(data=dashboard)
