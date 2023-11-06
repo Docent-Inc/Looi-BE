@@ -101,7 +101,7 @@ prompt7 = [
     {"role": "system", "content": "For item 2-3, provide some comments about the user's extroverted and introverted activities. about 120-character."},
     {"role": "system", "content": "For items 4-5, list 3 each. For item 6, list 5 recommendations."},
     {"role": "system", "content": "For item 7, provide a list 1 detail ratio dictionary for Extroversion, Introversion, and the five keyword list that you choose. The first ratio dictionary's total should add up to 100. In the second list . For example, [{\"외향\": 50, \"내향\": 50}, [\"열정\"]]"},
-    {"role": "system", "content": "Return the only json format of the report"},
+    {"role": "system", "content": "Return the only json format of the report without any other text and newline character"},
     {"role": "system", "content": "{\"mental_state\":\"content(korean)\", \"positives\": \"{\"comment\": \"content\", \"main_keyword\": \"(phrase in comment)\"}\"... \"extroverted_activities\":[...] ... }."},
     {"role": "system", "content": "공손한 말투로 만들어주세요."},
 ]
