@@ -394,13 +394,23 @@ async def dairy_list(list_request: ListRequest, current_user: User, db: Session)
         if item['diary_type'] > max_category:
             max_category = item['diary_type']
 
+    total = MorningDiary_count + NightDiary_count + Memo_count
+    if total == 0:
+        MorningDiary_ratio = 0
+        NightDiary_ratio = 0
+        Memo_ratio = 0
+    else:
+        MorningDiary_ratio = (MorningDiary_count / total) * 100
+        NightDiary_ratio = (NightDiary_count / total) * 100
+        Memo_ratio = (Memo_count / total) * 100
+
     return {
         "list": all_items,
         "count": len(all_items),
         "max_category": max_category,
-        "MoriningDiary_ratio": (MorningDiary_count / (MorningDiary_count + NightDiary_count + Memo_count)) * 100,
-        "NightDiary_ratio": (NightDiary_count / (MorningDiary_count + NightDiary_count + Memo_count)) * 100,
-        "Memo_ratio": (Memo_count / (MorningDiary_count + NightDiary_count + Memo_count)) * 100,
+        "MoriningDiary_ratio": MorningDiary_ratio,
+        "NightDiary_ratio": NightDiary_ratio,
+        "Memo_ratio": Memo_ratio,
         "total_MorningDiary_count": MorningDiary_count,
         "total_NightDiary_count": NightDiary_count,
         "total_Memo_count": Memo_count,
