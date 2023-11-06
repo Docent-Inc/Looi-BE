@@ -1,6 +1,7 @@
 import aioredis
 import redis as redis
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import BackgroundTasks
 from sqlalchemy.orm import Session
 import random
 
@@ -20,6 +21,7 @@ router = APIRouter(prefix="/chat")
 @router.post("", tags=["Chat"])
 async def chat(
     body: ChatRequest,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
     redis: aioredis.Redis = Depends(get_redis_client),
@@ -39,7 +41,7 @@ async def chat(
         number = await send_gpt4_request(1, text, current_user, db)
         text_type = int(number.strip())
         if text_type == 1:
-            diary_id = await create_morning_diary(body.content, current_user, db)
+            diary_id = await create_morning_diary(body.content, current_user, db, background_tasks)
             content = db.query(MorningDiary).filter(MorningDiary.id == diary_id).first()
         elif text_type == 2:
             diary_id = await create_night_diary(body.content, current_user, db)

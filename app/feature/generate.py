@@ -1,10 +1,13 @@
 from datetime import datetime, timedelta
+
+import aioredis
 import pytz
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 import extcolors
 from app.core.config import settings
 from app.core.security import time_now
+from app.db.database import get_redis_client
 from app.db.models import MorningDiary, NightDiary, Calender, Report, Luck, Chat, Prompt
 from app.feature.aiRequset import send_gpt_request, send_dalle2_request, send_gpt4_request
 import uuid
@@ -18,8 +21,14 @@ import json
 from app.schemas.response import User
 SERVICE_ACCOUNT_INFO = json.loads(settings.GOOGLE_APPLICATION_CREDENTIALS_JSON)
 
-async def generate_resolution_gpt(text: str, user: User, db: Session) -> str:
+async def generate_resolution_gpt(text: str, user: User, db: Session, redis_key: str) -> str:
     dream_resolution = await send_gpt4_request(2, text, user, db)
+    redis_client = await get_redis_client()
+    diary_id = await redis_client.get(redis_key)
+    diary = db.query(MorningDiary).filter(MorningDiary.id == diary_id).first()
+    diary.resolution = dream_resolution
+    db.commit()
+    db.refresh(diary)
     return dream_resolution
 async def generate_diary_name(message: str, user: User, db: Session) -> str:
     dreamName = await send_gpt_request(2, message, user, db)
