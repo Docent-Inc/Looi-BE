@@ -3,6 +3,7 @@ from sqlalchemy.orm import sessionmaker, Session
 from app.core.config import settings
 from app.db.models import get_Base
 import redis
+import aioredis
 
 redis_client = redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=settings.REDIS_DB, decode_responses=True)
 DB_URL = f'mysql+pymysql://{settings.DB_USER}:{settings.DB_PASSWORD}@{settings.DB_ADDRESS}/{settings.DB_NAME}'
@@ -17,8 +18,8 @@ Base.metadata.create_all(bind=engine)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 def get_SessionLocal():
     return SessionLocal
-def get_redis_client():
-    return redis_client
+async def get_redis_client():
+    return aioredis.from_url(f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}/{settings.REDIS_DB}", encoding="utf-8", decode_responses=True)
 
 def get_db() -> Session:
     db = SessionLocal()
@@ -26,3 +27,8 @@ def get_db() -> Session:
         yield db
     finally:
         db.close()
+async def try_to_acquire_lock(redis_client, lock_key, lock_timeout=60):
+    return await redis_client.set(lock_key, "locked", ex=lock_timeout, nx=True)
+
+async def release_lock(redis_client, lock_key):
+    await redis_client.delete(lock_key)

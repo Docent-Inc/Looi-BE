@@ -8,22 +8,27 @@ from sqlalchemy.orm import Session
 import json
 
 from app.core.security import time_now
-from app.db.database import get_SessionLocal
+from app.db.database import get_SessionLocal, get_redis_client, try_to_acquire_lock, release_lock
 from app.db.models import Report, MorningDiary, NightDiary, Calender
 from app.feature.aiRequset import send_gpt_request, send_gpt4_request
 from app.db.models import User
 from app.feature.generate import generate_image
 async def generate():
-    SessionLocal = get_SessionLocal()
-    db = SessionLocal()
-    try:
-        users = db.query(User).all()
-        for user in users:
-            await generate_report(user, db)
-    finally:
-        db.close()
+    redis_client = await get_redis_client()
+    lock_key = "generate_report_lock"
+    if await try_to_acquire_lock(redis_client, lock_key):
+        SessionLocal = get_SessionLocal()
+        db = SessionLocal()
+        try:
+            users = db.query(User).all()
+            for user in users:
+                await generate_report(user, db)
+        finally:
+            db.close()
+            await release_lock(redis_client, lock_key)
 
-cron_task = aiocron.crontab('0 19 * * 0', func=generate, tz=pytz.timezone('Asia/Seoul'))
+cron_task = aiocron.crontab('0 19 * * 0', func=generate, start=False, tz=pytz.timezone('Asia/Seoul'))
+cron_task.start()
 
 def validate_report_structure(report_data):
     try:
