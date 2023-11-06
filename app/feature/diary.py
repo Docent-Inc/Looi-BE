@@ -48,7 +48,8 @@ def transform_memo(memo):
 async def create_morning_diary(content: str, user: User, db: Session, background_tasks: BackgroundTasks) -> int:
     mbti_content = content if user.mbti is None else user.mbti + ", " + content
     redis_client = await get_redis_client()
-    redis_key = "resolution:" + str(user.id)
+    now = await time_now()
+    redis_key = "resolution:" + str(user.id) + ":" + now
 
     background_tasks.add_task(generate_resolution_gpt, mbti_content, user, db, redis_key)
 
