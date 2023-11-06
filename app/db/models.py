@@ -42,6 +42,7 @@ class MorningDiary(Base):
     create_date = Column(DateTime, nullable=False)
     modify_date = Column(DateTime, nullable=False)
     is_deleted = Column(Boolean, default=False, index=True)
+    is_completed = Column(Boolean, default=False, index=True)
 
     def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
@@ -185,6 +186,14 @@ class Dashboard(Base):
     today_night_diary = Column(Integer, nullable=False)
     today_calender = Column(Integer, nullable=False)
     today_memo = Column(Integer, nullable=False)
+    create_date = Column(DateTime, nullable=False)
+
+class TextClassification(Base):
+    __tablename__ = "TextClassification"
+
+    id = Column(Integer, primary_key=True)
+    text = Column(Text, nullable=False)
+    text_type = Column(String(10), nullable=False)
     create_date = Column(DateTime, nullable=False)
 
 def get_Base():

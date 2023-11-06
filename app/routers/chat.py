@@ -9,7 +9,7 @@ from app.core.apiDetail import ApiDetail
 from app.core.config import settings
 from app.core.security import get_current_user, text_length, time_now
 from app.db.database import get_db, get_redis_client
-from app.db.models import MorningDiary, NightDiary, Memo, Calender, WelcomeChat, HelperChat, Chat
+from app.db.models import MorningDiary, NightDiary, Memo, Calender, WelcomeChat, HelperChat, Chat, TextClassification
 from app.feature.aiRequset import send_gpt4_request
 from app.feature.diary import create_morning_diary, create_night_diary, create_memo
 from app.feature.generate import generate_schedule
@@ -40,6 +40,15 @@ async def chat(
     try:
         number = await send_gpt4_request(1, text, current_user, db)
         text_type = int(number.strip())
+        text_type_dict = {1: "꿈", 2: "일기", 3: "메모", 4: "일정"}
+        save_chat = TextClassification(
+            text=body.content,
+            text_type=text_type_dict[text_type],
+            create_date=await time_now(),
+        )
+        db.add(save_chat)
+        db.commit()
+        db.refresh(save_chat)
         if text_type == 1:
             diary_id = await create_morning_diary(body.content, current_user, db, background_tasks)
             content = db.query(MorningDiary).filter(MorningDiary.id == diary_id).first()

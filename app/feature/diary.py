@@ -46,29 +46,15 @@ def transform_memo(memo):
     }
 
 async def create_morning_diary(content: str, user: User, db: Session, background_tasks: BackgroundTasks) -> int:
-    # try:
-    #     chat = Chat(
-    #         User_id=user.id,
-    #         is_chatbot=False,
-    #         create_date=datetime.datetime.now(pytz.timezone('Asia/Seoul')),
-    #         content=content,
-    #     )
-    #     db.add(chat)
-    #     db.commit()
-    # except:
-    #     raise HTTPException(
-    #         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-    #         detail=5000,  # 에러 메시지를 반환합니다.
-    #     )
-    # 그림과 일기의 제목과 해몽을 생성합니다.
     mbti_content = content if user.mbti is None else user.mbti + ", " + content
     redis_client = await get_redis_client()
     redis_key = "resolution:" + str(user.id)
+
     background_tasks.add_task(generate_resolution_gpt, mbti_content, user, db, redis_key)
 
-    L, diary_name = await asyncio.gather(
-        generate_image(user.image_model, content, user, db),
+    diary_name, L = await asyncio.gather(
         generate_diary_name(content, user, db),
+        generate_image(user.image_model, content, user, db),
     )
 
     upper_lower_color = "[\"" + str(L[1]) + "\", \"" + str(L[2]) + "\"]"
@@ -83,26 +69,9 @@ async def create_morning_diary(content: str, user: User, db: Session, background
         create_date=await time_now(),
         modify_date=await time_now(),
     )
-    try:
-        db.add(diary)
-        db.commit()
-        await redis_client.set(redis_key, diary.id)
-        # chat = Chat(
-        #     User_id=user.id,
-        #     is_chatbot=True,
-        #     MorningDiary_id=diary.id,
-        #     create_date=await time_now(),
-        #     content_type=1,
-        #     content=diary_name,
-        #     image_url=L[0],
-        # )
-        # db.add(chat)
-        # db.commit()
-    except:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=5000,  # 에러 메시지를 반환합니다.
-        )
+    db.add(diary)
+    db.commit()
+    await redis_client.set(redis_key, diary.id)
     return diary.id
 
 async def read_morning_diary(diary_id: int, user:User, db: Session) -> MorningDiary:
@@ -153,21 +122,6 @@ async def list_morning_diary(page: int, user: User, db: Session):
     return diaries
 
 async def create_night_diary(content: str, user: User, db: Session):
-    # try:
-    #     chat = Chat(
-    #         User_id=user.id,
-    #         is_chatbot=False,
-    #         create_date=await time_now(),
-    #         content=content,
-    #     )
-    #     db.add(chat)
-    #     db.commit()
-    # except:
-    #     raise HTTPException(
-    #         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-    #         detail=5000,  # 에러 메시지를 반환합니다.
-    #     )
-    # 그림과 일기의 제목을 생성합니다.
     L, diary_name = await asyncio.gather(
         generate_image(user.image_model, content, user, db),
         generate_diary_name(content, user, db)
@@ -188,17 +142,6 @@ async def create_night_diary(content: str, user: User, db: Session):
     try:
         db.add(diary)
         db.commit()
-        # chat = Chat(
-        #     User_id=user.id,
-        #     is_chatbot=True,
-        #     NightDiary_id=diary.id,
-        #     create_date=await time_now(),
-        #     content_type=2,
-        #     content=diary_name,
-        #     image_url=L[0],
-        # )
-        # db.add(chat)
-        # db.commit()
     except:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -277,33 +220,9 @@ async def create_memo(content: str, user: User, db: Session) -> int:
         create_date=await time_now(),
         modify_date=await time_now(),
     )
-    try:
-        db.add(memo)
-        db.commit()
-        db.refresh(memo)
-        # chat = Chat(
-        #     User_id=user.id,
-        #     content=content,
-        #     is_chatbot=False,
-        #     create_date=await time_now(),
-        # )
-        # db.add(chat)
-        # db.commit()
-        # chat = Chat(
-        #     User_id=user.id,
-        #     is_chatbot=True,
-        #     Memo_id=memo.id,
-        #     create_date=await time_now(),
-        #     content_type=3,
-        #     content=data['title'],
-        # )
-        # db.add(chat)
-        # db.commit()
-    except:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=5000,
-        )
+    db.add(memo)
+    db.commit()
+    db.refresh(memo)
     return memo.id
 
 async def read_memo(memo_id: int, user: User, db: Session) -> Memo:
