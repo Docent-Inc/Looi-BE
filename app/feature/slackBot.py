@@ -11,7 +11,8 @@ from sqlalchemy import func
 from app.core.config import settings
 from app.core.security import time_now
 from app.db.database import get_SessionLocal, get_redis_client, try_to_acquire_lock, release_lock
-from app.db.models import User, ApiRequestLog, MorningDiary, NightDiary, Calender, Memo, Report, Dashboard
+from app.db.models import User, ApiRequestLog, MorningDiary, NightDiary, Calender, Memo, Report, Dashboard, \
+    TextClassification
 
 
 def calculate_api_usage_cost(db, now):
@@ -153,6 +154,9 @@ async def slack_bot():
         # 전체 생성된 리포트 수
         total_report_count = db.query(Report).count()
 
+        # 전체 생성된 채팅 수
+        total_chat_count = db.query(TextClassification).count()
+
         current_date = now.strftime("%Y-%m-%d")
 
         blocks = [
@@ -232,6 +236,10 @@ async def slack_bot():
                     {
                         "type": "mrkdwn",
                         "text": f"*전체 생성된 리포트 수:* {total_report_count}"
+                    },
+                    {
+                        "type": "mrkdwn",
+                        "text": f"*전체 생성된 채팅 수:* {total_chat_count}"
                     }
                 ]
             }
@@ -255,5 +263,5 @@ async def scheduled_task():
             await release_lock(redis_client, lock_key)
 
 # aiocron 스케줄러 설정
-cron_task = aiocron.crontab('59 23 * * *', func=scheduled_task, start=False, tz=pytz.timezone('Asia/Seoul'))
+cron_task = aiocron.crontab('59 19 * * *', func=scheduled_task, start=False, tz=pytz.timezone('Asia/Seoul'))
 cron_task.start()
