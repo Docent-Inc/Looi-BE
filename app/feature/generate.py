@@ -27,6 +27,7 @@ async def generate_resolution_gpt(text: str, user: User, db: Session, redis_key:
     diary_id = await redis_client.get(redis_key)
     diary = db.query(MorningDiary).filter(MorningDiary.id == diary_id).first()
     diary.resolution = dream_resolution
+    diary.is_completed = True
     db.commit()
     db.refresh(diary)
     return dream_resolution

@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 from typing import Any, Union
-
 import pytz
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -79,8 +78,6 @@ async def get_current_user_is_admin(
             detail=4402,
         )
     return User
-
-
 
 async def create_refresh_token(data: dict, expires_delta: timedelta = None) -> str:
     to_encode = data.copy() # data를 복사

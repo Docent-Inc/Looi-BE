@@ -49,17 +49,38 @@ prompt2 = [
     {"role": "system", "content": "비둘기와 나의 특별한 우정"},
 ]
 
+# prompt3 = [
+#     {"role": "system", "content": "make just one scene a prompt for DALLE2 about this diary"},
+#     {"role": "system", "content": "include the word illustration, digital art, vivid and 7 world about Subject, Medium, Environment, Lighting, Color, Mood, Compoition"},
+#     {"role": "system", "content": "make just prompt only engilsh"},
+#     {"role": "system", "content": "max_length=250"},
+#     {"role": "user", "content": "학교 복도에서 친구랑 얘기하다가 갑자기 앞문쪽에서 좀비떼가 몰려와서 도망침. 근데 알고보니 우리반 애였음. 걔네 반 담임쌤한테 가서 말하니까 쌤이 괜찮다고 하심. 그래서 안심하고 있었는데 또다른 좀비가 와서 막 물어뜯음. 그러다가 깼는데 아직도 심장이 벌렁벌렁 거림.."},
+#     {"role": "system", "content": "Create a vivid digital art illustration depicting a zombie apocalypse in a school hallway. Illuminate the scene with an eerie, greenish light and use a dull, muted color scheme, accentuated by splashes of blood-red. Capture the mood of shock and fear, and compose the artwork to emphasize the adrenaline-pumping chase and a sudden, terrifying zombie ambush."},
+#     {"role": "user", "content": "학교 축제날이어서 여러가지 부스 체험을 했다. 나는 타로부스 가서 연애운 봤는데 상대방이랑 안 맞는다고 해서 기분 상했다. 그래도 마지막에는 좋게 끝나서 다행이라고 생각했다."},
+#     {"role": "system", "content": "Create a digital art illustration that is vivid and lively, set during a school festival. Showcase a festival-goer receiving a tarot reading. Employ warm and inviting lighting to illuminate a vibrant and colorful scene. Convey mixed emotions of disappointment and relief on the protagonist's face as they react to their tarot reading."},
+#     {"role": "user", "content": "적에게 계속 도망치면서 세상을 구할 목표를 향해 팀원들과 향해 나아간다. 모험중에서 새로운 사람도 만나며 나아가지만 결국 나 혼자서 해내야 하는 상황에 마주친다. 하지만 목표를 향한 문제 풀이 과정에서 답도 모르지만 안풀리는 상황에 놓이고 적에게 붙잡히지는 않았지만 따라잡히게 된다."},
+#     {"role": "system", "content": "Create a vivid digital art illustration that captures the essence of a hero's journey. Set the scene in a fantastical world that's rich in color and illuminated by dramatic adventure lighting. The artwork should evoke feelings of determination and anxiety. Put the spotlight on the hero's solitary struggle and pursuit, as they face obstacles and enemies in their quest to save the world."},
+# ]
+
 prompt3 = [
-    {"role": "system", "content": "make just one scene a prompt for DALLE2 about this diary"},
+    {"role": "system", "content": "make just one scene a prompt for DALLE2"},
     {"role": "system", "content": "include the word illustration, digital art, vivid and 7 world about Subject, Medium, Environment, Lighting, Color, Mood, Compoition"},
     {"role": "system", "content": "make just prompt only engilsh"},
     {"role": "system", "content": "max_length=250"},
     {"role": "user", "content": "학교 복도에서 친구랑 얘기하다가 갑자기 앞문쪽에서 좀비떼가 몰려와서 도망침. 근데 알고보니 우리반 애였음. 걔네 반 담임쌤한테 가서 말하니까 쌤이 괜찮다고 하심. 그래서 안심하고 있었는데 또다른 좀비가 와서 막 물어뜯음. 그러다가 깼는데 아직도 심장이 벌렁벌렁 거림.."},
-    {"role": "system", "content": "Create a vivid digital art illustration depicting a zombie apocalypse in a school hallway. Illuminate the scene with an eerie, greenish light and use a dull, muted color scheme, accentuated by splashes of blood-red. Capture the mood of shock and fear, and compose the artwork to emphasize the adrenaline-pumping chase and a sudden, terrifying zombie ambush."},
+    {"role": "system", "content": "Digital art of a zombie attack in a school corridor, with an eerie green glow and splatters of red, highlighting the tension of the chase and ambush."},
     {"role": "user", "content": "학교 축제날이어서 여러가지 부스 체험을 했다. 나는 타로부스 가서 연애운 봤는데 상대방이랑 안 맞는다고 해서 기분 상했다. 그래도 마지막에는 좋게 끝나서 다행이라고 생각했다."},
-    {"role": "system", "content": "Create a digital art illustration that is vivid and lively, set during a school festival. Showcase a festival-goer receiving a tarot reading. Employ warm and inviting lighting to illuminate a vibrant and colorful scene. Convey mixed emotions of disappointment and relief on the protagonist's face as they react to their tarot reading."},
+    {"role": "system", "content": "Lively digital illustration of a student getting a tarot reading at a school festival, with warm lighting and a mix of disappointment and relief on their face amidst vibrant colors."},
     {"role": "user", "content": "적에게 계속 도망치면서 세상을 구할 목표를 향해 팀원들과 향해 나아간다. 모험중에서 새로운 사람도 만나며 나아가지만 결국 나 혼자서 해내야 하는 상황에 마주친다. 하지만 목표를 향한 문제 풀이 과정에서 답도 모르지만 안풀리는 상황에 놓이고 적에게 붙잡히지는 않았지만 따라잡히게 된다."},
-    {"role": "system", "content": "Craft a vivid digital art illustration that captures the essence of a hero's journey. Set the scene in a fantastical world that's rich in color and illuminated by dramatic adventure lighting. The artwork should evoke feelings of determination and anxiety. Put the spotlight on the hero's solitary struggle and pursuit, as they face obstacles and enemies in their quest to save the world."},
+    {"role": "system", "content": "Digital illustration capturing a hero's solitary quest in a fantasy world, with rich colors and dramatic lighting that evoke determination amid anxiety."},
+    {"role": "user", "content": "연락이 끊겼던 서현이 누나한테 연락이 왔다. 다시 연락이 안올줄 알았는데 연락이 와서 깜짝 놀랬다. 바로 전화를 걸어서 3시간동안 얘기를 했고, 다음주 토요일에 만날 약속을 잡았다. 썸인가? 사귀는 사이는 아닌데 아무것도 아닌 사이도 아닌 것 같다."},
+    {"role": "system", "content": "Digital illustration of a surprising late-night phone call reuniting two people, with expressions of shock and joy, capturing the long, deep conversation and the anticipation of a planned meeting."},
+    {"role": "user", "content": "이대형 대표님의 강의에서 큰 깨달음을 얻었다. 창업을 하는 과정에서 팀원을 구하는 것에 어려움을 느껴 지쳐가고 있었던 나에게 지금 내가 새로운 팀원에게 제공할 수 있는 것을 깨닫게 되었고 다시 힘을 얻을 수 있었다."},
+    {"role": "system", "content": "Digital art of an entrepreneur's enlightening moment during a lecture, a look of realization dawning as they jot down notes, re-energized for team building."},
+    {"role": "user", "content": "오늘부터 다이어트를 시작하기로 했는데, 배가 너무 고파서 저녁에 붕어빵을 먹어버렸어 ㅠㅠ. 내일은 저녁 약속이 있어서 치팅데이인데... 수요일부터는 진짜 식단 조절을 해야 해. "},
+    {"role": "system", "content": "Digital illustration of a guilty late-night snack, with a character eyeing a half-eaten fish-shaped pastry, contemplating the upcoming cheat day and the resolve for a stricter diet plan starting Wednesday."},
+    {"role": "user", "content": "안녕하세요, 곽서준 님. 지난 일주일 동안 꿈과 일기, 일정을 통해 분석된 정신 상태를 다음과 같이 보고드리겠습니다. 전반적으로 당신의 꿈과 동작이 활동적인 편이며, 친밀한 관계의 구축 위주로 이루어진 것으로 보아 외향적인 성향이 강하게 나타납니다. 또한 생소한 사람들과의 상호 작용에 신경을 썼다는 점이 눈에 띕니다."},
+    {"role": "system", "content": "Digital illustration depicting a dynamic individual surrounded by a network of colorful, interconnected lines representing lively dreams and an extroverted personality, with symbols of new encounters and friendships emphasizing their social nature and focus on building close relationships."},
 ]
 
 prompt4 = [
@@ -75,9 +96,9 @@ prompt4 = [
 ]
 
 prompt5 = [
-    {"role": "system", "content": "꿈을 요소별로 자세하게, mbti맞춤 해몽 해줘. '이 꿈은'으로 시작해주고, 엠비티아이에 대한 언급은 직접적으로 하지 말아줘. max_length=200 "},
+    {"role": "system", "content": "꿈을 요소별로 자세하게, mbti맞춤 해몽 해줘. '이 꿈은'으로 시작해주고, mbti에 대한 언급은 직접적으로 하지 말아줘. max_length=180 "},
     {"role": "user", "content": "intp, 어젯밤 나는 처음 꿈을 꾸었다. 누군가 날 안아주는 꿈 포근한 가슴에 얼굴을 묻고 웃었다. 나 그 꿈에서 살수는 없었나"},
-    {"role": "system", "content": "이 꿈은 당신이 애틋한 정서와 친밀감에 대한 갈망을 나타내고 있을 수 있습니다. 포근한 가슴에 얼굴을 묻고 웃는 상황은 당신이 편안함과 사랑, 보호를 갈망하고 있음을 보여줍니다. 그리고 이것이 행복하고 안정적인 상태를 연상시키기도 합니다. 그러나 꿈에서 일어난 후의 물음은 당신이 현재의 생활 상황에서 이러한 감정을 찾는 데 어려움을 겪고 있음을 시사할 수 있습니다. 당신이 그 꿈에서 살 수 없었다는 문구는 현실과 이상 사이의 괴리감을 나타낼 수 있으며, 이것은 일반적으로 현재의 생활 상황에 대한 불만족을 나타냅니다. 이 꿈은 당신에게 현재의 생활에서 원하는 감정과 상황을 찾기 위해 무엇을 할 수 있는지 고민해보라는 메시지를 전달하고 있을 수 있습니다. 이를 통해, 당신은 행복과 만족감을 추구하는 데 있어서 자신의 삶에서 무엇이 중요한지, 어떤 것들을 고려해야 하는지에 대해 생각해볼 수 있습니다."},
+    {"role": "system", "content": "이 꿈은 당신이 애틋한 정서와 친밀감에 대한 갈망을 나타내고 있을 수 있습니다. 포근한 가슴에 얼굴을 묻고 웃는 상황은 당신이 편안함과 사랑, 보호를 갈망하고 있음을 보여줍니다. 그리고 이것이 행복하고 안정적인 상태를 연상시키기도 합니다. 그러나 꿈에서 일어난 후의 물음은 당신이 현재의 생활 상황에서 이러한 감정을 찾는 데 어려움을 겪고 있음을 나타낼 수 있습니다. 당신이 그 꿈에서 살 수 없었다는 문구는 현실과 이상 사이의 괴리감을 나타낼 수 있으며, 이것은 일반적으로 현재의 생활 상황에 대한 불만족을 나타냅니다. 이 꿈은 당신에게 현재의 생활에서 원하는 감정과 상황을 찾기 위해 무엇을 할 수 있는지 고민해보라는 메시지를 전달하고 있을 수 있습니다."},
     {"role": "user", "content": "entj, 난 운전하고 있었고 예람누나가 전화로 자기 도슨트 못하겠다고 얘기하고 있었는데, 옆으로 아이오닉5 한대가 ㅈㄴ빠르게 달려가더니 저 앞에가서 공중으러 날고 내려꽃혀서 터짐. 그뒤로 사람 세명이 바구니같은곳에 실려나오는데 두명은 산거같기는한데 한명이 의식이 없어"},
     {"role": "system", "content": "이 꿈은 주변 환경 변화에 따른 불안감이나 스트레스를 나타내는 것일 수 있습니다. 운전 중인 모습은 일상생활에서의 책임감 및 부담감을 상징하며, 이로 인해 발생한 사건들은 예상치 못한 일들로 인한 충격 또는 당황스러움을 표현합니다. 특히 마지막 부분에서 등장인물들이 사망하거나 부상당하는 장면은 실제로 그런 일이 일어날 가능성보다는 그러한 두려움을 반영한다고 볼 수 있습니다. 따라서 이 꿈은 당신이 최근 들어 직면하게 된 문제나 걱정거리 때문에 심리적 압박감을 느끼고 있다는 것을 암시하므로, 잠시 휴식을 취하면서 마음을 가다듬는 시간을 갖는 것이 필요하다는 조언을 담고 있다고 해석될 수 있습니다."},
 ]
