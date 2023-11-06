@@ -154,7 +154,10 @@ async def list_report(page:int, user: User, db: Session) -> list:
     reports = db.query(Report).filter(
         Report.User_id == user.id,
         Report.is_deleted == False
-    ).order_by(Report.create_date.desc()).limit(limit).offset(offset).all()
+    ).order_by(Report.create_date.desc()).all()  # 주의: 오름차순으로 변경
+
+    report_count = len(reports)  # 모든 리포트의 개수를 가져옴
+    generated_reports = reports[offset:offset + limit]  # 현재 페이지에 해당하는 리포트
 
     # 현재 날짜와 시간을 구합니다.
     today = await time_now()
@@ -175,14 +178,35 @@ async def list_report(page:int, user: User, db: Session) -> list:
         NightDiary.is_deleted == False
     ).all()
 
-    total_count = len(morning_diaries) + len(night_diaries)
+    generated_total_count = len(morning_diaries) + len(night_diaries)
 
-    return {"total_count": total_count}, [
+    start_number = report_count - offset
+    titles = [f"{start_number - idx}번째 돌아보기" for idx in range(len(reports))]
+
+    # 페이지네이션을 위한 로직
+    paginated_titles = titles[offset:offset + limit]
+
+    # 기간 계산 로직을 추가합니다.
+    periods = [
+        {
+            "start_date": (report.create_date - timedelta(days=report.create_date.weekday())).strftime("%Y년 %m월 %d일"),
+            "end_date": report.create_date.strftime("%Y년 %m월 %d일")
+        } for report in generated_reports
+    ]
+
+    # 리포트 정보와 함께 제목과 기간을 포함하여 반환합니다.
+    return {
+        "generated_total_count": generated_total_count,
+        "list_count": report_count,
+        "reports": [
             {
                 "id": report.id,
+                "title": title,
+                "period": period,
                 "main_keyword": json.loads(report.content)["statistics"][1],
                 "image_url": report.image_url,
-                "create_date": report.create_date,
+                "create_date": report.create_date.strftime("%Y년 %m월 %d일"),
                 "is_read": report.is_read
-            } for report in reports
+            } for title, period, report in zip(paginated_titles, periods, generated_reports)
         ]
+    }
