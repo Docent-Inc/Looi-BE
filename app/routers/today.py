@@ -88,19 +88,18 @@ get_record.__doc__ = f"[API detail]({ApiDetail.get_record})"
 async def luck(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
-    redis: aioredis.Redis = Depends(get_redis_client),  # Redis 클라이언트 추가
 ) -> ApiResponse:
     now = await time_now()
     today = now.date()
-    redis_key = f"luck:{today}:user_{current_user.id}"
+    cached_luck = db.query(Report).filter(
+        Report.User_id == current_user.id,
+        Report.date == today
+    ).first()
 
-    cached_luck = await redis.get(redis_key)
     if cached_luck:
-        return ApiResponse(data={"luck": cached_luck})
+        return ApiResponse(data={"luck": cached_luck.content})
 
     luck_content = await generate_luck(current_user, db)
-    ttl = (now.replace(hour=23, minute=59, second=59) - now).seconds
-    await redis.setex(redis_key, ttl, luck_content)
 
     return ApiResponse(data={"luck": luck_content})
 luck.__doc__ = f"[API detail]({ApiDetail.generate_luck})"
