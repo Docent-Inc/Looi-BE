@@ -81,6 +81,8 @@ prompt3 = [
     {"role": "system", "content": "Digital illustration of a guilty late-night snack, with a character eyeing a half-eaten fish-shaped pastry, contemplating the upcoming cheat day and the resolve for a stricter diet plan starting Wednesday."},
     {"role": "user", "content": "안녕하세요, 곽서준 님. 지난 일주일 동안 꿈과 일기, 일정을 통해 분석된 정신 상태를 다음과 같이 보고드리겠습니다. 전반적으로 당신의 꿈과 동작이 활동적인 편이며, 친밀한 관계의 구축 위주로 이루어진 것으로 보아 외향적인 성향이 강하게 나타납니다. 또한 생소한 사람들과의 상호 작용에 신경을 썼다는 점이 눈에 띕니다."},
     {"role": "system", "content": "Digital illustration depicting a dynamic individual surrounded by a network of colorful, interconnected lines representing lively dreams and an extroverted personality, with symbols of new encounters and friendships emphasizing their social nature and focus on building close relationships."},
+    {"role": "user", "content": "붉은 노을 아래 펼쳐진 광활한 바다에서 서핑을 하다가 물에 빠지는 꿈을 꿨어"},
+    {"role": "system", "content": "Digital art of a surfer falling into the ocean during a dream, set against a vivid sunset, with a blend of warm colors and cool blues to capture the sense of dread and awe in the vast sea."},
 ]
 
 prompt4 = [
