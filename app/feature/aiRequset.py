@@ -119,15 +119,12 @@ prompt6 = [
 
 prompt7 = [
     {"role": "system", "content": "Analyze the user's dreams, diary, and schedule to create a about 3500-character Concrete 'Mental State Report'. Please write korean but each title is Engilsh."},
-    {"role": "system", "content": "1. mental_state 2. positives  3. negatives  4. extroverted_activities 5. introverted_activities  6. recommendations 7. statistics"},
+    {"role": "system", "content": "1. mental_state 2. positives  3. negatives  4. extroverted_activities 5. introverted_activities  6. recommendations 7. statistics 8. keywords"},
     {"role": "system", "content": "Provide detailed analysis for 'Mental State'. For items 1, total summary about report and include user nickname. about 200-character" },
-    {"role": "system", "content": "For item 2-3, provide some comments about the user's extroverted and introverted activities. about 120-character."},
-    {"role": "system", "content": "For items 4-5, list 3 each. For item 6, list 5 recommendations."},
-    {"role": "system", "content": "For item 7, provide a list 1 detail ratio dictionary for Extroversion, Introversion, and the five keyword list that you choose. The first ratio dictionary's total should add up to 100. In the second list . For example, [{\"외향\": 50, \"내향\": 50}, [\"열정\"]]"},
-    {"role": "system", "content": "Return the only json format of the report without any other text and newline character"},
-    {"role": "system", "content": "{\"mental_state\":\"content(korean)\", \"positives\": \"{\"comment\": \"content\", \"main_keyword\": \"(phrase in comment)\"}\"... \"extroverted_activities\":[...] ... }."},
-    {"role": "system", "content": "공손한 말투로 만들어주세요."},
-    {"role": "system", "content": "ex) {\"mental_state\":\"태완님의 최근 삶에서는 다양한 마음의 상태가 복합적으로 드러납니다. 꿈이나 일기니에서 압박, 좌절, 갈망, 열정 등의 감정이 교차하고 있으며, 일상에서는 스타트업 활동에 전념하는 열정과 동시에 간혹 불안과 고민이 느껴집니다.\", \"positives\": {\"comment\": \"태완님의 열정이 가장 두드러집니다. 그 분야에 대한 사랑과 우리 서비스에 대한 확신, 미래에 대한 기대감 모두 당신의 열정을 드러냅니다.\", \"main_keyword\": \"열정\"}, \"negatives\": {\"comment\": \"꿈에서 보여지는 불안와 좌절감이 삶에서도 다소 나타나고 있는 것으로 보입니다. 투자심사와 경쟁, 고민 등에 대한 부담감도 있을 것으로 보입니다.\", \"main_keyword\": \"불안\"}, \"extroverted_activities\": [\"스타트업 홍보\", \"미팅 참석\", \"백화점에서 여자친구와 연말 데이트\"], \"introverted_activities\": [\"영화 관람\", \"개인적인 고민 및 생각 정리\", \"가천코코네스쿨의 첫번째 아웃풋이 되기 위한 노력\"], \"recommendations\": [\"스트레스 해소를 위한 취미활동 찾기\", \"진로에 대한 명확한 계획 수립\", \"자신감을 유지하되 현실을 직시\", \"주변 사람들과의 소통과 네트워킹 꾸준히\", \"마음의 안정을 위한 심리 치료 고려\"], \"statistics\": [{\"외향\": 60, \"내향\": 40}, [\"열정\", \"불안\", \"확신\", \"현실감\", \"자기성찰\"]]}"},
+    {"role": "system", "content": "For item 2-3, provide some comments about the user's extroverted and introverted activities. about 120-character. main_keyword in 2-3 is phrase or word that you choose."},
+    {"role": "system", "content": "For item 7, provide a list 1 detail ratio dictionary for Extroversion, Introversion and for item 8 provide 5 keywords"},
+    {"role": "system", "content": "공손한 말투로 만들어주세요. follow my example format"},
+    {"role": "system", "content": "ex) if user nickname: 태완, return = {\"mental_state\":\"태완님의 최근 삶에서는 다양한 마음의 상태가 복합적으로 드러납니다. 꿈이나 일기니에서 압박, 좌절, 갈망, 열정 등의 감정이 교차하고 있으며, 일상에서는 스타트업 활동에 전념하는 열정과 동시에 간혹 불안과 고민이 느껴집니다.\", \"positives\": {\"comment\": \"태완님의 열정이 가장 두드러집니다. 그 분야에 대한 사랑과 우리 서비스에 대한 확신, 미래에 대한 기대감 모두 당신의 열정을 드러냅니다.\", \"main_keyword\": \"서비스 대한 확신\"}, \"negatives\": {\"comment\": \"꿈에서 보여지는 불안과 좌절감이 삶에서도 다소 나타나고 있는 것으로 보입니다. 투자심사와 경쟁, 고민 등에 대한 부담감도 있을 것으로 보입니다.\", \"main_keyword\": \"부담감\"}, \"extroverted_activities\": [\"스타트업 홍보\", \"미팅 참석\", \"백화점에서 여자친구와 연말 데이트\"], \"introverted_activities\": [\"영화 관람\", \"개인적인 고민 및 생각 정리\", \"가천코코네스쿨의 첫번째 아웃풋이 되기 위한 노력\"], \"recommendations\": [\"스트레스 해소를 위한 취미활동 찾기\", \"진로에 대한 명확한 계획 수립\", \"자신감을 유지하되 현실을 직시\", \"주변 사람들과의 소통과 네트워킹 꾸준히\", \"마음의 안정을 위한 심리 치료 고려\"], \"statistics\": {\"extrovert\": 60, \"introvert\": 40}, \"keywords\": [\"열정\", \"불안\", \"확신\", \"현실감\", \"자기성찰\"]}"},
 ]
 
 prompt8 = [
