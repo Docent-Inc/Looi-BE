@@ -45,20 +45,16 @@ def transform_memo(memo):
         'is_deleted': memo['is_deleted']
     }
 
-async def create_morning_diary(content: str, user: User, db: Session, background_tasks: BackgroundTasks) -> int:
+async def create_morning_diary(content: str, user: User, db: Session) -> int:
     mbti_content = content if user.mbti is None else user.mbti + ", " + content
-    redis_client = await get_redis_client()
-    now = await time_now()
-    redis_key = f"resolution:{user.id}:{now.day}"
-
-    background_tasks.add_task(generate_resolution_gpt, mbti_content, user, db, redis_key)
-
-    diary_name, L = await asyncio.gather(
+    diary_name, L, resolution= await asyncio.gather(
         generate_diary_name(content, user, db),
         generate_image(user.image_model, content, user, db),
+        generate_resolution_gpt(mbti_content, user, db)
     )
 
     upper_lower_color = "[\"" + str(L[1]) + "\", \"" + str(L[2]) + "\"]"
+    now = await time_now()
 
     diary = MorningDiary(
         content=content,
@@ -66,13 +62,12 @@ async def create_morning_diary(content: str, user: User, db: Session, background
         image_url=L[0],
         background_color=upper_lower_color,
         diary_name=diary_name,
-        resolution="잠시만 기다려주세요. 꿈을 분석 중이에요!",
-        create_date=await time_now(),
-        modify_date=await time_now(),
+        resolution=resolution,
+        create_date=now,
+        modify_date=now,
     )
     db.add(diary)
     db.commit()
-    await redis_client.set(redis_key, diary.id)
     return diary.id
 
 async def read_morning_diary(diary_id: int, user:User, db: Session) -> MorningDiary:
@@ -129,6 +124,7 @@ async def create_night_diary(content: str, user: User, db: Session):
     )
 
     upper_lower_color = "[\"" + str(L[1]) + "\", \"" + str(L[2]) + "\"]"
+    now = await time_now()
 
     # 저녁 일기를 생성합니다.
     diary = NightDiary(
@@ -137,8 +133,8 @@ async def create_night_diary(content: str, user: User, db: Session):
         image_url=L[0],
         background_color=upper_lower_color,
         diary_name=diary_name,
-        create_date=await time_now(),
-        modify_date=await time_now(),
+        create_date=now,
+        modify_date=now,
     )
     try:
         db.add(diary)
