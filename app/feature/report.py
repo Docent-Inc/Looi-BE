@@ -1,16 +1,14 @@
-import time
 from datetime import timedelta
-import asyncio
 import aiocron
 import pytz
-from fastapi import HTTPException, status, Depends
+from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 import json
 
 from app.core.security import time_now
 from app.db.database import get_SessionLocal, get_redis_client, try_to_acquire_lock, release_lock
 from app.db.models import Report, MorningDiary, NightDiary, Calender
-from app.feature.aiRequset import send_gpt_request, send_gpt4_request
+from app.feature.aiRequset import send_gpt4_request
 from app.db.models import User
 from app.feature.generate import generate_image
 async def generate():
@@ -62,9 +60,7 @@ def validate_report_structure(report_data):
 
     if not all(isinstance(keyword, str) for keyword in report_data["keywords"]):
         return False
-
     return True
-
 def calculate_period(start_date):
     start_of_week = start_date - timedelta(days=start_date.weekday())
     end_of_week = start_of_week + timedelta(days=6)
