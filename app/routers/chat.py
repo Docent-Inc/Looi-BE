@@ -35,33 +35,33 @@ async def chat(
     try:
         number = await send_gpt4_request(1, text, current_user, db)
         text_type = int(number.strip())
-        text_type_dict = {1: "꿈", 2: "일기", 3: "메모", 4: "일정"}
-        save_chat = TextClassification(
-            text=body.content,
-            text_type=text_type_dict[text_type],
-            create_date=await time_now(),
-        )
-        db.add(save_chat)
-        db.commit()
-        db.refresh(save_chat)
-        if text_type == 1:
-            diary_id = await create_morning_diary(body.content, current_user, db)
-            content = db.query(MorningDiary).filter(MorningDiary.id == diary_id).first()
-        elif text_type == 2:
-            diary_id = await create_night_diary(body.content, current_user, db)
-            content = db.query(NightDiary).filter(NightDiary.id == diary_id).first()
-        elif text_type == 3:
-            diary_id = await create_memo(body.content, current_user, db)
-            content = db.query(Memo).filter(Memo.id == diary_id).first()
-        elif text_type == 4:
-            diary_id = await generate_schedule(body.content, current_user, db)
-            content = db.query(Calender).filter(Calender.id == diary_id).first()
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=4013
-            )
     except:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=4013
+        )
+    text_type_dict = {1: "꿈", 2: "일기", 3: "메모", 4: "일정"}
+    save_chat = TextClassification(
+        text=body.content,
+        text_type=text_type_dict[text_type],
+        create_date=await time_now(),
+    )
+    db.add(save_chat)
+    db.commit()
+    db.refresh(save_chat)
+    if text_type == 1:
+        diary_id = await create_morning_diary(body.content, current_user, db)
+        content = db.query(MorningDiary).filter(MorningDiary.id == diary_id).first()
+    elif text_type == 2:
+        diary_id = await create_night_diary(body.content, current_user, db)
+        content = db.query(NightDiary).filter(NightDiary.id == diary_id).first()
+    elif text_type == 3:
+        diary_id = await create_memo(body.content, current_user, db)
+        content = db.query(Memo).filter(Memo.id == diary_id).first()
+    elif text_type == 4:
+        diary_id = await generate_schedule(body.content, current_user, db)
+        content = db.query(Calender).filter(Calender.id == diary_id).first()
+    else:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=4013
