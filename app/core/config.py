@@ -25,6 +25,8 @@ class Settings(BaseSettings):
     SLACK_ID: str
     SLACK_BOT_TOKEN: str
     class Config:
-        env_file = ".env"
+        # 개발 환경은 ".env-dev" 파일
+        # 서버 환경은 ".env" 파일
+        env_file = ".env-dev"
 
 settings = Settings()
