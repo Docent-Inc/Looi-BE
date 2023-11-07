@@ -42,17 +42,36 @@ def validate_report_structure(report_data):
         "extroverted_activities": list,
         "introverted_activities": list,
         "recommendations": list,
-        "statistics": list
+        "statistics": dict,
+        "keywords": list,
     }
     for key, expected_type in required_keys.items():
         if key not in report_data or not isinstance(report_data[key], expected_type):
             return False
         if key in ["positives", "negatives"]:
-            if "comment" not in report_data[key] or "main_keyword" not in report_data[key]:
+            if "comment" not in report_data[key] or not isinstance(report_data[key]["comment"], str):
                 return False
-    if not (isinstance(report_data["statistics"][0], dict) and isinstance(report_data["statistics"][1], list)):
+            if "main_keyword" not in report_data[key] or not isinstance(report_data[key]["main_keyword"], str):
+                return False
+
+    statistics = report_data["statistics"]
+    if not ("extrovert" in statistics and isinstance(statistics["extrovert"], int)):
         return False
+    if not ("introvert" in statistics and isinstance(statistics["introvert"], int)):
+        return False
+
+    if not all(isinstance(keyword, str) for keyword in report_data["keywords"]):
+        return False
+
     return True
+
+def calculate_period(start_date):
+    start_of_week = start_date - timedelta(days=start_date.weekday())
+    end_of_week = start_of_week + timedelta(days=6)
+    return {
+        "start_date": start_of_week.strftime("%Y년 %m월 %d일"),
+        "end_date": end_of_week.strftime("%Y년 %m월 %d일")
+    }
 
 async def generate_report(user: User, db: Session) -> str:
     text = f"nickname: {user.nickname}\n"
@@ -105,7 +124,7 @@ async def generate_report(user: User, db: Session) -> str:
 
     retries = 0
     is_success = False
-    MAX_RETRIES = 5
+    MAX_RETRIES = 3
     while is_success == False and retries < MAX_RETRIES:
         report_data = await send_gpt4_request(3, text, user, db)
         if not validate_report_structure(report_data):
@@ -114,13 +133,15 @@ async def generate_report(user: User, db: Session) -> str:
         else:
             is_success = True
 
+    if retries >= MAX_RETRIES:
+        return False
     data = json.loads(report_data)
     text = data["mental_state"]
     L = await generate_image(1, text, user, db)
 
     mental_report = Report(
         User_id=user.id,
-        content=json.dumps(report_data, ensure_ascii=False),
+        content=json.dumps(data, ensure_ascii=False),
         create_date=today,
         image_url=L[0],
         is_deleted=False,
@@ -129,7 +150,7 @@ async def generate_report(user: User, db: Session) -> str:
     db.commit()
     return True
 
-async def read_report(id: int, user: User, db: Session) -> str:
+async def read_report(id: int, user: User, db: Session) -> dict:
     report = db.query(Report).filter(
         Report.User_id == user.id,
         Report.id == id,
@@ -146,7 +167,16 @@ async def read_report(id: int, user: User, db: Session) -> str:
         report.is_read = True
         db.commit()
 
-    return json.loads(report.content)
+    data = json.loads(report.content)
+    period = calculate_period(report.create_date)
+
+    return {
+        "id": report.id,
+        "content": data,
+        "image_url": report.image_url,
+        "create_date": report.create_date.strftime("%Y년 %m월 %d일"),
+        "period": period
+    }
 
 async def list_report(page:int, user: User, db: Session) -> list:
     limit = 6
@@ -187,12 +217,7 @@ async def list_report(page:int, user: User, db: Session) -> list:
     paginated_titles = titles[offset:offset + limit]
 
     # 기간 계산 로직을 추가합니다.
-    periods = [
-        {
-            "start_date": (report.create_date - timedelta(days=report.create_date.weekday())).strftime("%Y년 %m월 %d일"),
-            "end_date": report.create_date.strftime("%Y년 %m월 %d일")
-        } for report in generated_reports
-    ]
+    periods = [calculate_period(report.create_date) for report in generated_reports]
 
     # 리포트 정보와 함께 제목과 기간을 포함하여 반환합니다.
     return {
@@ -203,7 +228,7 @@ async def list_report(page:int, user: User, db: Session) -> list:
                 "id": report.id,
                 "title": title,
                 "period": period,
-                "main_keyword": json.loads(report.content)["statistics"][1],
+                "main_keyword": json.loads(report.content)["statistics"],
                 "image_url": report.image_url,
                 "create_date": report.create_date.strftime("%Y년 %m월 %d일"),
                 "is_read": report.is_read
