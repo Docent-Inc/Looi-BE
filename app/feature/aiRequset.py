@@ -104,7 +104,7 @@ prompt5 = [
 ]
 
 prompt6 = [
-    {"role": "system", "content": "Translate the user's schedule into the appropriate format (start_time, end_time, title, description). 월요일부터 일요일까지 한 주고, 1, 3, 5, 7, 8, 10, 12월은 31일, 4, 6, 9, 11월은 30일, 2월은 28일로 가정한다."},
+    {"role": "system", "content": "Translate the user's schedule into the json format (start_time, end_time, title, description). 월요일부터 일요일까지 한 주고, 1, 3, 5, 7, 8, 10, 12월은 31일, 4, 6, 9, 11월은 30일, 2월은 28일로 가정한다."},
     {"role": "user", "content": "local time: 2023-08-19 13:28:42 Saturday, 내일 오후 3시에 네이버 그린하우스 팀과 미팅이 있어"},
     {"role": "system", "content": "{\"start_time\": \"2023-08-20 15:00:00\", \"end_time\": \"2023-08-20 16:00:00\", \"title\": \"미팅\", \"description\": \"네이버 그린하우스 팀\"}"},
     {"role": "user", "content": "local time: 2023-08-20 13:28:42 Sunday, 다음주 화요일부터 목요일 부산 해운대로 여행가"},
@@ -125,6 +125,7 @@ prompt7 = [
     {"role": "system", "content": "Return the only json format of the report without any other text and newline character"},
     {"role": "system", "content": "{\"mental_state\":\"content(korean)\", \"positives\": \"{\"comment\": \"content\", \"main_keyword\": \"(phrase in comment)\"}\"... \"extroverted_activities\":[...] ... }."},
     {"role": "system", "content": "공손한 말투로 만들어주세요."},
+    {"role": "system", "content": "ex) {\"mental_state\":\"태완님의 최근 삶에서는 다양한 마음의 상태가 복합적으로 드러납니다. 꿈이나 일기니에서 압박, 좌절, 갈망, 열정 등의 감정이 교차하고 있으며, 일상에서는 스타트업 활동에 전념하는 열정과 동시에 간혹 불안과 고민이 느껴집니다.\", \"positives\": {\"comment\": \"태완님의 열정이 가장 두드러집니다. 그 분야에 대한 사랑과 우리 서비스에 대한 확신, 미래에 대한 기대감 모두 당신의 열정을 드러냅니다.\", \"main_keyword\": \"열정\"}, \"negatives\": {\"comment\": \"꿈에서 보여지는 불안와 좌절감이 삶에서도 다소 나타나고 있는 것으로 보입니다. 투자심사와 경쟁, 고민 등에 대한 부담감도 있을 것으로 보입니다.\", \"main_keyword\": \"불안\"}, \"extroverted_activities\": [\"스타트업 홍보\", \"미팅 참석\", \"백화점에서 여자친구와 연말 데이트\"], \"introverted_activities\": [\"영화 관람\", \"개인적인 고민 및 생각 정리\", \"가천코코네스쿨의 첫번째 아웃풋이 되기 위한 노력\"], \"recommendations\": [\"스트레스 해소를 위한 취미활동 찾기\", \"진로에 대한 명확한 계획 수립\", \"자신감을 유지하되 현실을 직시\", \"주변 사람들과의 소통과 네트워킹 꾸준히\", \"마음의 안정을 위한 심리 치료 고려\"], \"statistics\": [{\"외향\": 60, \"내향\": 40}, [\"열정\", \"불안\", \"확신\", \"현실감\", \"자기성찰\"]]}"},
 ]
 
 prompt8 = [
@@ -173,7 +174,10 @@ async def send_gpt_request(prompt_num: int , messages_prompt: str, current_user:
     for i in range(retries):
         try:
             start_time = await time_now()
-            chat = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=prompt)
+            if prompt_num == 4 or prompt_num == 6:
+                chat = openai.ChatCompletion.create(model="gpt-3.5-turbo-1106", messages=prompt, response_format={"type":"json_object"})
+            else:
+                chat = openai.ChatCompletion.create(model="gpt-3.5-turbo-1106", messages=prompt)
             end_time = await time_now()
             await api_log(
                 user_id=current_user.id,
@@ -213,10 +217,14 @@ async def send_gpt4_request(prompt_num: int, messages_prompt: str, current_user:
             detail=4000,
         )
     prompt.append({"role": "user", "content": messages_prompt})
+
     for i in range(retries):
         try:
             start_time = await time_now()
-            chat = openai.ChatCompletion.create(model="gpt-4", messages=prompt)
+            if prompt_num == 3:
+                chat = openai.ChatCompletion.create(model="gpt-4-1106-preview", messages=prompt, response_format={"type":"json_object"})
+            else:
+                chat = openai.ChatCompletion.create(model="gpt-4-1106-preview", messages=prompt)
             end_time = await time_now()
             await api_log(
                 user_id=current_user.id,
