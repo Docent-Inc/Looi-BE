@@ -224,7 +224,7 @@ async def list_report(page:int, user: User, db: Session) -> list:
                 "id": report.id,
                 "title": title,
                 "period": period,
-                "main_keyword": json.loads(report.content)["statistics"],
+                "main_keyword": json.loads(report.content)["keywords"],
                 "image_url": report.image_url,
                 "create_date": report.create_date.strftime("%Y년 %m월 %d일"),
                 "is_read": report.is_read
