@@ -221,10 +221,11 @@ async def send_gpt4_request(prompt_num: int, messages_prompt: str, current_user:
     for i in range(retries):
         try:
             start_time = await time_now()
-            if prompt_num == 3:
-                chat = openai.ChatCompletion.create(model="gpt-4-1106-preview", messages=prompt, response_format={"type":"json_object"})
-            else:
+            if prompt_num == 2:
                 chat = openai.ChatCompletion.create(model="gpt-4-1106-preview", messages=prompt)
+            # chat = openai.ChatCompletion.create(model="gpt-4-1106-preview", messages=prompt, response_format={"type":"json_object"})
+            else:
+                chat = openai.ChatCompletion.create(model="gpt-4", messages=prompt)
             end_time = await time_now()
             await api_log(
                 user_id=current_user.id,
