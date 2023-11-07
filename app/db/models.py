@@ -1,7 +1,6 @@
 from sqlalchemy import Column, Integer, Text, ForeignKey, String, Boolean, DateTime, func, JSON, Date, FLOAT
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
-
 Base = declarative_base()
 
 class User(Base):
@@ -194,6 +193,14 @@ class TextClassification(Base):
     id = Column(Integer, primary_key=True)
     text = Column(Text, nullable=False)
     text_type = Column(String(10), nullable=False)
+    create_date = Column(DateTime, nullable=False)
+
+class ErrorLog(Base):
+    __tablename__ = "ErrorLog"
+
+    id = Column(Integer, primary_key=True)
+    error_code = Column(Integer, nullable=False)
+    error_message = Column(Text, nullable=False)
     create_date = Column(DateTime, nullable=False)
 
 def get_Base():
