@@ -74,7 +74,6 @@ async def slack_bot():
     client = AsyncWebClient(token=settings.SLACK_BOT_TOKEN)
     SessionLocal = get_SessionLocal()
     db = SessionLocal()
-    redis_client = await get_redis_client()
     try:
         # 1. 오늘 가입한 유저 수
         # 2. 오늘 요청한 채팅 수
@@ -98,8 +97,9 @@ async def slack_bot():
         ).all()
         today_users_count = len(today_users)
 
-        total_count_key = f"chat_count:total"
-        total_count = await redis_client.get(total_count_key) or 0
+        total_count = db.query(TextClassification).filter(
+            func.date(TextClassification.create_date) == now.date(),
+        ).count()
 
         total_cost = calculate_api_usage_cost(db, now)
 
