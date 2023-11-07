@@ -179,7 +179,7 @@ async def send_gpt_request(prompt_num: int , messages_prompt: str, current_user:
             if prompt_num == 4 or prompt_num == 6:
                 chat = openai.ChatCompletion.create(model="gpt-3.5-turbo-1106", messages=prompt, response_format={"type":"json_object"})
             else:
-                chat = openai.ChatCompletion.create(model="gpt-3.5-turbo-1106", messages=prompt)
+                chat = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=prompt)
             end_time = await time_now()
             await api_log(
                 user_id=current_user.id,
