@@ -1,6 +1,5 @@
 from fastapi import Request, HTTPException
 from fastapi.responses import JSONResponse
-
 from app.core.config import settings
 from app.core.security import time_now
 from app.core.status_code import CUSTOM_EXCEPTIONS
@@ -15,22 +14,23 @@ def register_exception_handlers(app):
     async def custom_http_exception_handler(request: Request, exc: HTTPException):
         if exc.detail not in CUSTOM_EXCEPTIONS:
             exc.detail = 4000
-        SessionLocal = get_SessionLocal()
-        db = SessionLocal()
-        try:
-            error = ErrorLog(error_code=exc.detail, error_message=CUSTOM_EXCEPTIONS[exc.detail], create_date=await time_now())
-            db.add(error)
-            db.commit()
-            db.refresh(error)
-            client = AsyncWebClient(token=settings.SLACK_BOT_TOKEN)
-            await client.chat_postMessage(
-                channel="C064ZCNDVU1",
-                text=f"Error Code: {exc.detail}\nError Message: {CUSTOM_EXCEPTIONS[exc.detail]}"
-            )
-        except:
-            db.rollback()
-        finally:
-            db.close()
+        if exc.detail != 4220:
+            SessionLocal = get_SessionLocal()
+            db = SessionLocal()
+            try:
+                error = ErrorLog(error_code=exc.detail, error_message=CUSTOM_EXCEPTIONS[exc.detail], create_date=await time_now())
+                db.add(error)
+                db.commit()
+                db.refresh(error)
+                client = AsyncWebClient(token=settings.SLACK_BOT_TOKEN)
+                await client.chat_postMessage(
+                    channel="C064ZCNDVU1",
+                    text=f"Error Code: {exc.detail}\nError Message: {CUSTOM_EXCEPTIONS[exc.detail]}"
+                )
+            except:
+                db.rollback()
+            finally:
+                db.close()
         return JSONResponse(
             content=ApiResponse(
                 success=False,
