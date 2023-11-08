@@ -1,5 +1,5 @@
 import asyncio
-from sqlalchemy import desc, literal
+from sqlalchemy import desc, literal, func
 from sqlalchemy import null
 from dateutil.relativedelta import relativedelta
 from aiohttp import ClientSession
@@ -305,11 +305,6 @@ async def dairy_list(list_request: ListRequest, current_user: User, db: Session)
     diary_type = list_request.diary_type
     limit = 8  # 페이지당 레코드 수
     offset = (page - 1) * limit
-    
-    MorningDiary_count = db.query(MorningDiary).filter(MorningDiary.User_id == current_user.id, MorningDiary.is_deleted == False).count()
-    NightDiary_count = db.query(NightDiary).filter(NightDiary.User_id == current_user.id, NightDiary.is_deleted == False).count()
-    Memo_count = db.query(Memo).filter(Memo.User_id == current_user.id, Memo.is_deleted == False).count()
-
 
     # 모델의 열을 명시적으로 나열합니다.
     morning_diary_columns = [
@@ -365,10 +360,14 @@ async def dairy_list(list_request: ListRequest, current_user: User, db: Session)
                 key = column.key if column.key == 'diary_type' else column.key.split('_', 1)[-1]
                 parsed_row[key] = value
             all_items.append(parsed_row)
+        total_count = db.query(MorningDiary.id).filter(MorningDiary.User_id == current_user.id, MorningDiary.is_deleted == False).count() + \
+                        db.query(NightDiary.id).filter(NightDiary.User_id == current_user.id, NightDiary.is_deleted == False).count() + \
+                        db.query(Memo.id).filter(Memo.User_id == current_user.id, Memo.is_deleted == False).count()
 
 
     elif diary_type in [1, 2, 3]:
         Model = [MorningDiary, NightDiary, Memo][diary_type - 1]
+        total_count = db.query(func.count(Model.id)).filter(Model.User_id == current_user.id, Model.is_deleted == False).scalar()
         data_rows = db.query(Model).filter(Model.User_id == current_user.id, Model.is_deleted == False).order_by(Model.create_date.desc()).limit(limit).offset(offset).all()
 
         for item in data_rows:
@@ -384,32 +383,10 @@ async def dairy_list(list_request: ListRequest, current_user: User, db: Session)
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=4000,
         )
-
-    max_category = 0
-    for item in all_items:
-        if item['diary_type'] > max_category:
-            max_category = item['diary_type']
-
-    total = MorningDiary_count + NightDiary_count + Memo_count
-    if total == 0:
-        MorningDiary_ratio = 0
-        NightDiary_ratio = 0
-        Memo_ratio = 0
-    else:
-        MorningDiary_ratio = (MorningDiary_count / total) * 100
-        NightDiary_ratio = (NightDiary_count / total) * 100
-        Memo_ratio = (Memo_count / total) * 100
-
     return {
         "list": all_items,
         "count": len(all_items),
-        "max_category": max_category,
-        "MoriningDiary_ratio": MorningDiary_ratio,
-        "NightDiary_ratio": NightDiary_ratio,
-        "Memo_ratio": Memo_ratio,
-        "total_MorningDiary_count": MorningDiary_count,
-        "total_NightDiary_count": NightDiary_count,
-        "total_Memo_count": Memo_count,
+        "total_count": total_count,
     }
 
 async def dairy_list_calender(list_request: CalenderListRequest, current_user: User, db: Session):
@@ -444,3 +421,39 @@ async def dairy_list_calender(list_request: CalenderListRequest, current_user: U
 
     calenders_transformed = [transform_calendar(cal) for cal in calenders]
     return today_count, calenders_transformed
+
+async def get_diary_ratio(user: User, db: Session):
+    MorningDiary_count = db.query(MorningDiary).filter(MorningDiary.User_id == user.id,
+                                                       MorningDiary.is_deleted == False).count()
+    NightDiary_count = db.query(NightDiary).filter(NightDiary.User_id == user.id,
+                                                   NightDiary.is_deleted == False).count()
+    Memo_count = db.query(Memo).filter(Memo.User_id == user.id, Memo.is_deleted == False).count()
+
+    total = MorningDiary_count + NightDiary_count + Memo_count
+    if total == 0:
+        morning_diary_ratio = 0
+        night_diary_ratio = 0
+        memo_ratio = 0
+    else:
+        morning_diary_ratio = (MorningDiary_count / total) * 100
+        night_diary_ratio = (NightDiary_count / total) * 100
+        memo_ratio = (Memo_count / total) * 100
+
+    max_category_value = max(morning_diary_ratio, night_diary_ratio, memo_ratio)
+    if max_category_value == morning_diary_ratio:
+        max_category = 1
+    elif max_category_value == night_diary_ratio:
+        max_category = 2
+    else:
+        max_category = 3
+
+
+    return {
+        "max_category": max_category,
+        "morning_diary_count": MorningDiary_count,
+        "night_diary_count": NightDiary_count,
+        "memo_count": Memo_count,
+        "morning_diary_ratio": morning_diary_ratio,
+        "night_diary_ratio": night_diary_ratio,
+        "memo_ratio": memo_ratio,
+    }
