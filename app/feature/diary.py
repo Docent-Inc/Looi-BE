@@ -444,9 +444,10 @@ async def get_diary_ratio(user: User, db: Session):
         max_category = 1
     elif max_category_value == night_diary_ratio:
         max_category = 2
-    else:
+    elif max_category_value == morning_diary_ratio:
         max_category = 3
-
+    else:
+        max_category = 4
 
     return {
         "max_category": max_category,
