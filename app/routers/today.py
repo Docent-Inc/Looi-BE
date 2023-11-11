@@ -93,7 +93,7 @@ async def luck(
     today = now.date()
     cached_luck = db.query(Report).filter(
         Report.User_id == current_user.id,
-        Report.date == today
+        func.date(Report.create_date) == today
     ).first()
 
     if cached_luck:
