@@ -434,20 +434,21 @@ async def get_diary_ratio(user: User, db: Session):
         morning_diary_ratio = 0
         night_diary_ratio = 0
         memo_ratio = 0
+        max_category = 0
     else:
         morning_diary_ratio = (MorningDiary_count / total) * 100
         night_diary_ratio = (NightDiary_count / total) * 100
         memo_ratio = (Memo_count / total) * 100
 
     max_category_value = max(morning_diary_ratio, night_diary_ratio, memo_ratio)
-    if max_category_value == morning_diary_ratio:
+    if morning_diary_ratio == night_diary_ratio and night_diary_ratio == memo_ratio:
+        max_category = 4
+    elif max_category_value == morning_diary_ratio:
         max_category = 1
     elif max_category_value == night_diary_ratio:
         max_category = 2
     elif max_category_value == morning_diary_ratio:
         max_category = 3
-    else:
-        max_category = 4
 
     return {
         "max_category": max_category,
