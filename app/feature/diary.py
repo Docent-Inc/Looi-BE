@@ -231,6 +231,22 @@ async def read_memo(memo_id: int, user: User, db: Session) -> Memo:
         )
     return memo
 
+async def delete_memo(memo_id: int, user: User, db: Session) -> int:
+    memo = db.query(Memo).filter(Memo.id == memo_id, Memo.User_id == user.id, Memo.is_deleted == False).first()
+    if not memo:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=4016,
+        )
+    try:
+        memo.is_deleted = True
+        db.commit()
+    except:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=5000,
+        )
+
 async def create_calender(body: CalenderRequest, user: User, db: Session) -> int:
     calender = Calender(
         User_id=user.id,
