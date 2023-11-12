@@ -92,7 +92,8 @@ async def luck(
     now = await time_now()
     cached_luck = db.query(Luck).filter(
         Luck.User_id == current_user.id,
-        Luck.create_date == now.date()
+        Luck.create_date == now.date(),
+        Luck.is_deleted == False
     ).first()
 
     if cached_luck:
