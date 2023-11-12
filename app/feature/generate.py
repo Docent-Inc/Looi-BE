@@ -142,7 +142,7 @@ async def generate_luck(user: User, db: Session):
     luck = Luck(
         User_id=user.id,
         content=data,
-        create_date=today.date()
+        create_date=today.date(),
     )
     db.add(luck)
     db.commit()
