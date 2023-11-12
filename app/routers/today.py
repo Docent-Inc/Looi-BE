@@ -97,8 +97,8 @@ async def luck(
     ).first()
 
     if cached_luck:
-        return ApiResponse(data={"luck": cached_luck.content})
+        return ApiResponse(data={"luck": cached_luck.content, "isCheckedToday": True})
 
     luck_content = await generate_luck(current_user, db)
-    return ApiResponse(data={"luck": luck_content})
+    return ApiResponse(data={"luck": luck_content,  "isCheckedToday": False})
 luck.__doc__ = f"[API detail]({ApiDetail.generate_luck})"
