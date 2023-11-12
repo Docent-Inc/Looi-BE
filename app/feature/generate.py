@@ -23,7 +23,7 @@ SERVICE_ACCOUNT_INFO = json.loads(settings.GOOGLE_APPLICATION_CREDENTIALS_JSON)
 
 async def generate_resolution_gpt(text: str, user: User, db: Session) -> str:
     dream_resolution = await send_gpt4_request(2, text, user, db)
-    return dream_resolution
+    return json.loads(dream_resolution)
 async def generate_diary_name(message: str, user: User, db: Session) -> str:
     dreamName = await send_gpt_request(2, message, user, db)
     return dreamName

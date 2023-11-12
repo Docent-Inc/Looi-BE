@@ -1,4 +1,6 @@
 import asyncio
+import json
+
 from sqlalchemy import desc, literal, func
 from sqlalchemy import null
 from dateutil.relativedelta import relativedelta
@@ -47,12 +49,12 @@ def transform_memo(memo):
 
 async def create_morning_diary(content: str, user: User, db: Session) -> int:
     mbti_content = content if user.mbti is None else user.mbti + ", " + content
-    diary_name, L, resolution= await asyncio.gather(
+    diary_name, L, resolution = await asyncio.gather(
         generate_diary_name(content, user, db),
         generate_image(user.image_model, content, user, db),
         generate_resolution_gpt(mbti_content, user, db)
     )
-
+    print(resolution)
     upper_lower_color = "[\"" + str(L[1]) + "\", \"" + str(L[2]) + "\"]"
     now = await time_now()
 
@@ -62,7 +64,8 @@ async def create_morning_diary(content: str, user: User, db: Session) -> int:
         image_url=L[0],
         background_color=upper_lower_color,
         diary_name=diary_name,
-        resolution=resolution,
+        resolution=resolution['resolution'],
+        main_keyword=json.dumps(resolution["main_keywords"], ensure_ascii=False),
         create_date=now,
         modify_date=now,
     )
@@ -204,16 +207,16 @@ async def create_memo(content: str, user: User, db: Session) -> int:
             soup = BeautifulSoup(html_content, 'html.parser')
             title = soup.title.string if soup.title else "No title"
             if title == "No title":
-                data = {"title": "URL 주소", "content": content}
-                print(data)
+                content = f"title = URL 주소, content = {content}"
             else:
-                data = {"title": title, "content": content}
-    else:
-        data = await send_gpt_request(6, content, user, db)
+                content = f"title = {title}, content = {content}"
+
+    data = await send_gpt_request(6, content, user, db)
     memo = Memo(
         title=data['title'],
         content=data['content'],
         User_id=user.id,
+        tags=json.dumps(data['tags'], ensure_ascii=False),
         create_date=await time_now(),
         modify_date=await time_now(),
     )
