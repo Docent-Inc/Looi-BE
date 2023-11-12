@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from app.core.apiDetail import ApiDetail
 from app.core.security import get_current_user, time_now
 from app.db.database import get_db, get_redis_client
-from app.db.models import Calender, MorningDiary, NightDiary, Report
+from app.db.models import Calender, MorningDiary, NightDiary, Report, Luck
 from app.feature.generate import generate_luck
 from app.schemas.response import User, ApiResponse
 
@@ -90,16 +90,14 @@ async def luck(
     db: Session = Depends(get_db),
 ) -> ApiResponse:
     now = await time_now()
-    today = now.date()
-    cached_luck = db.query(Report).filter(
-        Report.User_id == current_user.id,
-        func.date(Report.create_date) == today
+    cached_luck = db.query(Luck).filter(
+        Luck.User_id == current_user.id,
+        Luck.create_date == now.date()
     ).first()
 
     if cached_luck:
         return ApiResponse(data={"luck": cached_luck.content})
 
     luck_content = await generate_luck(current_user, db)
-
     return ApiResponse(data={"luck": luck_content})
 luck.__doc__ = f"[API detail]({ApiDetail.generate_luck})"

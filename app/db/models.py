@@ -135,7 +135,7 @@ class Luck(Base):
     User = relationship('User', backref='lucks')
     User_id = Column(Integer, ForeignKey('User.id'), nullable=False, index=True)
     content = Column(Text, nullable=False)
-    create_date = Column(DateTime, nullable=False)
+    create_date = Column(Date, nullable=False)
     is_deleted = Column(Boolean, default=False, index=True)
 
 class Prompt(Base):
