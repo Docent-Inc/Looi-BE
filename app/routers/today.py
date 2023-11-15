@@ -3,7 +3,10 @@ from datetime import datetime
 from random import randint
 
 import aioredis
+import requests
+from app.core.config import settings
 import pytz
+from urllib.parse import urlencode, unquote
 import redis as redis
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, status
 from sqlalchemy import func
@@ -15,6 +18,26 @@ from app.db.database import get_db, get_redis_client
 from app.db.models import Calender, MorningDiary, NightDiary, Report, Luck
 from app.feature.generate import generate_luck
 from app.schemas.response import User, ApiResponse
+
+import datetime
+import pytz
+
+async def get_api_date() :
+    standard_time = [2, 5, 8, 11, 14, 17, 20, 23]
+    time_now = datetime.datetime.now(tz=pytz.timezone('Asia/Seoul')).strftime('%H')
+    check_time = int(time_now) - 1
+    day_calibrate = 0
+	#hour to api time
+    while not check_time in standard_time :
+        check_time -= 1
+        if check_time < 2 :
+            day_calibrate = 1 # yesterday
+            check_time = 23
+
+    date_now = datetime.datetime.now(tz=pytz.timezone('Asia/Seoul')).strftime('%Y%m%d')
+    check_date = int(date_now) - day_calibrate
+
+    return (str(check_date), (str(check_time) + '00'))
 
 router = APIRouter(prefix="/today")
 
@@ -102,3 +125,57 @@ async def luck(
     luck_content = await generate_luck(current_user, db)
     return ApiResponse(data={"luck": luck_content,  "isCheckedToday": False})
 luck.__doc__ = f"[API detail]({ApiDetail.generate_luck})"
+
+@router.get("/weather", tags=["Today"])
+async def get_weather(
+    nx: int,
+    ny: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> ApiResponse:
+    url = 'http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst'
+    api_date, api_time = await get_api_date()
+    params = {
+        'serviceKey': settings.WEATHER_API_KEY,
+        'pageNo': '1',
+        'numOfRows': '500',
+        "ftype": "SHRT",
+        'dataType': 'JSON',
+        'base_date': api_date,
+        'base_time': api_time,
+        'nx': '61',
+        'ny': '125'
+    }
+    response = requests.get(url, params=params)
+    response = response.json()
+    parsed_json = response['response']['body']['items']['item']
+
+    target_date = parsed_json[0]['fcstDate']  # get date and time
+    target_time = parsed_json[0]['fcstTime']
+
+    date_calibrate = target_date  # date of TMX, TMN
+    if target_time > '1300':
+        date_calibrate = str(int(target_date) + 1)
+
+    passing_data = {}
+    for one_parsed in parsed_json:
+        if one_parsed['fcstDate'] == target_date and one_parsed['fcstTime'] == target_time:  # get today's data
+            passing_data[one_parsed['category']] = one_parsed['fcstValue']
+
+        if one_parsed['fcstDate'] == date_calibrate and (
+                one_parsed['category'] == 'TMX' or one_parsed['category'] == 'TMN'):
+            passing_data[one_parsed['category']] = one_parsed['fcstValue']
+    try:
+        pop = passing_data['POP']
+    except KeyError:
+        pop = 0
+    try:
+        tmx = passing_data['TMX']
+    except KeyError:
+        tmx = 0
+    try:
+        tmn = passing_data['TMN']
+    except KeyError:
+        tmn = 0
+
+    return ApiResponse(data={"pop": pop, "tmx": tmx, "tmn": tmn})
