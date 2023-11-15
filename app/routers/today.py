@@ -21,6 +21,52 @@ from app.schemas.response import User, ApiResponse
 
 import datetime
 import pytz
+import math
+
+async def dfs_xy_conv(code, v1, v2):
+    # LCC DFS 좌표변환을 위한 기초 자료
+    RE = 6371.00877 # 지구 반경(km)
+    GRID = 5.0 # 격자 간격(km)
+    SLAT1 = 30.0 # 투영 위도1(degree)
+    SLAT2 = 60.0 # 투영 위도2(degree)
+    OLON = 126.0 # 기준점 경도(degree)
+    OLAT = 38.0 # 기준점 위도(degree)
+    XO = 43 # 기준점 X좌표(GRID)
+    YO = 136 # 기준점 Y좌표(GRID)
+    DEGRAD = math.pi / 180.0
+    RADDEG = 180.0 / math.pi
+
+    re = RE / GRID
+    slat1 = SLAT1 * DEGRAD
+    slat2 = SLAT2 * DEGRAD
+    olon = OLON * DEGRAD
+    olat = OLAT * DEGRAD
+
+    sn = math.tan(math.pi * 0.25 + slat2 * 0.5) / math.tan(math.pi * 0.25 + slat1 * 0.5)
+    sn = math.log(math.cos(slat1) / math.cos(slat2)) / math.log(sn)
+    sf = math.tan(math.pi * 0.25 + slat1 * 0.5)
+    sf = math.pow(sf, sn) * math.cos(slat1) / sn
+    ro = math.tan(math.pi * 0.25 + olat * 0.5)
+    ro = re * sf / math.pow(ro, sn)
+
+    rs = {}
+    if code == "toXY":
+        lat = v1
+        lng = v2
+        ra = math.tan(math.pi * 0.25 + lat * DEGRAD * 0.5)
+        ra = re * sf / math.pow(ra, sn)
+        theta = lng * DEGRAD - olon
+        if theta > math.pi:
+            theta -= 2.0 * math.pi
+        if theta < -math.pi:
+            theta += 2.0 * math.pi
+        theta *= sn
+        x = math.floor(ra * math.sin(theta) + XO + 0.5)
+        y = math.floor(ro - ra * math.cos(theta) + YO + 0.5)
+        return x, y
+    else:
+        # "toLL" 변환은 필요하지 않은 경우 이 부분은 구현하지 않아도 됩니다.
+        pass
 
 async def get_api_date() :
     standard_time = [2, 5, 8, 11, 14, 17, 20, 23]
@@ -128,11 +174,13 @@ luck.__doc__ = f"[API detail]({ApiDetail.generate_luck})"
 
 @router.get("/weather", tags=["Today"])
 async def get_weather(
-    nx: int,
-    ny: int,
+    x: float,
+    y: float,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> ApiResponse:
+    nx, ny = await dfs_xy_conv("toXY", x, y)
+
     url = 'http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst'
     api_date, api_time = await get_api_date()
     params = {
