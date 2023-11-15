@@ -18,8 +18,6 @@ from app.db.database import get_db, get_redis_client
 from app.db.models import Calender, MorningDiary, NightDiary, Report, Luck
 from app.feature.generate import generate_luck
 from app.schemas.response import User, ApiResponse
-
-import datetime
 import pytz
 import math
 
@@ -70,7 +68,7 @@ async def dfs_xy_conv(code, v1, v2):
 
 async def get_api_date() :
     standard_time = [2, 5, 8, 11, 14, 17, 20, 23]
-    time_now = datetime.datetime.now(tz=pytz.timezone('Asia/Seoul')).strftime('%H')
+    time_now = datetime.now(tz=pytz.timezone('Asia/Seoul')).strftime('%H')
     check_time = int(time_now) - 1
     day_calibrate = 0
 	#hour to api time
@@ -80,7 +78,7 @@ async def get_api_date() :
             day_calibrate = 1 # yesterday
             check_time = 23
 
-    date_now = datetime.datetime.now(tz=pytz.timezone('Asia/Seoul')).strftime('%Y%m%d')
+    date_now = datetime.now(tz=pytz.timezone('Asia/Seoul')).strftime('%Y%m%d')
     check_date = int(date_now) - day_calibrate
 
     return (str(check_date), (str(check_time) + '00'))
@@ -186,7 +184,7 @@ async def get_weather(
     params = {
         'serviceKey': settings.WEATHER_API_KEY,
         'pageNo': '1',
-        'numOfRows': '500',
+        'numOfRows': '2000',
         "ftype": "SHRT",
         'dataType': 'JSON',
         'base_date': api_date,
@@ -195,8 +193,14 @@ async def get_weather(
         'ny': ny
     }
     response = requests.get(url, params=params)
-    response = response.json()
-    parsed_json = response['response']['body']['items']['item']
+    try:
+        response = response.json()
+        parsed_json = response['response']['body']['items']['item']
+    except:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=4506,
+        )
 
     target_date = parsed_json[0]['fcstDate']  # get date and time
     target_time = parsed_json[0]['fcstTime']
@@ -225,5 +229,6 @@ async def get_weather(
         tmn = passing_data['TMN']
     except KeyError:
         tmn = 0
+    print(passing_data)
 
     return ApiResponse(data={"pop": pop, "tmx": tmx, "tmn": tmn})
