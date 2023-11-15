@@ -143,8 +143,8 @@ async def get_weather(
         'dataType': 'JSON',
         'base_date': api_date,
         'base_time': api_time,
-        'nx': '61',
-        'ny': '125'
+        'nx': nx,
+        'ny': ny
     }
     response = requests.get(url, params=params)
     response = response.json()
