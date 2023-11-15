@@ -113,7 +113,7 @@ async def callback(
     expires_in, refresh_expires_in, access_token, refresh_token = await create_token(user.email)
     return ApiResponse(
         success=True,
-        data=TokenData(
+        data=KakaoTokenData(
             user_name=user.nickname,
             access_token=access_token,
             expires_in=expires_in,
