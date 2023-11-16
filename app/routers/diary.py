@@ -1,7 +1,4 @@
 from fastapi import APIRouter, Depends
-from sqlalchemy import desc
-
-from app.core.apiDetail import ApiDetail
 from app.feature.diary import create_night_diary, create_morning_diary, read_morning_diary, read_night_diary, \
     update_morning_diary, delete_morning_diary, update_night_diary, delete_night_diary, create_memo, list_morning_diary, \
     list_night_diary, create_calender, update_calender, read_calender, delete_calender, dairy_list, read_memo, \
@@ -230,9 +227,8 @@ async def list(
 ) -> ApiResponse:
     data = await dairy_list(list_request, current_user, db)
     return ApiResponse(data=data)
-list.__doc__ = f"[API detail]({ApiDetail.list})"
 
-@router.post("/list/calender", response_model=ApiResponse, tags=["Diary"])
+@router.post("/list/calender", response_model=ApiResponse, tags=["Calender"])
 async def list_calender(
     list_request: CalenderListRequest,
     current_user: User = Depends(get_current_user),
@@ -245,7 +241,6 @@ async def list_calender(
             "list": data
         }
     )
-list_calender.__doc__ = f"[API detail]({ApiDetail.list_calender})"
 
 @router.get("/ratio", response_model=ApiResponse, tags=["Diary"])
 async def get_ratio(
@@ -256,4 +251,3 @@ async def get_ratio(
     return ApiResponse(
         data={"ratio": ratio}
     )
-get_ratio.__doc__ = f"[API detail]({ApiDetail.get_ratio})"

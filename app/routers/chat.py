@@ -2,8 +2,6 @@ import aioredis
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 import random
-
-from app.core.apiDetail import ApiDetail
 from app.core.config import settings
 from app.core.security import get_current_user, text_length, time_now
 from app.db.database import get_db, get_redis_client
@@ -75,7 +73,6 @@ async def chat(
             "content": content
         }
     )
-chat.__doc__ = f"[API detail]({ApiDetail.chat})"
 
 @router.get("/list", tags=["Chat"])
 async def generate_chat_list(
@@ -91,7 +88,6 @@ async def generate_chat_list(
             "total_counts": total_counts,
             "list": chat
     })
-generate_chat_list.__doc__ = f"[API detail]({ApiDetail.generate_chat_list})"
 
 @router.get("/welcome", tags=["Chat"])
 async def get_welcome(
@@ -105,7 +101,6 @@ async def get_welcome(
     return ApiResponse(
         data=random_chat
     )
-get_welcome.__doc__ = f"[API detail]({ApiDetail.get_welcome})"
 
 @router.get("/helper", tags=["Chat"])
 async def get_helper(
@@ -118,4 +113,3 @@ async def get_helper(
     return ApiResponse(
         data=random_chat
     )
-get_helper.__doc__ = f"[API detail]({ApiDetail.get_helper})"
