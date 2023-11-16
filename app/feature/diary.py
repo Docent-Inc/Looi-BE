@@ -31,7 +31,7 @@ def transform_calendar(cal):
         'User_id': cal.User_id,
         'start_time': cal.start_time,
         'end_time': cal.end_time,
-        'diary_name': cal.title,
+        'title': cal.title,
         'content': cal.content,
         'is_deleted': cal.is_deleted
     }
