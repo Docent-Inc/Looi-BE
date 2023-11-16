@@ -234,9 +234,10 @@ async def list_calender(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> ApiResponse:
-    data = await dairy_list_calender(list_request, current_user, db)
+    today_count, data = await dairy_list_calender(list_request, current_user, db)
     return ApiResponse(
         data={
+            "today_count": today_count,
             "list": data
         }
     )
