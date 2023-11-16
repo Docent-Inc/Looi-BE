@@ -1,7 +1,7 @@
 import asyncio
 import json
 
-from sqlalchemy import desc, literal, func
+from sqlalchemy import desc, literal, func, or_, and_
 from sqlalchemy import null
 from dateutil.relativedelta import relativedelta
 from aiohttp import ClientSession
@@ -412,23 +412,31 @@ async def dairy_list_calender(list_request: CalenderListRequest, current_user: U
     if list_request.day is None:
         year = list_request.year
         month = list_request.month
-        # year와 month를 받아서 해당 달의 일정을 모두 불러옵니다.
+        start_of_month = datetime.datetime(year, month, 1)
+        end_of_month = add_one_month(start_of_month)
+
         calenders = db.query(Calender).filter(
             Calender.User_id == current_user.id,
             Calender.is_deleted == False,
-            Calender.start_time >= datetime.datetime(year, month, 1),
-            Calender.start_time < add_one_month(datetime.datetime(year, month, 1))
+            or_(
+                Calender.start_time.between(start_of_month, end_of_month),
+                Calender.end_time.between(start_of_month, end_of_month)
+            )
         ).all()
     else:
         year = list_request.year
         month = list_request.month
         day = list_request.day
-        # year와 month를 받아서 해당 일의 일정을 모두 불러옵니다.
+        start_of_day = datetime.datetime(year, month, day)
+        end_of_day = start_of_day + datetime.timedelta(days=1)
         calenders = db.query(Calender).filter(
             Calender.User_id == current_user.id,
             Calender.is_deleted == False,
-            Calender.start_time >= datetime.datetime(year, month, day),
-            Calender.start_time < datetime.datetime(year, month, day) + datetime.timedelta(days=1)
+            or_(
+                and_(Calender.start_time >= start_of_day, Calender.start_time < end_of_day),
+                and_(Calender.end_time > start_of_day, Calender.end_time <= end_of_day),
+                and_(Calender.start_time <= start_of_day, Calender.end_time >= end_of_day)
+            )
         ).all()
     today = await time_now()
     today_count = db.query(Calender).filter(
