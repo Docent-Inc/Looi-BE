@@ -265,7 +265,7 @@ async def send_dalle2_request(messages_prompt: str, user: User, db: Session, ret
             response = await asyncio.to_thread(
                 openai.Image.create,
                 model="dall-e-3",
-                prompt=f"korean, {messages_prompt[:255]}",
+                prompt=f"{messages_prompt[:255]}",
                 n=1,
                 size="1024x1024",
                 response_format="url"
