@@ -63,6 +63,26 @@ async def dfs_xy_conv(code, v1, v2):
     else:
         # "toLL" 변환은 필요하지 않은 경우 이 부분은 구현하지 않아도 됩니다.
         pass
+async def select_weather_icon(sky, pty):
+    if pty == '0':  # 강수 없음
+        if sky == '1':  # 맑음
+            return 'sun_with_rays'
+        elif sky == '3':  # 구름 많음
+            return 'sun_behind_large_cloud'
+        elif sky == '4':  # 흐림
+            return 'cloud'
+    elif pty in ['1', '5']:  # 비
+        return 'cloud_with_rain'
+    elif pty in ['2', '6']:  # 비/눈
+        return 'cloud_with_snow'
+    elif pty == '3':  # 눈
+        return 'cloud_with_snow'
+    elif pty == '4':  # 소나기
+        return 'cloud_with_rain'
+    elif pty == '7':  # 눈날림
+        return 'cloud_with_snow'
+    else:
+        return 'cloud'  # 기본 아이콘
 
 async def get_api_date() :
     standard_time = [2, 5, 8, 11, 14, 17, 20, 23]
@@ -224,6 +244,8 @@ async def get_weather(
         tmn = passing_data['TMN']
     except KeyError:
         tmn = 0
-    print(passing_data)
+    sky = passing_data.get('SKY')
+    pty = passing_data.get('PTY')
+    weather_icon = await select_weather_icon(sky, pty)
 
-    return ApiResponse(data={"pop": pop, "tmx": tmx, "tmn": tmn})
+    return ApiResponse(data={"pop": pop, "tmx": tmx, "tmn": tmn, "icon": weather_icon})
