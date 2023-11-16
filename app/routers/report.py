@@ -1,6 +1,4 @@
 from fastapi import APIRouter, Depends
-
-from app.core.apiDetail import ApiDetail
 from app.core.security import get_current_user
 from app.db.database import get_db
 from sqlalchemy.orm import Session
@@ -20,7 +18,6 @@ async def get_report(
     return ApiResponse(
         data=report
     )
-get_report.__doc__ = f"[API detail]({ApiDetail.get_report})"
 
 @router.get("/list/{page}", tags=["Report"])
 async def get_report_list(
@@ -32,5 +29,4 @@ async def get_report_list(
     return ApiResponse(
         data=report_list
     )
-get_report_list.__doc__ = f"[API detail]({ApiDetail.get_report_list})"
 

@@ -1,6 +1,5 @@
 from app.core.handler import register_exception_handlers
 from fastapi import FastAPI
-from app.core.apiDetail import ApiDetail
 from app.routers import auth, report, diary, today, admin, chat
 from app.core.middleware import TimingMiddleware
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,7 +7,6 @@ from app.core.config import settings
 
 
 app = FastAPI(title="Look API",
-              description=f"[Error Status]({ApiDetail.error_status})",
               version="0.2.0",
               docs_url='/docs',
               redoc_url='/redoc',

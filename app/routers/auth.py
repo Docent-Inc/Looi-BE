@@ -1,6 +1,5 @@
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
-from app.core.apiDetail import ApiDetail
 from app.feature.kakaoOAuth2 import KAKAO_AUTH_URL, get_user_kakao, KAKAO_AUTH_URL_TEST, \
     get_user_kakao_test
 from app.db.database import get_db
@@ -91,7 +90,6 @@ async def login(
         return ApiResponse(data={"url": LINE_AUTH_URL_TEST if test else LINE_AUTH_URL})
     else:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=4403)
-login.__doc__ = f"[API detail]({ApiDetail.login})"
 
 @router.get("/callback/{service}", response_model=ApiResponse, tags=["Auth"])
 async def callback(
@@ -123,7 +121,6 @@ async def callback(
             is_signup=is_sign_up,
         )
     )
-callback.__doc__ = f"[API detail]({ApiDetail.callback})"
 
 @router.post("/refresh", response_model=ApiResponse, tags=["Auth"])
 async def refresh_token(
@@ -153,7 +150,6 @@ async def refresh_token(
             token_type="bearer",
         )
     )
-refresh_token.__doc__ = f"[API detail]({ApiDetail.refresh_token})"
 
 @router.get("/info", response_model=ApiResponse, tags=["Auth"])
 async def get_info(
@@ -161,7 +157,6 @@ async def get_info(
 ):
     current_user.hashed_password = None
     return ApiResponse(data=current_user)
-get_info.__doc__ = f"[API detail]({ApiDetail.get_info})"
 
 @router.post("/update", response_model=ApiResponse, tags=["Auth"])
 async def update_user(
@@ -171,7 +166,6 @@ async def update_user(
 ):
     await updateUser(request, current_user, db)
     return ApiResponse()
-update_user.__doc__ = f"[API detail]({ApiDetail.update_user})"
 
 
 @router.post("/update/nickname", response_model=ApiResponse, tags=["Auth"])
@@ -182,7 +176,6 @@ async def change_nickname(
 ):
     await changeNickName(nickname_change_request.nickname, current_user, db)
     return ApiResponse()
-change_nickname.__doc__ = f"[API detail]({ApiDetail.change_nickname})"
 
 @router.post("/update/mbti", response_model=ApiResponse, tags=["Auth"])
 async def change_mbti(
@@ -192,7 +185,6 @@ async def change_mbti(
 ):
     await changeMbti(body.mbti, current_user, db)
     return ApiResponse()
-change_mbti.__doc__ = f"[API detail]({ApiDetail.change_mbti})"
 
 @router.post("/update/push", response_model=ApiResponse, tags=["Auth"])
 async def update_push(
@@ -202,7 +194,6 @@ async def update_push(
 ):
     await updatePush(request, current_user, db)
     return ApiResponse()
-update_push.__doc__ = f"[API detail]({ApiDetail.update_push})"
 
 @router.delete("/delete", response_model=ApiResponse, tags=["Auth"])
 async def delete_user(
@@ -211,7 +202,6 @@ async def delete_user(
 ):
     await deleteUser(current_user, db)
     return ApiResponse()
-delete_user.__doc__ = f"[API detail]({ApiDetail.delete_user})"
 
 
 

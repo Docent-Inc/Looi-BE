@@ -11,8 +11,6 @@ import redis as redis
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session
-
-from app.core.apiDetail import ApiDetail
 from app.core.security import get_current_user, time_now
 from app.db.database import get_db, get_redis_client
 from app.db.models import Calender, MorningDiary, NightDiary, Report, Luck
@@ -99,7 +97,6 @@ async def get_calender(
     return ApiResponse(
         data=upcoming_events
     )
-get_calender.__doc__ = f"[API detail]({ApiDetail.get_calender})"
 
 def default_converter(o):
     if isinstance(o, datetime):
@@ -149,7 +146,6 @@ async def get_record(
     await redis.setex(redis_key, ttl, data_json)
 
     return ApiResponse(data=data)
-get_record.__doc__ = f"[API detail]({ApiDetail.get_record})"
 
 @router.get("/luck", tags=["Today"])
 async def luck(
@@ -168,7 +164,6 @@ async def luck(
 
     luck_content = await generate_luck(current_user, db)
     return ApiResponse(data={"luck": luck_content,  "isCheckedToday": False})
-luck.__doc__ = f"[API detail]({ApiDetail.generate_luck})"
 
 @router.get("/weather", tags=["Today"])
 async def get_weather(
