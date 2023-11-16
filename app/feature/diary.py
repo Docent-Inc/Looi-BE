@@ -439,11 +439,17 @@ async def dairy_list_calender(list_request: CalenderListRequest, current_user: U
             )
         ).all()
     today = await time_now()
+    start_of_today = datetime.datetime(today.year, today.month, today.day)
+    end_of_today = start_of_today + datetime.timedelta(days=1)
+
     today_count = db.query(Calender).filter(
         Calender.User_id == current_user.id,
         Calender.is_deleted == False,
-        Calender.start_time >= datetime.datetime(today.year, today.month, today.day),
-        Calender.start_time < datetime.datetime(today.year, today.month, today.day) + datetime.timedelta(days=1)
+        or_(
+            and_(Calender.start_time >= start_of_today, Calender.start_time < end_of_today),
+            and_(Calender.end_time > start_of_today, Calender.end_time <= end_of_today),
+            and_(Calender.start_time <= start_of_today, Calender.end_time >= end_of_today)
+        )
     ).count()
 
     calenders_transformed = [transform_calendar(cal) for cal in calenders]
