@@ -54,7 +54,6 @@ async def create_morning_diary(content: str, user: User, db: Session) -> int:
         generate_image(user.image_model, content, user, db),
         generate_resolution_gpt(mbti_content, user, db)
     )
-    print(resolution)
     upper_lower_color = "[\"" + str(L[1]) + "\", \"" + str(L[2]) + "\"]"
     now = await time_now()
 
