@@ -230,11 +230,11 @@ async def send_gpt4_request(prompt_num: int, messages_prompt: str, current_user:
     for i in range(retries):
         try:
             start_time = await time_now()
-            if prompt_num == 2:
+            if prompt_num == 2 or prompt_num == 3:
                 chat = openai.ChatCompletion.create(model="gpt-4-1106-preview", messages=prompt, response_format={"type":"json_object"})
-            # chat = openai.ChatCompletion.create(model="gpt-4-1106-preview", messages=prompt, response_format={"type":"json_object"})
+            # # chat = openai.ChatCompletion.create(model="gpt-4-1106-preview", messages=prompt, response_format={"type":"json_object"})
             else:
-                chat = openai.ChatCompletion.create(model="gpt-4", messages=prompt)
+                chat = openai.ChatCompletion.create(model="gpt-4-1106-preview", messages=prompt)
             end_time = await time_now()
             await api_log(
                 user_id=current_user.id,
@@ -264,9 +264,10 @@ async def send_dalle2_request(messages_prompt: str, user: User, db: Session, ret
             start_time = await time_now()
             response = await asyncio.to_thread(
                 openai.Image.create,
+                model="dall-e-3",
                 prompt=messages_prompt[:255],
                 n=1,
-                size="512x512",
+                size="1024x1024",
                 response_format="url"
             )
             end_time = await time_now()
@@ -276,7 +277,7 @@ async def send_dalle2_request(messages_prompt: str, user: User, db: Session, ret
                 request_token=0,
                 response_token=0,
                 response_time_ms=int((end_time - start_time).total_seconds() * 1000),
-                model="DaLLE-2",
+                model="DaLLE-3",
                 db=db
             )
             return response['data'][0]['url']

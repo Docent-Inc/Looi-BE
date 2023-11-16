@@ -45,7 +45,7 @@ def calculate_api_usage_cost(db, now):
         func.count(ApiRequestLog.id)
     ).filter(
         func.date(ApiRequestLog.create_date) == now.date(),
-        ApiRequestLog.model == "DaLLE-2"
+        ApiRequestLog.model == "DaLLE-3"
     ).scalar()  # .count() 대신 .scalar()를 사용하여 바로 값을 가져올 수 있습니다.
 
     # 각 모델의 토큰 가격을 설정합니다.
@@ -53,7 +53,7 @@ def calculate_api_usage_cost(db, now):
         "gpt-3.5-turbo-1106": (Decimal('0.001'), Decimal('0.002')),
         "gpt-4-1106-preview": (Decimal('0.01'), Decimal('0.03')),
         "gpt-4-0613": (Decimal('0.03'), Decimal('0.06')),
-        "DaLLE-2": Decimal('0.018')  # DaLLE-2 모델의 가격
+        "DaLLE-3": Decimal('0.040')  # DaLLE-2 모델의 가격
     }
 
     # 비용을 계산하는 내부 함수입니다.
@@ -64,7 +64,7 @@ def calculate_api_usage_cost(db, now):
             input_cost = (request_tokens / 1000) * input_price
             output_cost = (response_tokens / 1000) * output_price
             return input_cost + output_cost
-        elif model == "DaLLE-2":
+        elif model == "DaLLE-3":
             requests = Decimal(logs if logs else 0)
             price_per_request = prices[model]
             return requests * price_per_request
@@ -73,7 +73,7 @@ def calculate_api_usage_cost(db, now):
     total_cost3 = calculate_cost(gpt3_logs, "gpt-3.5-turbo-1106")
     total_cost4_turbo = calculate_cost(gpt4_turbo_logs, "gpt-4-1106-preview")
     total_cost4 = calculate_cost(gpt4_logs, "gpt-4-0613")
-    total_cost_dalle = calculate_cost(dalle_logs, "DaLLE-2")
+    total_cost_dalle = calculate_cost(dalle_logs, "DaLLE-3")
 
     # 총 비용을 반환합니다.
     return float(total_cost3 + total_cost4 + total_cost_dalle + total_cost4_turbo)
