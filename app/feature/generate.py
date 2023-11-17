@@ -134,10 +134,10 @@ async def generate_luck(user: User, db: Session):
                 MorningDiary.is_deleted == False
             ).first()
     if not morning:
-        text = ""
+        text = "x"
     else:
         if morning:
-            text += morning.content
+            text = morning.content
     data = await send_gpt_request(5, text, user, db)
     luck = Luck(
         User_id=user.id,
