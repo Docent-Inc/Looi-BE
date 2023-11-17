@@ -421,7 +421,7 @@ async def dairy_list_calender(list_request: CalenderListRequest, current_user: U
                 Calender.start_time.between(start_of_month, end_of_month),
                 Calender.end_time.between(start_of_month, end_of_month)
             )
-        ).all()
+        ).order_by(Calender.start_time).all()
     else:
         year = list_request.year
         month = list_request.month
@@ -436,7 +436,7 @@ async def dairy_list_calender(list_request: CalenderListRequest, current_user: U
                 and_(Calender.end_time > start_of_day, Calender.end_time <= end_of_day),
                 and_(Calender.start_time <= start_of_day, Calender.end_time >= end_of_day)
             )
-        ).all()
+        ).order_by(Calender.start_time).all()
     today = await time_now()
     start_of_today = datetime.datetime(today.year, today.month, today.day)
     end_of_today = start_of_today + datetime.timedelta(days=1)
