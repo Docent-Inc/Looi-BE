@@ -1,9 +1,10 @@
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from random import randint
 
 import aioredis
 import requests
+
 from app.core.config import settings
 import pytz
 from urllib.parse import urlencode, unquote
@@ -125,9 +126,9 @@ def default_converter(o):
 
 @router.get("/history", tags=["Today"])
 async def get_record(
-        current_user: User = Depends(get_current_user),
-        db: Session = Depends(get_db),
-        redis: aioredis.Redis = Depends(get_redis_client),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    redis: aioredis.Redis = Depends(get_redis_client),
 ) -> ApiResponse:
     now = await time_now()
     today_str = now.strftime('%Y-%m-%d')
@@ -161,7 +162,10 @@ async def get_record(
         "NightDiary": [diary.as_dict() for diary in random_night_diaries]
     }
 
-    ttl = (now.replace(hour=23, minute=59, second=59) - now).seconds
+    timezone = pytz.timezone('Asia/Seoul')
+    start_of_today = datetime(now.year, now.month, now.day, tzinfo=timezone)
+    end_of_today = start_of_today + timedelta(days=1)
+    ttl = int((end_of_today - now).total_seconds())
     data_json = json.dumps(data, default=default_converter)
     await redis.setex(redis_key, ttl, data_json)
 
