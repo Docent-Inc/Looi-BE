@@ -61,8 +61,8 @@ def calculate_api_usage_cost(db, now):
         if model in ["gpt-3.5-turbo-1106", "gpt-4-1106-preview", "gpt-4-0613"]:
             request_tokens, response_tokens = (Decimal(log) if log else 0 for log in logs)
             input_price, output_price = prices[model]
-            input_cost = (request_tokens / 1000) * input_price
-            output_cost = (response_tokens / 1000) * output_price
+            input_cost = (request_tokens / Decimal(1000)) * input_price
+            output_cost = (response_tokens / Decimal(1000)) * output_price
             return input_cost + output_cost
         elif model == "DaLLE-3":
             requests = Decimal(logs if logs else 0)
