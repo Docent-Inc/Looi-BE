@@ -18,7 +18,9 @@ async def generate():
         SessionLocal = get_SessionLocal()
         db = SessionLocal()
         try:
-            users = db.query(User).all()
+            users = db.query(User).filter(
+                User.is_deleted == False,
+            ).all()
             for user in users:
                 await generate_report(user, db)
         finally:
