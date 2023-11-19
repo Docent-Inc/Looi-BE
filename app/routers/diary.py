@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from app.feature.diary import create_night_diary, create_morning_diary, read_morning_diary, read_night_diary, \
     update_morning_diary, delete_morning_diary, update_night_diary, delete_night_diary, create_memo, list_morning_diary, \
     list_night_diary, create_calender, update_calender, read_calender, delete_calender, dairy_list, read_memo, \
-    dairy_list_calender, get_diary_ratio, delete_memo
+    dairy_list_calender, get_diary_ratio, delete_memo, share_read_morning_diary, share_read_night_diary
 from app.db.database import get_db
 from sqlalchemy.orm import Session
 from app.core.security import get_current_user
@@ -250,4 +250,24 @@ async def get_ratio(
     ratio = await get_diary_ratio(current_user, db)
     return ApiResponse(
         data={"ratio": ratio}
+    )
+
+@router.get("/morning/share/{diary_id}", response_model=ApiResponse, tags=["Diary"])
+async def share_morning_diary(
+    diary_id: int,
+    db: Session = Depends(get_db),
+) -> ApiResponse:
+    diary = await share_read_morning_diary(diary_id, db)
+    return ApiResponse(
+        data=diary
+    )
+
+@router.get("/night/share/{diary_id}", response_model=ApiResponse, tags=["Diary"])
+async def share_night_diary(
+    diary_id: int,
+    db: Session = Depends(get_db),
+) -> ApiResponse:
+    diary = await share_read_night_diary(diary_id, db)
+    return ApiResponse(
+        data=diary
     )
