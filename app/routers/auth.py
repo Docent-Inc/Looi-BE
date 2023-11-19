@@ -140,6 +140,11 @@ async def refresh_token(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=4005,
         )
+    if user.is_signup == True:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=4998,
+        )
     expires_in, refresh_expires_in, access_token, refresh_token = await create_token(user.email) # 토큰을 생성합니다.
     return ApiResponse(
         data=TokenData(
