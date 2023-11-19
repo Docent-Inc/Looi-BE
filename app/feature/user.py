@@ -236,6 +236,7 @@ async def updateUser(request: UserUpdateRequest, current_user: User, db: Session
         current_user.mbti = request.mbti
         current_user.gender = request.gender
         current_user.birth = request.birth
+        current_user.is_sign_up = False
         db.add(current_user)
         db.commit()
         db.refresh(current_user)
