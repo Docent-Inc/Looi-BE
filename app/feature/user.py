@@ -226,7 +226,7 @@ async def user_line(kakao_data: dict, db: Session) -> Optional[User]:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=5000,
             )
-    elif user.nickname == user.email[:user.email.find("@")] or user.mbti == 0:
+    if user.mbti == 0:
         is_sign_up = True
     return user, is_sign_up
 
