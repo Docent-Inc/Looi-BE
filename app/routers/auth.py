@@ -140,7 +140,7 @@ async def refresh_token(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=4005,
         )
-    if user.is_signup == True:
+    if user.is_sign_up == True:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=4998,
