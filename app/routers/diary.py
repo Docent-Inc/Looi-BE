@@ -259,7 +259,7 @@ async def share_morning_diary(
 ) -> ApiResponse:
     diary = await share_read_morning_diary(diary_id, db)
     return ApiResponse(
-        data=diary
+        data={"diary": diary}
     )
 
 @router.get("/night/share/{diary_id}", response_model=ApiResponse, tags=["Diary"])
@@ -269,5 +269,5 @@ async def share_night_diary(
 ) -> ApiResponse:
     diary = await share_read_night_diary(diary_id, db)
     return ApiResponse(
-        data=diary
+        data={"diary": diary}
     )
