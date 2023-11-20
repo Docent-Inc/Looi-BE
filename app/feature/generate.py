@@ -49,6 +49,7 @@ async def generate_image(image_model: int, message: str, user: User, db: Session
             detail=4500
         )
     img = Image.open(BytesIO(response.content))
+    img = img.resize((512, 512), Image.ANTIALIAS)
 
     width, height = img.size
 
