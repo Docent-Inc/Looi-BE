@@ -1,4 +1,4 @@
-from app.core.handler import register_exception_handlers
+from app.core.handler import register_exception_handlers, TimeoutMiddleware
 from fastapi import FastAPI
 from app.routers import auth, report, diary, today, admin, chat
 from app.core.middleware import TimingMiddleware
@@ -21,6 +21,7 @@ app.include_router(diary.router)
 app.include_router(admin.router)
 app.add_middleware(TimingMiddleware)
 register_exception_handlers(app)
+app.add_middleware(TimeoutMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
