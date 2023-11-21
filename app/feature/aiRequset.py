@@ -38,6 +38,8 @@ prompt1 = [
     {"role": "system", "content": "1"},
     {"role": "user", "content": "2023-08-24 17:00:00 학교에서 계속 공부를했다. 너무 힘든 하루였지만 마무리가 깔끔해서 기분좋게 잠에 잘 수 있을 것 같다. 내일은 더 열심히 해야겠다."},
     {"role": "system", "content": "2"},
+    {"role": "user", "content": "2023-08-25 19:11:24 11월 20일부터 28일은 부산으로 여행갈거야"},
+    {"role": "system", "content": "4"},
 ]
 
 
@@ -122,7 +124,11 @@ prompt6 = [
     {"role": "user", "content": "local time: 2023-11-16 15:23:26 Thursday, 다음주 토요일 8시에 친구랑 노래방 가"},
     {"role": "system", "content": "{\"start_time\": \"2023-11-25 20:00:00\", \"end_time\": \"2023-11-25 22:00:00\", \"title\": \"노래방\", \"description\": \"친구랑 노래방\"}"},
     {"role": "user", "content": "local time: 2023-11-16 15:23:26 Thursday, 다음주 월요일에 서현이 누나랑 데이트!!"},
-    {"role": "system", "content": "{\"start_time\": \"2023-11-20 09:00:00\", \"end_time\": \"2023-11-20 10:00:00\", \"title\": \"데이트\", \"description\": \"서현이 누나랑 데이트\"}"},
+    {"role": "system", "content": "{\"start_time\": \"2023-11-20 09:00:00\", \"end_time\": \"2023-11-20 22:00:00\", \"title\": \"데이트\", \"description\": \"서현이 누나랑 데이트\"}"},
+    {"role": "user", "content": "local time: 2023-11-16 15:23:26 Thursday, 12월 23일-25일 후쿠오카 여행"},
+    {"role": "system", "content": "{\"start_time\": \"2023-12-23 09:00:00\", \"end_time\": \"2023-12-25 22:00:00\", \"title\": \"여행\", \"description\": \"후쿠오카\"}"},
+    {"role": "user", "content": "local time: 2023-11-21 15:23:26 Tuesday, 1월 1일에 서현이 누나랑 데이트"},
+    {"role": "system", "content": "{\"start_time\": \"2024-01-01 09:00:00\", \"end_time\": \"2024-01-01 22:00:00\", \"title\": \"데이트\", \"description\": \"서현이 누나랑 데이트\"}"},
 ]
 
 prompt7 = [
