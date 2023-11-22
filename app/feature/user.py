@@ -172,7 +172,6 @@ async def user_kakao(kakao_data: dict, db: Session) -> Optional[User]:
             db.refresh(user)
             diary = NightDiary(
                 User_id=user.id,
-                date=await time_now(),
                 diary_name="나만의 기록 친구 Look-i와의 특별한 첫 만남",
                 content="오늘은 인상깊은 날이다. 기록 친구 Look-i와 만나게 되었다. 앞으로 기록 열심히 해야지~!",
                 image_url="https://storage.googleapis.com/docent/c1c96c92-a8d2-4b18-9465-48be554d8880.png",
