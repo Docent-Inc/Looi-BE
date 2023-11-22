@@ -67,6 +67,11 @@ async def get_current_user(
     user = get_user_by_email(db, email=email)
     if user is None or user.is_deleted == True:
         raise credentials_exception
+    if user.mbti == "0":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=4998,
+        )
     return user
 
 async def get_current_user_is_admin(
