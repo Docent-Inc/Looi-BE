@@ -74,6 +74,31 @@ async def get_current_user(
         )
     return user
 
+async def get_update_user(
+    api_key: str = Depends(api_key_header_auth), # api_key_header_auth를 통해 api_key를 받아온다.
+    db: Session = Depends(get_db),
+) -> User:
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail=4220,
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    if settings.TEST_TOKEN != "test":
+        api_key = settings.TEST_TOKEN
+    try:
+        token = api_key.replace("Bearer ", "")
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            raise credentials_exception
+    except:
+        raise credentials_exception
+
+    user = get_user_by_email(db, email=email)
+    if user is None or user.is_deleted == True:
+        raise credentials_exception
+    return user
+
 async def get_current_user_is_admin(
     User: User = Depends(get_current_user),
 ) -> User:
