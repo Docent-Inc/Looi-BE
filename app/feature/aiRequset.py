@@ -40,6 +40,10 @@ prompt1 = [
     {"role": "system", "content": "2"},
     {"role": "user", "content": "2023-08-25 19:11:24 11월 20일부터 28일은 부산으로 여행갈거야"},
     {"role": "system", "content": "4"},
+    {"role": "user", "content": "2023-11-22 19:24:24 오늘 내역서 작업하느라 매우 바빴는데 저녁에 회를 먹어서 호다닥 달려옴"},
+    {"role": "system", "content": "2"},
+    {"role": "user", "content": "2023-11-22 20:12:51 아침마다 파업 그만했으면 좋겠다 한놈만 걸려라 다 패버린다"},
+    {"role": "system", "content": "2"},
 ]
 
 
