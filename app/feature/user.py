@@ -3,7 +3,7 @@ from app.core.security import verify_password, get_password_hash, time_now
 from app.schemas.request import UserCreate, UserUpdateRequest, PushUpdateRequest
 from typing import Optional
 from app.core.security import get_user_by_email, get_user_by_nickname
-from app.db.models import User
+from app.db.models import User, NightDiary
 from fastapi import HTTPException, status
 
 mbti_list = ['istj', 'isfj', 'infj', 'intj', 'istp', 'isfp', 'infp', 'intp', 'estp', 'esfp', 'enfp', 'entp', 'estj', 'esfj', 'enfj', 'entj']
@@ -170,6 +170,19 @@ async def user_kakao(kakao_data: dict, db: Session) -> Optional[User]:
             db.add(user)
             db.commit()
             db.refresh(user)
+            diary = NightDiary(
+                User_id=user.id,
+                date=await time_now(),
+                diary_name="나만의 기록 친구 Look-i와의 특별한 첫 만남",
+                content="오늘은 인상깊은 날이다. 기록 친구 Look-i와 만나게 되었다. 앞으로 기록 열심히 해야지~!",
+                image_url="https://storage.googleapis.com/docent/c1c96c92-a8d2-4b18-9465-48be554d8880.png",
+                background_color="[\"(255, 143, 230)\", \"(252, 253, 253)\"]",
+                is_deleted=False,
+                create_date=await time_now(),
+            )
+            db.add(diary)
+            db.commit()
+            db.refresh(diary)
         except:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

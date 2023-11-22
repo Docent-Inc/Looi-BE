@@ -158,8 +158,8 @@ async def get_record(
     ).order_by(func.random()).limit(count_night).all()
 
     data = {
-        "MorningDiary": [diary.as_dict() for diary in random_morning_diaries],
-        "NightDiary": [diary.as_dict() for diary in random_night_diaries]
+        "MorningDiary": [{"diary_type": 1, **diary.as_dict()} for diary in random_morning_diaries],
+        "NightDiary": [{"diary_type": 2, **diary.as_dict()} for diary in random_night_diaries]
     }
 
     timezone = pytz.timezone('Asia/Seoul')
