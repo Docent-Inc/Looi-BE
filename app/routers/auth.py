@@ -4,7 +4,7 @@ from app.feature.kakaoOAuth2 import KAKAO_AUTH_URL, get_user_kakao, KAKAO_AUTH_U
     get_user_kakao_test
 from app.db.database import get_db
 from sqlalchemy.orm import Session
-from app.core.security import decode_access_token, create_token
+from app.core.security import decode_access_token, create_token, get_update_user
 from app.feature.lineOAuth2 import LINE_AUTH_URL, LINE_AUTH_URL_TEST, get_user_line, get_user_line_test
 from app.feature.slackBot import slack_bot
 from app.schemas.response import TokenData, ApiResponse, KakaoTokenData
@@ -166,7 +166,7 @@ async def get_info(
 @router.post("/update", response_model=ApiResponse, tags=["Auth"])
 async def update_user(
     request: UserUpdateRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_update_user),
     db: Session = Depends(get_db),
 ):
     await updateUser(request, current_user, db)
