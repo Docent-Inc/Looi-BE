@@ -16,7 +16,14 @@ def register_exception_handlers(app):
     async def custom_http_exception_handler(request: Request, exc: HTTPException):
         if exc.detail not in CUSTOM_EXCEPTIONS:
             exc.detail = 4000
-        if exc.detail != 4220:
+
+        if exc.detail == 4220:
+            pass
+        elif exc.detail == 4998:
+            pass
+        elif exc.detail == 4004:
+            pass
+        else:
             SessionLocal = get_SessionLocal()
             db = SessionLocal()
             try:
