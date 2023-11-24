@@ -1,6 +1,5 @@
 import asyncio
 import json
-
 from sqlalchemy import desc, literal, func, or_, and_
 from sqlalchemy import null
 from dateutil.relativedelta import relativedelta
@@ -10,16 +9,11 @@ from bs4 import BeautifulSoup
 from sqlalchemy.orm import Session
 from sqlalchemy import union_all
 from starlette import status
-from fastapi import BackgroundTasks
-
 from app.core.security import time_now
-from app.db.database import get_redis_client
 from app.db.models import NightDiary, MorningDiary, Memo, Calender
 from app.feature.aiRequset import send_gpt_request
 from app.feature.generate import generate_image, generate_diary_name, generate_resolution_gpt
 import datetime
-import pytz
-
 from app.schemas.request import UpdateDiaryRequest, CalenderRequest, ListRequest, CalenderListRequest
 from app.schemas.response import User
 
@@ -340,10 +334,9 @@ async def list_calender(user: User, db: Session):
 async def dairy_list(list_request: ListRequest, current_user: User, db: Session):
     page = list_request.page
     diary_type = list_request.diary_type
-    limit = 8  # 페이지당 레코드 수
+    limit = 8
     offset = (page - 1) * limit
 
-    # 모델의 열을 명시적으로 나열합니다.
     morning_diary_columns = [
         MorningDiary.id, MorningDiary.User_id, MorningDiary.diary_name, MorningDiary.content,
         MorningDiary.resolution, MorningDiary.image_url, MorningDiary.background_color,
@@ -370,24 +363,17 @@ async def dairy_list(list_request: ListRequest, current_user: User, db: Session)
     all_items = []
 
     if diary_type == 0:
-        # Fetching all types of diaries.
         queries = []
         for idx, Model in enumerate([MorningDiary, NightDiary, Memo]):
-            # You need to ensure 'create_date' is selected and labeled consistently across all queries.
-            # Here, we are labeling it as 'common_create_date' for the union operation.
             query = db.query(*columns_list[idx], Model.create_date.label('common_create_date')).filter(
                 Model.User_id == current_user.id,
                 Model.is_deleted == False
             )
             query = query.order_by(Model.create_date.desc())
             queries.append(query)
-
-        # Union all queries and the label will help in identifying the column in the merged table.
         unioned_queries = union_all(*queries).alias('unioned_queries')
-
-        # Now you can safely order by the 'common_create_date', as it is consistently labeled in all subqueries.
         final_query = db.query(unioned_queries).order_by(desc(unioned_queries.c.common_create_date))
-        final_query = final_query.limit(limit).offset(offset)  # Apply limit and offset after the order
+        final_query = final_query.limit(limit).offset(offset)
         data_rows = db.execute(final_query).fetchall()
 
         for row in data_rows:
