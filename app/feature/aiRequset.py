@@ -55,19 +55,6 @@ prompt2 = [
     {"role": "system", "content": "비둘기와 나의 특별한 우정"},
 ]
 
-# prompt3 = [
-#     {"role": "system", "content": "make just one scene a prompt for DALLE2 about this diary"},
-#     {"role": "system", "content": "include the word illustration, digital art, vivid and 7 world about Subject, Medium, Environment, Lighting, Color, Mood, Compoition"},
-#     {"role": "system", "content": "make just prompt only engilsh"},
-#     {"role": "system", "content": "max_length=250"},
-#     {"role": "user", "content": "학교 복도에서 친구랑 얘기하다가 갑자기 앞문쪽에서 좀비떼가 몰려와서 도망침. 근데 알고보니 우리반 애였음. 걔네 반 담임쌤한테 가서 말하니까 쌤이 괜찮다고 하심. 그래서 안심하고 있었는데 또다른 좀비가 와서 막 물어뜯음. 그러다가 깼는데 아직도 심장이 벌렁벌렁 거림.."},
-#     {"role": "system", "content": "Create a vivid digital art illustration depicting a zombie apocalypse in a school hallway. Illuminate the scene with an eerie, greenish light and use a dull, muted color scheme, accentuated by splashes of blood-red. Capture the mood of shock and fear, and compose the artwork to emphasize the adrenaline-pumping chase and a sudden, terrifying zombie ambush."},
-#     {"role": "user", "content": "학교 축제날이어서 여러가지 부스 체험을 했다. 나는 타로부스 가서 연애운 봤는데 상대방이랑 안 맞는다고 해서 기분 상했다. 그래도 마지막에는 좋게 끝나서 다행이라고 생각했다."},
-#     {"role": "system", "content": "Create a digital art illustration that is vivid and lively, set during a school festival. Showcase a festival-goer receiving a tarot reading. Employ warm and inviting lighting to illuminate a vibrant and colorful scene. Convey mixed emotions of disappointment and relief on the protagonist's face as they react to their tarot reading."},
-#     {"role": "user", "content": "적에게 계속 도망치면서 세상을 구할 목표를 향해 팀원들과 향해 나아간다. 모험중에서 새로운 사람도 만나며 나아가지만 결국 나 혼자서 해내야 하는 상황에 마주친다. 하지만 목표를 향한 문제 풀이 과정에서 답도 모르지만 안풀리는 상황에 놓이고 적에게 붙잡히지는 않았지만 따라잡히게 된다."},
-#     {"role": "system", "content": "Create a vivid digital art illustration that captures the essence of a hero's journey. Set the scene in a fantastical world that's rich in color and illuminated by dramatic adventure lighting. The artwork should evoke feelings of determination and anxiety. Put the spotlight on the hero's solitary struggle and pursuit, as they face obstacles and enemies in their quest to save the world."},
-# ]
-
 prompt3 = [
     {"role": "system", "content": "make just one scene a prompt for DALLE2"},
     {"role": "system", "content": "include the word illustration, digital art, vivid and 7 world about Subject, Medium, Environment, Lighting, Color, Mood, Compoition"},
@@ -248,7 +235,6 @@ async def send_gpt4_request(prompt_num: int, messages_prompt: str, current_user:
             start_time = await time_now()
             if prompt_num == 2 or prompt_num == 3:
                 chat = openai.ChatCompletion.create(model="gpt-4-1106-preview", messages=prompt, response_format={"type":"json_object"})
-            # # chat = openai.ChatCompletion.create(model="gpt-4-1106-preview", messages=prompt, response_format={"type":"json_object"})
             else:
                 chat = openai.ChatCompletion.create(model="gpt-4-1106-preview", messages=prompt)
             end_time = await time_now()
