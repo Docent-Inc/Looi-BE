@@ -480,6 +480,10 @@ async def get_diary_ratio(user: User, db: Session):
                                                    NightDiary.is_deleted == False).count()
     Memo_count = db.query(Memo).filter(Memo.User_id == user.id, Memo.is_deleted == False).count()
 
+    MorningDiary_count = 0
+    NightDiary_count = 0
+    Memo_count = 0
+
     total = MorningDiary_count + NightDiary_count + Memo_count
     if total == 0:
         morning_diary_ratio = 0
@@ -492,7 +496,9 @@ async def get_diary_ratio(user: User, db: Session):
         memo_ratio = (Memo_count / total) * 100
 
     max_category_value = max(morning_diary_ratio, night_diary_ratio, memo_ratio)
-    if morning_diary_ratio == night_diary_ratio and night_diary_ratio == memo_ratio:
+    if total == 0:
+        pass
+    elif morning_diary_ratio == night_diary_ratio and night_diary_ratio == memo_ratio:
         max_category = 4
     elif max_category_value == morning_diary_ratio:
         max_category = 1
