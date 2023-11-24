@@ -480,10 +480,6 @@ async def get_diary_ratio(user: User, db: Session):
                                                    NightDiary.is_deleted == False).count()
     Memo_count = db.query(Memo).filter(Memo.User_id == user.id, Memo.is_deleted == False).count()
 
-    MorningDiary_count = 0
-    NightDiary_count = 0
-    Memo_count = 0
-
     total = MorningDiary_count + NightDiary_count + Memo_count
     if total == 0:
         morning_diary_ratio = 0
