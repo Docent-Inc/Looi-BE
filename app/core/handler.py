@@ -23,6 +23,8 @@ def register_exception_handlers(app):
             pass
         elif exc.detail == 4004:
             pass
+        elif exc.detail == 4506:
+            pass
         else:
             SessionLocal = get_SessionLocal()
             db = SessionLocal()
