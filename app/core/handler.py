@@ -61,19 +61,3 @@ def register_exception_handlers(app):
             ).dict(),
             status_code=400
         )
-
-import time
-
-class TimeoutMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        start_time = time.time()
-        response = await call_next(request)
-        process_time = time.time() - start_time
-        max_process_time = 40  # 최대 허용 응답 시간 (초)
-
-        if process_time > max_process_time:
-            raise HTTPException(
-                status_code=status.HTTP_408_REQUEST_TIMEOUT,
-                detail=4997,  # 에러 메시지를 반환합니다.
-            )
-        return response
