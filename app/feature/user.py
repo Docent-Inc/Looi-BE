@@ -30,16 +30,16 @@ async def create_user(db: Session, user: UserCreate) -> User:
             detail=5000,  # 에러 메시지를 반환합니다.
         )
 
-def authenticate_user(db: Session, email: str, password: str) -> Optional[User]:
-    user = get_user_by_email(db, email) # 이메일로 사용자 정보 가져오기
-    if not user:
-        return None
-    if not verify_password(password, user.hashed_password): # 비밀번호 확인
-        return None
-    return user
+# def authenticate_user(db: Session, email: str, password: str) -> Optional[User]:
+#     user = get_user_by_email(db, email) # 이메일로 사용자 정보 가져오기
+#     if not user:
+#         return None
+#     if not verify_password(password, user.hashed_password): # 비밀번호 확인
+#         return None
+#     return user
 
 async def changeNickName(requset_nickName: str, current_user: User, db: Session):
-    existing_user = get_user_by_nickname(db, nickname=requset_nickName)  # 닉네임으로 사용자를 조회합니다.
+    existing_user = await get_user_by_nickname(db, nickname=requset_nickName)  # 닉네임으로 사용자를 조회합니다.
     if existing_user:  # 사용자가 존재하면
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -149,7 +149,7 @@ async def user_kakao(kakao_data: dict, db: Session) -> Optional[User]:
         age_range = "0"
 
     # 카카오에서 전달받은 사용자 정보로 사용자를 조회합니다.
-    user = get_user_by_email(db, email=kakao_email)
+    user = await get_user_by_email(db, email=kakao_email)
     is_sign_up = False
     # 사용자가 존재하지 않으면 새로운 사용자를 생성합니다.
     if not user:
@@ -213,7 +213,7 @@ async def user_line(kakao_data: dict, db: Session) -> Optional[User]:
         age_range = "0"
 
     # 카카오에서 전달받은 사용자 정보로 사용자를 조회합니다.
-    user = get_user_by_email(db, email=kakao_email)
+    user = await get_user_by_email(db, email=kakao_email)
     is_sign_up = False
     # 사용자가 존재하지 않으면 새로운 사용자를 생성합니다.
     if not user:
