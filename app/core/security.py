@@ -121,7 +121,7 @@ async def create_refresh_token(data: dict, expires_delta: timedelta = None) -> s
 async def get_user_by_email(db: Session, email: str) -> Optional[User]:
     return db.query(User).filter(User.email == email, User.is_deleted == False).first()
 
-def get_user_by_nickname(db: Session, nickname: str) -> Optional[User]:
+async def get_user_by_nickname(db: Session, nickname: str) -> Optional[User]:
     return db.query(User).filter(User.nickname == nickname, User.is_deleted == False).first()
 
 async def create_token(email):
