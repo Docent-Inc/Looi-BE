@@ -1,7 +1,7 @@
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from app.feature.kakaoOAuth2 import KAKAO_AUTH_URL, get_user_kakao, KAKAO_AUTH_URL_TEST, \
-    get_user_kakao_test
+    get_user_kakao_test, KAKAO_AUTH_URL_VERCEL, get_user_kakao_vercel
 from app.db.database import get_db
 from sqlalchemy.orm import Session
 from app.core.security import decode_access_token, create_token, get_update_user
@@ -15,7 +15,6 @@ from app.schemas.request import UserCreate, PasswordChangeRequest, NicknameChang
     MbtiChangeRequest
 from app.core.security import get_current_user
 from app.schemas.response import User
-
 router = APIRouter(prefix="/auth")
 
 # @router.post("/signup", response_model=ApiResponse, tags=["Auth"])
@@ -88,6 +87,9 @@ async def login(
         return ApiResponse(data={"url": KAKAO_AUTH_URL_TEST if test else KAKAO_AUTH_URL})
     elif service == "line":
         return ApiResponse(data={"url": LINE_AUTH_URL_TEST if test else LINE_AUTH_URL})
+    elif service == "vercel":
+        return ApiResponse(data={"url": KAKAO_AUTH_URL_VERCEL})
+
     else:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=4403)
 
@@ -105,6 +107,9 @@ async def callback(
     elif service == "line":
         data = await get_user_line_test(code) if test else await get_user_line(code)
         user, is_sign_up = await user_line(data, db)
+    elif service == "vercel":
+        data = await get_user_kakao_vercel(code)
+        user, is_sign_up = await user_kakao(data, db)
     else:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=4403)
 
