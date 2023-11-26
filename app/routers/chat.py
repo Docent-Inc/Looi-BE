@@ -41,6 +41,7 @@ async def chat(
     text_type_dict = {1: "꿈", 2: "일기", 3: "메모", 4: "일정"}
     save_chat = TextClassification(
         text=body.content,
+        User_id=current_user.id,
         text_type=text_type_dict[text_type],
         create_date=await time_now(),
     )
