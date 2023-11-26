@@ -189,13 +189,15 @@ class Dashboard(Base):
     today_night_diary = Column(Integer, nullable=False)
     today_calender = Column(Integer, nullable=False)
     today_memo = Column(Integer, nullable=False)
+    today_chat_user = Column(Integer, nullable=False)
+    today_chat_mean_request = Column(FLOAT, nullable=False)
     create_date = Column(DateTime, nullable=False)
 
 class TextClassification(Base):
     __tablename__ = "TextClassification"
 
     id = Column(Integer, primary_key=True)
-    # User_id = Column(Integer, ForeignKey('User.id'), nullable=False, index=True)
+    User_id = Column(Integer, ForeignKey('User.id'), nullable=False, index=True)
     text = Column(Text, nullable=False)
     text_type = Column(String(10), nullable=False)
     create_date = Column(DateTime, nullable=False)

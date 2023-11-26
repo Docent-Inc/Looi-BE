@@ -111,6 +111,14 @@ async def slack_bot():
 
         total_cost = calculate_api_usage_cost(db, now)
 
+        # 오늘 채팅 요청을 한번이라도 한 사람 수
+        today_chat_users = db.query(TextClassification).filter(
+            func.date(TextClassification.create_date) == now.date(),
+        ).group_by(TextClassification.User_id).all()
+        today_chat_users_count = len(today_chat_users)
+
+        mean_request = total_count / today_chat_users_count
+
         # 오늘 생성된 아침 일기 수
         morning_diary_count = db.query(MorningDiary).filter(
             func.date(MorningDiary.create_date) == now.date(),
@@ -140,9 +148,12 @@ async def slack_bot():
             today_night_diary=evening_diary_count,
             today_calender=calender_count,
             today_memo=memo_count,
+            today_chat_user=today_chat_users_count,
+            today_chat_mean_request=mean_request,
         )
         db.add(save)
         db.commit()
+        db.refresh(save)
 
         # 전체 유저 수
         total_users_count = db.query(User).count()
@@ -205,7 +216,11 @@ async def slack_bot():
                     {
                         "type": "mrkdwn",
                         "text": f"*오늘 생성된 메모 수:* {memo_count}"
-                    }
+                    },
+                    {
+                        "type": "mrkdwn",
+                        "text": f"*오늘 평균 채팅 요청 수:* {mean_request:.2f}"
+                    },
                 ]
             },
             {
@@ -248,7 +263,7 @@ async def slack_bot():
                     {
                         "type": "mrkdwn",
                         "text": f"*전체 생성된 채팅 수:* {total_chat_count}"
-                    }
+                    },
                 ]
             }
         ]
@@ -271,5 +286,5 @@ async def scheduled_task():
             await release_lock(redis_client, lock_key)
 
 # aiocron 스케줄러 설정
-cron_task = aiocron.crontab('59 23 * * *', func=scheduled_task, start=False, tz=pytz.timezone('Asia/Seoul'))
+cron_task = aiocron.crontab('17 15 * * *', func=scheduled_task, start=False, tz=pytz.timezone('Asia/Seoul'))
 cron_task.start()
