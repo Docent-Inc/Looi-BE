@@ -162,10 +162,9 @@ async def get_record(
         "NightDiary": [{"diary_type": 2, **diary.as_dict()} for diary in random_night_diaries]
     }
 
-    timezone = pytz.timezone('Asia/Seoul')
-    start_of_today = datetime(now.year, now.month, now.day, tzinfo=timezone)
-    end_of_today = start_of_today + timedelta(days=1)
-    ttl = int((end_of_today - now).total_seconds())
+    now = time_now()
+    end_of_today = now.replace(hour=23, minute=59, second=59, microsecond=999999)
+    ttl = int((end_of_today - now).total_seconds()) + 1  # 하루의 끝까지의 시간을 초로 계산
     data_json = json.dumps(data, default=default_converter)
     await redis.setex(redis_key, ttl, data_json)
 
