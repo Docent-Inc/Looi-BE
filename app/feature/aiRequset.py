@@ -186,10 +186,14 @@ async def send_gpt_request(prompt_num: int , messages_prompt: str, current_user:
     for i in range(retries):
         try:
             start_time = await time_now()
-            if prompt_num == 4 or prompt_num == 6:
-                chat = openai.ChatCompletion.create(model="gpt-3.5-turbo-1106", messages=prompt, response_format={"type":"json_object"})
-            else:
-                chat = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=prompt)
+            model = "gpt-3.5-turbo-1106" if prompt_num in [4, 6] else "gpt-3.5-turbo"
+            response_format = {"type": "json_object"} if prompt_num in [4, 6] else None
+            chat = await asyncio.to_thread(
+                openai.ChatCompletion.create,
+                model=model,
+                messages=prompt,
+                response_format=response_format
+            )
             end_time = await time_now()
             await api_log(
                 user_id=current_user.id,
@@ -200,7 +204,7 @@ async def send_gpt_request(prompt_num: int , messages_prompt: str, current_user:
                 model=chat.model,
                 db=db
             )
-            if prompt_num == 4 or prompt_num == 6:
+            if prompt_num in [4, 6]:
                 return json.loads(chat.choices[0].message.content)
             else:
                 return chat.choices[0].message.content
@@ -233,10 +237,12 @@ async def send_gpt4_request(prompt_num: int, messages_prompt: str, current_user:
     for i in range(retries):
         try:
             start_time = await time_now()
-            if prompt_num == 2 or prompt_num == 3:
-                chat = openai.ChatCompletion.create(model="gpt-4-1106-preview", messages=prompt, response_format={"type":"json_object"})
-            else:
-                chat = openai.ChatCompletion.create(model="gpt-4-1106-preview", messages=prompt)
+            chat = await asyncio.to_thread(
+                openai.ChatCompletion.create,
+                model="gpt-4-1106-preview",
+                messages=prompt,
+                response_format={"type": "json_object"} if prompt_num in [2, 3] else None
+            )
             end_time = await time_now()
             await api_log(
                 user_id=current_user.id,
