@@ -9,7 +9,7 @@ from app.feature.lineOAuth2 import LINE_AUTH_URL, LINE_AUTH_URL_TEST, get_user_l
 from app.feature.slackBot import slack_bot
 from app.schemas.response import TokenData, ApiResponse, KakaoTokenData
 from app.schemas.request import TokenRefresh, UserUpdateRequest, PushUpdateRequest
-from app.feature.user import get_user_by_email, create_user, authenticate_user, changeNickName, changePassword, \
+from app.feature.user import get_user_by_email, create_user, changeNickName, changePassword, \
     deleteUser, user_kakao, changeMbti, updateUser, updatePush, user_line
 from app.schemas.request import UserCreate, PasswordChangeRequest, NicknameChangeRequest, \
     MbtiChangeRequest
@@ -139,7 +139,7 @@ async def refresh_token(
             detail=4004,
         )
     email: str = payload.get("sub")
-    user = get_user_by_email(db, email=email)
+    user = await get_user_by_email(db, email=email)
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
