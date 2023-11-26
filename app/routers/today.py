@@ -161,8 +161,6 @@ async def get_record(
         "MorningDiary": [{"diary_type": 1, **diary.as_dict()} for diary in random_morning_diaries],
         "NightDiary": [{"diary_type": 2, **diary.as_dict()} for diary in random_night_diaries]
     }
-
-    now = time_now()
     end_of_today = now.replace(hour=23, minute=59, second=59, microsecond=999999)
     ttl = int((end_of_today - now).total_seconds()) + 1  # 하루의 끝까지의 시간을 초로 계산
     data_json = json.dumps(data, default=default_converter)
