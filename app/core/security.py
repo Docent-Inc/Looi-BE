@@ -64,7 +64,7 @@ async def get_current_user(
     except:
         raise credentials_exception
 
-    user = get_user_by_email(db, email=email)
+    user = await get_user_by_email(db, email=email)
     if user is None or user.is_deleted == True:
         raise credentials_exception
     if user.mbti == "0":
@@ -94,7 +94,7 @@ async def get_update_user(
     except:
         raise credentials_exception
 
-    user = get_user_by_email(db, email=email)
+    user = await get_user_by_email(db, email=email)
     if user is None or user.is_deleted == True:
         raise credentials_exception
     return user
@@ -118,7 +118,7 @@ async def create_refresh_token(data: dict, expires_delta: timedelta = None) -> s
     to_encode.update({"exp": expire, "type": "refresh"}) # 토큰에 만료시간과 type을 추가
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM) # 토큰을 생성
     return encoded_jwt, expire
-def get_user_by_email(db: Session, email: str) -> Optional[User]:
+async def get_user_by_email(db: Session, email: str) -> Optional[User]:
     return db.query(User).filter(User.email == email, User.is_deleted == False).first()
 
 def get_user_by_nickname(db: Session, nickname: str) -> Optional[User]:
