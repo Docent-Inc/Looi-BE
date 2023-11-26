@@ -118,7 +118,6 @@ async def generate_schedule(text: str, user: User, db: Session) -> str:
         )
         db.add(chat)
         db.commit()
-
         return calender.id
     except:
         raise HTTPException(
@@ -142,6 +141,7 @@ async def generate_luck(user: User, db: Session):
     data = await send_gpt_request(5, text, user, db)
     luck = Luck(
         User_id=user.id,
+        text=text,
         content=data,
         create_date=today.date(),
     )
