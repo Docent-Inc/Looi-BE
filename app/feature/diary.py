@@ -97,7 +97,7 @@ async def share_read_night_diary(diary_id: int, db: Session) -> NightDiary:
             status_code=status.HTTP_404_NOT_FOUND,
             detail=4011,
         )
-    diary.share_cout += 1
+    diary.share_count += 1
     db.commit()
     db.refresh(diary)
     diary.User_id = None
