@@ -195,7 +195,7 @@ class TextClassification(Base):
     __tablename__ = "TextClassification"
 
     id = Column(Integer, primary_key=True)
-    User_id = Column(Integer, ForeignKey('User.id'), nullable=False, index=True)
+    # User_id = Column(Integer, ForeignKey('User.id'), nullable=False, index=True)
     text = Column(Text, nullable=False)
     text_type = Column(String(10), nullable=False)
     create_date = Column(DateTime, nullable=False)
