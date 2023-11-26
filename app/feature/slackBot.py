@@ -176,6 +176,12 @@ async def slack_bot():
         # 전체 생성된 채팅 수
         total_chat_count = db.query(TextClassification).count()
 
+        # 전체 게시물 공유 조회수
+        MorningDiary_share_count_result = db.query(func.sum(MorningDiary.share_count)).scalar()
+        NightDiary_share_count_result = db.query(func.sum(NightDiary.share_count)).scalar()
+
+        total_share_count = MorningDiary_share_count_result + NightDiary_share_count_result
+
         current_date = now.strftime("%Y-%m-%d")
 
         blocks = [
@@ -264,6 +270,10 @@ async def slack_bot():
                         "type": "mrkdwn",
                         "text": f"*전체 생성된 채팅 수:* {total_chat_count}"
                     },
+                    {
+                        "type": "mrkdwn",
+                        "text": f"*전체 공유 게시물 조회 수:* {total_share_count}"
+                    },
                 ]
             }
         ]
@@ -284,7 +294,3 @@ async def scheduled_task():
             await slack_bot()
         finally:
             await release_lock(redis_client, lock_key)
-
-# aiocron 스케줄러 설정
-cron_task = aiocron.crontab('59 23 * * *', func=scheduled_task, start=False, tz=pytz.timezone('Asia/Seoul'))
-cron_task.start()

@@ -44,6 +44,8 @@ class MorningDiary(Base):
     is_deleted = Column(Boolean, default=False, index=True)
     is_completed = Column(Boolean, default=False, index=True)
     main_keyword = Column(String(50), nullable=True)
+    view_count = Column(Integer, default=1, nullable=True)
+    share_count = Column(Integer, default=0, nullable=True)
 
     def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
@@ -62,6 +64,8 @@ class NightDiary(Base):
     create_date = Column(DateTime, nullable=False)
     modify_date = Column(DateTime, nullable=False)
     is_deleted = Column(Boolean, default=False, index=True)
+    view_count = Column(Integer, default=1, nullable=True)
+    share_count = Column(Integer, default=0, nullable=True)
 
     def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}

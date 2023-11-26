@@ -1,5 +1,10 @@
+import aiocron
+import pytz
+
 from app.core.handler import register_exception_handlers
 from fastapi import FastAPI
+
+from app.feature.slackBot import scheduled_task
 from app.routers import auth, report, diary, today, admin, chat
 from app.core.middleware import TimingMiddleware
 from fastapi.middleware.cors import CORSMiddleware
@@ -29,3 +34,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+cron_task = aiocron.crontab('59 23 * * *', func=scheduled_task, start=False, tz=pytz.timezone('Asia/Seoul'))
+cron_task.start()

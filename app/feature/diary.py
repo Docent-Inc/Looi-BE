@@ -73,6 +73,9 @@ async def read_morning_diary(diary_id: int, user:User, db: Session) -> MorningDi
             status_code=status.HTTP_404_NOT_FOUND,
             detail=4011,
         )
+    diary.view_count += 1
+    db.commit()
+    db.refresh(diary)
     return diary
 async def share_read_morning_diary(diary_id: int, db: Session) -> MorningDiary:
     diary = db.query(MorningDiary).filter(MorningDiary.id == diary_id, MorningDiary.is_deleted == False).first()
@@ -81,6 +84,9 @@ async def share_read_morning_diary(diary_id: int, db: Session) -> MorningDiary:
             status_code=status.HTTP_404_NOT_FOUND,
             detail=4011,
         )
+    diary.share_count += 1
+    db.commit()
+    db.refresh(diary)
     diary.User_id = None
     return diary
 
@@ -91,6 +97,9 @@ async def share_read_night_diary(diary_id: int, db: Session) -> NightDiary:
             status_code=status.HTTP_404_NOT_FOUND,
             detail=4011,
         )
+    diary.share_cout += 1
+    db.commit()
+    db.refresh(diary)
     diary.User_id = None
     return diary
 
@@ -168,6 +177,9 @@ async def read_night_diary(diary_id: int, user:User, db: Session) -> NightDiary:
             status_code=status.HTTP_404_NOT_FOUND,
             detail=4012,
         )
+    diary.view_count += 1
+    db.commit()
+    db.refresh(diary)
     return diary
 
 async def update_night_diary(diary_id: int, content: UpdateDiaryRequest, user: User, db: Session) -> int:
