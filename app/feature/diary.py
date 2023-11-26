@@ -17,9 +17,9 @@ import datetime
 from app.schemas.request import UpdateDiaryRequest, CalenderRequest, ListRequest, CalenderListRequest
 from app.schemas.response import User
 
-def add_one_month(original_date):
+async def add_one_month(original_date):
     return original_date + relativedelta(months=1)
-def transform_calendar(cal):
+async def transform_calendar(cal):
     return {
         'id': cal.id,
         'User_id': cal.User_id,
@@ -29,7 +29,7 @@ def transform_calendar(cal):
         'content': cal.content,
         'is_deleted': cal.is_deleted
     }
-def transform_memo(memo):
+async def transform_memo(memo):
     return {
         'id': memo['id'],
         'User_id': memo['User_id'],
@@ -399,7 +399,7 @@ async def dairy_list(list_request: ListRequest, current_user: User, db: Session)
                 item_dict['diary_type'] = diary_type
                 all_items.append(item_dict)
         if diary_type == 3:
-            all_items = [transform_memo(cal) for cal in all_items]
+            all_items = [await transform_memo(cal) for cal in all_items]
 
     else:
         raise HTTPException(
@@ -417,7 +417,7 @@ async def dairy_list_calender(list_request: CalenderListRequest, current_user: U
         year = list_request.year
         month = list_request.month
         start_of_month = datetime.datetime(year, month, 1)
-        end_of_month = add_one_month(start_of_month)
+        end_of_month = await add_one_month(start_of_month)
 
         calenders = db.query(Calender).filter(
             Calender.User_id == current_user.id,
@@ -456,7 +456,7 @@ async def dairy_list_calender(list_request: CalenderListRequest, current_user: U
         )
     ).count()
 
-    calenders_transformed = [transform_calendar(cal) for cal in calenders]
+    calenders_transformed = [await transform_calendar(cal) for cal in calenders]
     return today_count, calenders_transformed
 
 async def get_diary_ratio(user: User, db: Session):
