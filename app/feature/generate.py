@@ -118,6 +118,7 @@ async def generate_schedule(text: str, user: User, db: Session) -> str:
         )
         db.add(chat)
         db.commit()
+        db.refresh(chat)
         return calender.id
     except:
         raise HTTPException(
@@ -147,4 +148,5 @@ async def generate_luck(user: User, db: Session):
     )
     db.add(luck)
     db.commit()
+    db.refresh(luck)
     return data
