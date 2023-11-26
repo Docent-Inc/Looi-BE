@@ -203,7 +203,8 @@ async def list_report(page:int, user: User, db: Session) -> list:
     night_diaries = db.query(NightDiary).filter(
         NightDiary.User_id == user.id,
         NightDiary.create_date.between(monday.date(), today),
-        NightDiary.is_deleted == False
+        NightDiary.is_deleted == False,
+        NightDiary.diary_name != "나만의 기록 친구 Look-i와의 특별한 첫 만남",
     ).all()
 
     generated_total_count = len(morning_diaries) + len(night_diaries)
