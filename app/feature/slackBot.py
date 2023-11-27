@@ -138,22 +138,37 @@ async def slack_bot():
         memo_count = db.query(Memo).filter(
             func.date(Memo.create_date) == now.date(),
         ).count()
-
-        save = Dashboard(
-            create_date=now,
-            today_user=today_users_count,
-            today_chat=total_count,
-            today_cost=total_cost,
-            today_morning_diary=morning_diary_count,
-            today_night_diary=evening_diary_count,
-            today_calender=calender_count,
-            today_memo=memo_count,
-            today_chat_user=today_chat_users_count,
-            today_chat_mean_request=mean_request,
-        )
-        db.add(save)
-        db.commit()
-        db.refresh(save)
+        dashboards = db.query(Dashboard).filter(
+            func.date(Dashboard.create_date) == now.date(),
+        ).first()
+        if dashboards:
+            dashboards.today_user = today_users_count
+            dashboards.today_chat = total_count
+            dashboards.today_cost = total_cost
+            dashboards.today_morning_diary = morning_diary_count
+            dashboards.today_night_diary = evening_diary_count
+            dashboards.today_calender = calender_count
+            dashboards.today_memo = memo_count
+            dashboards.today_chat_user = today_chat_users_count
+            dashboards.today_chat_mean_request = mean_request
+            db.commit()
+            db.refresh(dashboards)
+        else:
+            save = Dashboard(
+                create_date=now,
+                today_user=today_users_count,
+                today_chat=total_count,
+                today_cost=total_cost,
+                today_morning_diary=morning_diary_count,
+                today_night_diary=evening_diary_count,
+                today_calender=calender_count,
+                today_memo=memo_count,
+                today_chat_user=today_chat_users_count,
+                today_chat_mean_request=mean_request,
+            )
+            db.add(save)
+            db.commit()
+            db.refresh(save)
 
         # 전체 유저 수
         total_users_count = db.query(User).count()
