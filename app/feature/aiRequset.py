@@ -124,6 +124,8 @@ prompt6 = [
     {"role": "system", "content": "{\"start_time\": \"2024-01-01 09:00:00\", \"end_time\": \"2024-01-01 22:00:00\", \"title\": \"데이트\", \"description\": \"서현이 누나랑 데이트\"}"},
     {"role": "user", "content": "local time: 2023-11-24 10:21:46 Friday, 다음주 수요일부터 금요일까지 일본 여행"},
     {"role": "system", "content": "{\"start_time\": \"2023-11-29 09:00:00\", \"end_time\": \"2023-12-01 22:00:00\", \"title\": \"여행\", \"description\": \"일본\"}"},
+    {"role": "user", "content": "local time: 2023-11-27 10:07:01 Monday, 12시에 일정 등록해줘"},
+    {"role": "system", "content": "{\"start_time\": \"2023-11-27 12:00:00\", \"end_time\": \"2023-11-27 13:00:00\", \"title\": \"일정\", \"description\": \"\"}"},
 ]
 
 prompt7 = [
