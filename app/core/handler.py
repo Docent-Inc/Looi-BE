@@ -16,7 +16,6 @@ def register_exception_handlers(app):
     async def custom_http_exception_handler(request: Request, exc: HTTPException):
         if exc.detail not in CUSTOM_EXCEPTIONS:
             exc.detail = 4000
-
         if exc.detail == 4220:
             pass
         elif exc.detail == 4998:
@@ -28,6 +27,8 @@ def register_exception_handlers(app):
         elif exc.detail == 4005:
             pass
         elif exc.detail == 4010:
+            pass
+        elif exc.detail == 4221:
             pass
         else:
             SessionLocal = get_SessionLocal()
