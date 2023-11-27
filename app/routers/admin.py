@@ -120,7 +120,7 @@ async def get_dashboard(
     dashboard = db.query(Dashboard).all()
     return ApiResponse(data=dashboard)
 
-@router.get("/now", response_model=ApiResponse, tags=["Admin"])
+@router.post("/now", response_model=ApiResponse, tags=["Admin"])
 async def get_now(
     db: Session = Depends(get_db),
 ):
