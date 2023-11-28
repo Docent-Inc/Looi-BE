@@ -268,7 +268,7 @@ async def send_gpt4_request(prompt_num: int, messages_prompt: str, current_user:
                     detail=4501,
                 )
 
-async def send_dalle2_request(messages_prompt: str, user: User, db: Session, retries=3):
+async def send_dalle3_request(messages_prompt: str, user: User, db: Session, retries=3):
     for i in range(retries):
         try:
             start_time = await time_now()
@@ -290,7 +290,7 @@ async def send_dalle2_request(messages_prompt: str, user: User, db: Session, ret
                 model="DaLLE-3",
                 db=db
             )
-            return response['data'][0]['url']
+            return response['data'][0]['revised_prompt'], response['data'][0]['url']
         except Exception as e:
             print(f"DALL-E API Error{e}")
             if i < retries - 1:

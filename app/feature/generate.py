@@ -9,7 +9,7 @@ from app.core.config import settings
 from app.core.security import time_now
 from app.db.database import get_redis_client
 from app.db.models import MorningDiary, NightDiary, Calender, Report, Luck, Chat, Prompt
-from app.feature.aiRequset import send_gpt_request, send_dalle2_request, send_gpt4_request
+from app.feature.aiRequset import send_gpt_request, send_gpt4_request, send_dalle3_request
 import uuid
 from io import BytesIO
 import asyncio
@@ -28,10 +28,9 @@ async def generate_diary_name(message: str, user: User, db: Session) -> str:
     dreamName = await send_gpt_request(2, message, user, db)
     return dreamName
 async def generate_image(image_model: int, message: str, user: User, db: Session):
-    prompt = await send_gpt_request(3, message, user, db)
-
+    # prompt = await send_gpt_request(3, message, user, db)
     if image_model == 1:
-        dream_image_url = await send_dalle2_request(prompt, user, db)
+        prompt, dream_image_url = await send_dalle3_request(message, user, db)
 
     save_promt = Prompt(
         text=message,
