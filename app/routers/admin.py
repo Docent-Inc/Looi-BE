@@ -7,7 +7,7 @@ from starlette import status
 
 from app.core.security import get_current_user, get_current_user_is_admin
 from app.db.database import get_db
-from app.db.models import User, WelcomeChat, HelperChat, Dashboard
+from app.db.models import User, WelcomeChat, HelperChat, Dashboard, TextClassification
 from app.feature.slackBot import slack_bot
 from app.schemas.request import WelcomeRequest, HelperRequest
 from app.schemas.response import ApiResponse
@@ -119,6 +119,14 @@ async def get_dashboard(
 ):
     dashboard = db.query(Dashboard).all()
     return ApiResponse(data=dashboard)
+
+@router.get("/text", response_model=ApiResponse, tags=["Admin"])
+async def get_text(
+    current_user: User = Depends(get_current_user_is_admin),
+    db: Session = Depends(get_db),
+):
+    text = db.query(TextClassification).all()
+    return ApiResponse(data=text)
 
 @router.post("/now", response_model=ApiResponse, tags=["Admin"])
 async def get_now(
