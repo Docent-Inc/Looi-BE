@@ -72,6 +72,9 @@ async def get_current_user(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=4998,
         )
+    user.last_active_date = await time_now()
+    db.commit()
+    db.refresh(user)
     return user
 
 async def get_update_user(
