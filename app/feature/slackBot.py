@@ -1,3 +1,4 @@
+from datetime import timedelta
 from decimal import Decimal
 import aiocron
 import pytz
@@ -128,6 +129,7 @@ async def slack_bot():
         evening_diary_count = db.query(NightDiary).filter(
             func.date(NightDiary.create_date) == now.date(),
         ).count()
+        evening_diary_count -= today_users_count
 
         # 오늘 생성된 캘린더 수
         calender_count = db.query(Calender).filter(
@@ -141,6 +143,22 @@ async def slack_bot():
         dashboards = db.query(Dashboard).filter(
             func.date(Dashboard.create_date) == now.date(),
         ).first()
+
+        # DAU 및 MAU 계산
+        dau_count = db.query(User).filter(
+            func.date(User.last_active_date) == now.date()
+        ).count()
+        start_of_month = now.date().replace(day=1)
+        mau_count = db.query(User).filter(
+            func.date(User.last_active_date) >= start_of_month
+        ).count()
+
+        # 증감율 계산 (예시: 오늘 가입한 유저 수 대비 어제 가입한 유저 수)
+        yesterday_users_count = db.query(User).filter(
+            func.date(User.create_date) == (now.date() - timedelta(days=1))
+        ).count()
+        user_growth_rate = ((today_users_count - yesterday_users_count) / max(yesterday_users_count, 1)) * 100
+
         if dashboards:
             dashboards.today_user = today_users_count
             dashboards.today_chat = total_count
@@ -178,6 +196,7 @@ async def slack_bot():
 
         # 전체 생성된 저녁 일기 수
         total_evening_diary_count = db.query(NightDiary).count()
+        total_evening_diary_count -= total_users_count
 
         # 전체 생성된 캘린더 수
         total_calender_count = db.query(Calender).count()
@@ -198,6 +217,12 @@ async def slack_bot():
         total_share_count = MorningDiary_share_count_result + NightDiary_share_count_result
 
         current_date = now.strftime("%Y-%m-%d")
+
+        # 탈퇴한 유저 수
+        withdraw_users_count = db.query(User).filter(
+            User.is_deleted == True
+        ).count()
+
 
         blocks = [
             {
@@ -241,6 +266,14 @@ async def slack_bot():
                     {
                         "type": "mrkdwn",
                         "text": f"*오늘 평균 채팅 요청 수:* {mean_request:.2f}"
+                    },
+                    {
+                        "type": "mrkdwn",
+                        "text": f"*오늘 채팅 요청한 유저 수:* {today_chat_users_count}"
+                    },
+                    {
+                        "type": "mrkdwn",
+                        "text": f"*오류 발생 확률:* {((total_count - morning_diary_count - evening_diary_count - calender_count - memo_count) / total_count)*100:.1f}%"
                     },
                 ]
             },
@@ -289,9 +322,38 @@ async def slack_bot():
                         "type": "mrkdwn",
                         "text": f"*전체 공유 게시물 조회 수:* {total_share_count}"
                     },
+                    {
+                        "type": "mrkdwn",
+                        "text": f"*탈퇴한 유저 수:* {withdraw_users_count}"
+                    },
+                    {
+                        "type": "mrkdwn",
+                        "text": f"*전체 오류 발생 확률:* {((total_chat_count - total_morning_diary_count - total_evening_diary_count - total_calender_count - total_memo_count) / total_chat_count)*100:.1f}%"
+                    }
                 ]
-            }
+            },
+            {
+                "type": "divider"
+            },
+            {
+                "type": "section",
+                "fields": [
+                    {
+                        "type": "mrkdwn",
+                        "text": f"*오늘의 DAU:* {dau_count}"
+                    },
+                    {
+                        "type": "mrkdwn",
+                        "text": f"*이번 달 DAU:* {mau_count}"
+                    },
+                    {
+                        "type": "mrkdwn",
+                        "text": f"*사용자 증감율:* {user_growth_rate:.2f}%"
+                    }
+                ]
+            },
         ]
+
         await client.chat_postMessage(
             channel=settings.SLACK_ID,
             blocks=blocks

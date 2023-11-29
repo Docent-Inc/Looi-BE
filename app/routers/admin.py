@@ -1,7 +1,7 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import inspect
+from sqlalchemy import inspect, func
 from sqlalchemy.orm import Session
 from starlette import status
 
@@ -134,3 +134,26 @@ async def get_now(
 ):
     await slack_bot()
     return ApiResponse()
+
+@router.get("/user_chat", response_model=ApiResponse, tags=["Admin"])
+async def get_user_chat(
+    db: Session = Depends(get_db),
+):
+    chat_data = (
+        db.query(
+            User.nickname,
+            func.date(TextClassification.create_date).label('chat_date'),
+            func.count(TextClassification.id).label('total_chats')
+        )
+        .join(TextClassification, User.id == TextClassification.User_id)
+        .group_by(User.nickname, 'chat_date')
+        .order_by(User.nickname, 'chat_date')
+        .all()
+    )
+    # 결과를 딕셔너리 형태로 변환하여 반환
+    chat_dict = {}
+    for record in chat_data:
+        if record.nickname not in chat_dict:
+            chat_dict[record.nickname] = {}
+        chat_dict[record.nickname][str(record.chat_date)] = record.total_chats
+    return ApiResponse(data=chat_dict)
