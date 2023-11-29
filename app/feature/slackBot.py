@@ -84,22 +84,6 @@ async def slack_bot():
     SessionLocal = get_SessionLocal()
     db = SessionLocal()
     try:
-        # 1. 오늘 가입한 유저 수
-        # 2. 오늘 요청한 채팅 수
-        # 3. 오늘 사용된 api 가격
-        # 4. 오늘 생성된 아침 일기 수
-        # 5. 오늘 생성된 저녁 일기 수
-        # 6. 오늘 생성된 캘린더 수
-        # 7. 오늘 생성된 메모 수
-        # 8. 전체 유저 수
-        # 9. 전체 요청 채팅 수
-        # 10. 전체 사용된 api 가격
-        # 11. 전체 생성된 아침 일기 수
-        # 12. 전체 생성된 저녁 일기 수
-        # 13. 전체 생성된 캘린더 수
-        # 14. 전체 생성된 메모 수
-        # 15. 전체 생성된 리포트 수
-
         now = await time_now()
         today_users = db.query(User).filter(
             func.date(User.create_date) == now.date(),
@@ -152,41 +136,16 @@ async def slack_bot():
         mau_count = db.query(User).filter(
             func.date(User.last_active_date) >= start_of_month
         ).count()
-
-        # 증감율 계산 (예시: 오늘 가입한 유저 수 대비 어제 가입한 유저 수)
-        yesterday_users_count = db.query(User).filter(
-            func.date(User.create_date) == (now.date() - timedelta(days=1))
+        wau_count = db.query(User).filter(
+            func.date(User.last_active_date) >= (now.date() - timedelta(days=7))
         ).count()
-        user_growth_rate = ((today_users_count - yesterday_users_count) / max(yesterday_users_count, 1)) * 100
 
-        if dashboards:
-            dashboards.today_user = today_users_count
-            dashboards.today_chat = total_count
-            dashboards.today_cost = total_cost
-            dashboards.today_morning_diary = morning_diary_count
-            dashboards.today_night_diary = evening_diary_count
-            dashboards.today_calender = calender_count
-            dashboards.today_memo = memo_count
-            dashboards.today_chat_user = today_chat_users_count
-            dashboards.today_chat_mean_request = mean_request
-            db.commit()
-            db.refresh(dashboards)
-        else:
-            save = Dashboard(
-                create_date=now,
-                today_user=today_users_count,
-                today_chat=total_count,
-                today_cost=total_cost,
-                today_morning_diary=morning_diary_count,
-                today_night_diary=evening_diary_count,
-                today_calender=calender_count,
-                today_memo=memo_count,
-                today_chat_user=today_chat_users_count,
-                today_chat_mean_request=mean_request,
-            )
-            db.add(save)
-            db.commit()
-            db.refresh(save)
+        # dau 증감율 계산
+        yesterday_dau_count = db.query(Dashboard).filter(
+            func.date(Dashboard.create_date) == (now.date() - timedelta(days=1))
+        ).first()
+        yesterday_dau_count = yesterday_dau_count.dau if yesterday_dau_count else 0
+        dau_growth_rate = ((dau_count - yesterday_dau_count) / max(yesterday_dau_count, 1)) * 100
 
         # 전체 유저 수
         total_users_count = db.query(User).count()
@@ -223,6 +182,7 @@ async def slack_bot():
             User.is_deleted == True
         ).count()
 
+        today_error_count = total_count - morning_diary_count - evening_diary_count - calender_count - memo_count
 
         blocks = [
             {
@@ -340,24 +300,64 @@ async def slack_bot():
                 "fields": [
                     {
                         "type": "mrkdwn",
-                        "text": f"*오늘의 DAU:* {dau_count}"
+                        "text": f"*DAU:* {dau_count}"
                     },
                     {
                         "type": "mrkdwn",
-                        "text": f"*이번 달 DAU:* {mau_count}"
+                        "text": f"*WAU:* {wau_count}"
                     },
                     {
                         "type": "mrkdwn",
-                        "text": f"*사용자 증감율:* {user_growth_rate:.2f}%"
+                        "text": f"*MAU:* {mau_count}"
+                    },
+                    {
+                        "type": "mrkdwn",
+                        "text": f"*DAU 증감율:* {dau_growth_rate:.2f}%"
                     }
                 ]
             },
         ]
-
         await client.chat_postMessage(
             channel=settings.SLACK_ID,
             blocks=blocks
         )
+        if dashboards:
+            dashboards.today_user = today_users_count
+            dashboards.today_chat = total_count
+            dashboards.today_cost = total_cost
+            dashboards.today_morning_diary = morning_diary_count
+            dashboards.today_night_diary = evening_diary_count
+            dashboards.today_calender = calender_count
+            dashboards.today_memo = memo_count
+            dashboards.today_chat_user = today_chat_users_count
+            dashboards.today_chat_mean_request = mean_request
+            dashboards.create_date = now
+            dashboards.dau = dau_count
+            dashboards.wau = wau_count
+            dashboards.mau = mau_count
+            dashboards.error_count = today_error_count
+            db.commit()
+            db.refresh(dashboards)
+        else:
+            save = Dashboard(
+                create_date=now,
+                today_user=today_users_count,
+                today_chat=total_count,
+                today_cost=total_cost,
+                today_morning_diary=morning_diary_count,
+                today_night_diary=evening_diary_count,
+                today_calender=calender_count,
+                today_memo=memo_count,
+                today_chat_user=today_chat_users_count,
+                today_chat_mean_request=mean_request,
+                dau=dau_count,
+                wau=wau_count,
+                mau=mau_count,
+                error_count=today_error_count
+            )
+            db.add(save)
+            db.commit()
+            db.refresh(save)
     except SlackApiError as e:
         print(f"Error posting message: {e}")
     finally:
