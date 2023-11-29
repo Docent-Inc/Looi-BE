@@ -197,7 +197,10 @@ class Dashboard(Base):
     today_chat_user = Column(Integer, nullable=False)
     today_chat_mean_request = Column(FLOAT, nullable=False)
     create_date = Column(DateTime, nullable=False)
-
+    error_count = Column(Integer, nullable=False)
+    dau = Column(Integer, nullable=False)
+    wau = Column(Integer, nullable=False)
+    mau = Column(Integer, nullable=False)
 class TextClassification(Base):
     __tablename__ = "TextClassification"
 

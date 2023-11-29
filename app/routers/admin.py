@@ -137,6 +137,7 @@ async def get_now(
 
 @router.get("/user_chat", response_model=ApiResponse, tags=["Admin"])
 async def get_user_chat(
+    current_user: User = Depends(get_current_user_is_admin),
     db: Session = Depends(get_db),
 ):
     chat_data = (

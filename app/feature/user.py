@@ -117,12 +117,12 @@ async def updatePush(request: PushUpdateRequest, current_user: User, db: Session
 async def deleteUser(current_user: User, db: Session):
     # 사용자의 삭제 상태를 변경합니다.
     current_user.is_deleted = True
+    current_user.deleted_date = await time_now()
     try:
         db.add(current_user)
         db.commit()
         db.refresh(current_user)
     except:
-        db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=5000,
