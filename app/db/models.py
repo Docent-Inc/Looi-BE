@@ -26,6 +26,7 @@ class User(Base):
     create_date = Column(DateTime, nullable=False)
     deleted_date = Column(DateTime, nullable=True)
     is_sign_up = Column(Boolean, default=True)
+    last_active_date = Column(DateTime, nullable=True)
 
 
 class MorningDiary(Base):
