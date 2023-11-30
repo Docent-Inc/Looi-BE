@@ -1,3 +1,4 @@
+from fastapi import Depends
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from app.core.config import settings
@@ -27,6 +28,11 @@ def get_db() -> Session:
         yield db
     finally:
         db.close()
+def save_db(data, db):
+    db.add(data)
+    db.commit()
+    db.refresh(data)
+    return data
 async def try_to_acquire_lock(redis_client, lock_key, lock_timeout=60):
     return await redis_client.set(lock_key, "locked", ex=lock_timeout, nx=True)
 
