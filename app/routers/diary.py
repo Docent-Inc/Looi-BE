@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.core.security import get_current_user
 from app.schemas.request import CreateDiaryRequest, UpdateDiaryRequest, CalenderRequest, MemoRequest, ListRequest, \
     CalenderListRequest
-from app.schemas.response import User, ApiResponse
+from app.schemas.response import User, ApiResponse, ListResponse
 
 router = APIRouter(prefix="/diary")
 
@@ -225,8 +225,18 @@ async def list(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> ApiResponse:
-    data = await dairy_list(list_request, current_user, db)
-    return ApiResponse(data=data)
+
+    # request type에 따라 diary list를 가져옴
+    all_items, count, total_count = await dairy_list(list_request, current_user, db)
+
+    # 가져온 diary list를 response 형태로 변환
+    return ApiResponse(
+        data=ListResponse(
+            list=all_items,
+            count=count,
+            total_count=total_count,
+        )
+    )
 
 @router.post("/list/calender", response_model=ApiResponse, tags=["Calender"])
 async def list_calender(

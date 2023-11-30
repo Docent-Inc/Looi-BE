@@ -36,3 +36,8 @@ class ChatResponse(BaseModel):
     text_type: int
     diary_id: int
     content: object
+
+class ListResponse(BaseModel):
+    list: object
+    count: int
+    total_count: int
