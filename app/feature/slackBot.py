@@ -8,7 +8,7 @@ from sqlalchemy import func
 
 from app.core.config import settings
 from app.core.security import time_now
-from app.db.database import get_SessionLocal, get_redis_client, try_to_acquire_lock, release_lock
+from app.db.database import get_SessionLocal, get_redis_client, try_to_acquire_lock, release_lock, get_db, save_db
 from app.db.models import User, ApiRequestLog, MorningDiary, NightDiary, Calender, Memo, Report, Dashboard, \
     TextClassification
 
@@ -85,15 +85,19 @@ async def slack_bot():
     db = SessionLocal()
     try:
         now = await time_now()
+
+        # 오늘 생성된 유저 수
         today_users = db.query(User).filter(
             func.date(User.create_date) == now.date(),
         ).all()
         today_users_count = len(today_users)
 
+        # 오늘 생성된 채팅 수
         total_count = db.query(TextClassification).filter(
             func.date(TextClassification.create_date) == now.date(),
         ).count()
 
+        # 오늘 사용된 api 비용
         total_cost = calculate_api_usage_cost(db, now)
 
         # 오늘 채팅 요청을 한번이라도 한 사람 수
@@ -102,6 +106,7 @@ async def slack_bot():
         ).group_by(TextClassification.User_id).all()
         today_chat_users_count = len(today_chat_users)
 
+        # 오늘 평균 채팅 요청 수
         mean_request = total_count / today_chat_users_count
 
         # 오늘 생성된 아침 일기 수
@@ -128,7 +133,7 @@ async def slack_bot():
             func.date(Dashboard.create_date) == now.date(),
         ).first()
 
-        # DAU 및 MAU 계산
+        # dau, mau, wau
         dau_count = db.query(User).filter(
             func.date(User.last_active_date) == now.date()
         ).count()
@@ -173,8 +178,10 @@ async def slack_bot():
         MorningDiary_share_count_result = db.query(func.sum(MorningDiary.share_count)).scalar()
         NightDiary_share_count_result = db.query(func.sum(NightDiary.share_count)).scalar()
 
+        # 전체 공유 조회수
         total_share_count = MorningDiary_share_count_result + NightDiary_share_count_result
 
+        # 오늘 날짜
         current_date = now.strftime("%Y-%m-%d")
 
         # 탈퇴한 유저 수
@@ -182,6 +189,7 @@ async def slack_bot():
             User.is_deleted == True
         ).count()
 
+        # 오늘 에러가 발생한 채팅 수
         today_error_count = total_count - morning_diary_count - evening_diary_count - calender_count - memo_count
 
         blocks = [
@@ -317,11 +325,15 @@ async def slack_bot():
                 ]
             },
         ]
+        # 슬랙에 메세지 보내기
         await client.chat_postMessage(
             channel=settings.SLACK_ID,
             blocks=blocks
         )
+
+        # 이미 대쉬보드에 데이터가 있는지 확인
         if dashboards:
+            # 대쉬보드에 데이터가 있으면 업데이트
             dashboards.today_user = today_users_count
             dashboards.today_chat = total_count
             dashboards.today_cost = total_cost
@@ -336,8 +348,9 @@ async def slack_bot():
             dashboards.wau = wau_count
             dashboards.mau = mau_count
             dashboards.error_count = today_error_count
-            db.commit()
-            db.refresh(dashboards)
+            save_db(dashboards, db)
+
+        # 대쉬보드에 데이터가 없으면 생성
         else:
             save = Dashboard(
                 create_date=now,
@@ -355,9 +368,7 @@ async def slack_bot():
                 mau=mau_count,
                 error_count=today_error_count
             )
-            db.add(save)
-            db.commit()
-            db.refresh(save)
+            save_db(save, db)
     except SlackApiError as e:
         print(f"Error posting message: {e}")
     finally:
