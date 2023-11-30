@@ -8,7 +8,7 @@ from app.feature.generate import generate_schedule
 
 async def classify_text(text, current_user, db):
     try:
-        # 택스트 분류
+        # 텍스트 분류
         number = await send_gpt4_request(1, text, current_user, db)
         text_type = int(number.strip())
     except:
@@ -29,6 +29,10 @@ async def classify_text(text, current_user, db):
     save_db(save_chat, db)
 
     # 각 텍스트에 맞는 기능 실행
+    diary_id, content = await generate_diary(text, text_type, current_user, db)
+    return diary_id, content, text_type
+
+async def generate_diary(text, text_type, current_user, db):
     if text_type == 1:
         diary_id = await create_morning_diary(text, current_user, db)
         content = db.query(MorningDiary).filter(MorningDiary.id == diary_id).first()
@@ -47,4 +51,4 @@ async def classify_text(text, current_user, db):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=4013
         )
-    return diary_id, content, text_type
+    return diary_id, content
