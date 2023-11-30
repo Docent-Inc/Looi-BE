@@ -49,30 +49,21 @@ async def chat(
         )
     )
 
-@router.get("/list", tags=["Chat"])
-async def generate_chat_list(
-    page: int,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-) -> ApiResponse:
-    chat = db.query(Chat).filter(Chat.User_id == current_user.id, Chat.is_deleted == False).order_by(Chat.id.desc()).offset((page-1) * 10).limit(10).all()
-    total_counts = db.query(Chat).filter(Chat.User_id == current_user.id, Chat.is_deleted == False).count()
-    return ApiResponse(
-        data={
-            "page_num": page,
-            "total_counts": total_counts,
-            "list": chat
-    })
-
 @router.get("/welcome", tags=["Chat"])
 async def get_welcome(
     type: int,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> ApiResponse:
+
+    # type에 맞는 채팅방 인사 문구 가져오기
     data = db.query(WelcomeChat).filter(WelcomeChat.is_deleted == False, WelcomeChat.type == type).all()
+
+    # 랜덤으로 하나 선택
     random_chat = random.choice(data)
     random_chat.text = random_chat.text.replace("{}", current_user.nickname)
+
+    # 응답
     return ApiResponse(
         data=random_chat
     )
@@ -83,8 +74,30 @@ async def get_helper(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> ApiResponse:
+
+    # type에 맞는 채팅 도움말 가져오기
     data = db.query(HelperChat).filter(HelperChat.is_deleted == False, HelperChat.type == type).all()
+
+    # 랜덤으로 하나 선택
     random_chat = random.choice(data)
+
+    # 응답
     return ApiResponse(
         data=random_chat
     )
+
+
+# @router.get("/list", tags=["Chat"])
+# async def generate_chat_list(
+#     page: int,
+#     current_user: User = Depends(get_current_user),
+#     db: Session = Depends(get_db),
+# ) -> ApiResponse:
+#     chat = db.query(Chat).filter(Chat.User_id == current_user.id, Chat.is_deleted == False).order_by(Chat.id.desc()).offset((page-1) * 10).limit(10).all()
+#     total_counts = db.query(Chat).filter(Chat.User_id == current_user.id, Chat.is_deleted == False).count()
+#     return ApiResponse(
+#         data={
+#             "page_num": page,
+#             "total_counts": total_counts,
+#             "list": chat
+#     })
