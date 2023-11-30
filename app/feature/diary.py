@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import union_all
 from starlette import status
 from app.core.security import time_now
+from app.db.database import save_db
 from app.db.models import NightDiary, MorningDiary, Memo, Calender
 from app.feature.aiRequset import send_gpt_request
 from app.feature.generate import generate_image, generate_diary_name, generate_resolution_gpt
@@ -42,15 +43,22 @@ async def transform_memo(memo):
     }
 
 async def create_morning_diary(content: str, user: User, db: Session) -> int:
+
+    # 사용자의 mbti와 content를 합친 문자열 생성
     mbti_content = content if user.mbti is None else user.mbti + ", " + content
+
+    # 다이어리 제목, 이미지, 해몽 생성
     diary_name, L, resolution = await asyncio.gather(
         generate_diary_name(content, user, db),
         generate_image(user.image_model, content, user, db),
         generate_resolution_gpt(mbti_content, user, db)
     )
-    upper_lower_color = "[\"" + str(L[1]) + "\", \"" + str(L[2]) + "\"]"
-    now = await time_now()
 
+    # 이미지 background color 문자열로 변환
+    upper_lower_color = "[\"" + str(L[1]) + "\", \"" + str(L[2]) + "\"]"
+
+    # db에 저장
+    now = await time_now()
     diary = MorningDiary(
         content=content,
         User_id=user.id,
@@ -62,95 +70,107 @@ async def create_morning_diary(content: str, user: User, db: Session) -> int:
         create_date=now,
         modify_date=now,
     )
-    db.add(diary)
-    db.commit()
+    diary = save_db(diary, db)
+
+    # 다이어리 id 반환
     return diary.id
 
 async def read_morning_diary(diary_id: int, user:User, db: Session) -> MorningDiary:
+
+    # 다이어리 조회
     diary = db.query(MorningDiary).filter(MorningDiary.id == diary_id, MorningDiary.User_id == user.id, MorningDiary.is_deleted == False).first()
+
+    # 다이어리가 없을 경우 예외 처리
     if not diary:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=4011,
         )
+
+    # 조회수 증가
     diary.view_count += 1
-    db.commit()
-    db.refresh(diary)
+    diary = save_db(diary, db)
+
+    # 다이어리 반환
     return diary
 async def share_read_morning_diary(diary_id: int, db: Session) -> MorningDiary:
-    diary = db.query(MorningDiary).filter(MorningDiary.id == diary_id, MorningDiary.is_deleted == False).first()
-    if not diary:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=4011,
-        )
-    diary.share_count += 1
-    db.commit()
-    db.refresh(diary)
-    diary.User_id = None
-    return diary
 
-async def share_read_night_diary(diary_id: int, db: Session) -> NightDiary:
-    diary = db.query(NightDiary).filter(NightDiary.id == diary_id, NightDiary.is_deleted == False).first()
+    # 다이어리 조회
+    diary = db.query(MorningDiary).filter(MorningDiary.id == diary_id, MorningDiary.is_deleted == False).first()
+
+    # 다이어리가 없을 경우 예외 처리
     if not diary:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=4011,
         )
+
+    # 조회수 증가
     diary.share_count += 1
-    db.commit()
-    db.refresh(diary)
+    diary = save_db(diary, db)
+
+    # 다이어리 반환
     diary.User_id = None
     return diary
 
 async def update_morning_diary(diary_id: int, content: UpdateDiaryRequest, user: User, db: Session) -> int:
+
+    # 다이어리 조회
     diary = db.query(MorningDiary).filter(MorningDiary.id == diary_id, MorningDiary.User_id == user.id, MorningDiary.is_deleted == False).first()
+
+    # 다이어리가 없을 경우 예외 처리
     if not diary:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=4011,
         )
-    try:
-        diary.diary_name = content.diary_name
-        diary.content = content.diary_content
-        diary.modify_date = await time_now()
-        db.commit()
-    except:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=5000,
-        )
-    return diary_id
+
+    # 다이어리 수정
+    diary.diary_name = content.diary_name
+    diary.content = content.diary_content
+    diary.modify_date = await time_now()
+    diary = save_db(diary, db)
+
+    # 다이어리 id 반환
+    return diary.id
 
 async def delete_morning_diary(diary_id: int, user: User, db: Session):
+
+    # 다이어리 조회
     diary = db.query(MorningDiary).filter(MorningDiary.id == diary_id, MorningDiary.User_id == user.id, MorningDiary.is_deleted == False).first()
+
+    # 다이어리가 없을 경우 예외 처리
     if not diary:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=4011,
         )
-    try:
-        diary.is_deleted = True
-        db.commit()
-    except:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=5000,
-        )
+
+    # 다이어리 삭제
+    diary.is_deleted = True
+    save_db(diary, db)
 async def list_morning_diary(page: int, user: User, db: Session):
-    diaries = db.query(MorningDiary).filter(MorningDiary.User_id == user.id, MorningDiary.is_deleted == False).order_by(MorningDiary.create_date.desc()).limit(5).offset((page-1)*5).all()
+
+    # 다이어리 목록 조회
+    limit = 5
+    diaries = db.query(MorningDiary).filter(MorningDiary.User_id == user.id, MorningDiary.is_deleted == False).order_by(MorningDiary.create_date.desc()).limit(limit).offset((page-1)*limit).all()
+
+    # 다이어리 목록 반환
     return diaries
 
 async def create_night_diary(content: str, user: User, db: Session):
+
+    # 이미지와 다이어리 제목 생성
     L, diary_name = await asyncio.gather(
         generate_image(user.image_model, content, user, db),
         generate_diary_name(content, user, db)
     )
 
+    # 이미지 background color 문자열로 변환
     upper_lower_color = "[\"" + str(L[1]) + "\", \"" + str(L[2]) + "\"]"
     now = await time_now()
 
-    # 저녁 일기를 생성합니다.
+    # 저녁 일기 db에 저장
     diary = NightDiary(
         content=content,
         User_id=user.id,
@@ -160,71 +180,102 @@ async def create_night_diary(content: str, user: User, db: Session):
         create_date=now,
         modify_date=now,
     )
-    try:
-        db.add(diary)
-        db.commit()
-    except:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=5000,
-        )
+    diary = save_db(diary, db)
+
+    # 다이어리 id 반환
     return diary.id
 
 async def read_night_diary(diary_id: int, user:User, db: Session) -> NightDiary:
+
+    # 다이어리 조회
     diary = db.query(NightDiary).filter(NightDiary.id == diary_id, NightDiary.User_id == user.id, NightDiary.is_deleted == False).first()
+
+    # 다이어리가 없을 경우 예외 처리
     if not diary:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=4012,
         )
+
+    # 조회수 증가
     diary.view_count += 1
-    db.commit()
-    db.refresh(diary)
+    diary = save_db(diary, db)
+
+    # 다이어리 반환
+    return diary
+
+async def share_read_night_diary(diary_id: int, db: Session) -> NightDiary:
+
+    # 다이어리 조회
+    diary = db.query(NightDiary).filter(NightDiary.id == diary_id, NightDiary.is_deleted == False).first()
+
+    # 다이어리가 없을 경우 예외 처리
+    if not diary:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=4011,
+        )
+
+    # 조회수 증가
+    diary.share_count += 1
+    diary = save_db(diary, db)
+
+    # 다이어리 반환
+    diary.User_id = None
     return diary
 
 async def update_night_diary(diary_id: int, content: UpdateDiaryRequest, user: User, db: Session) -> int:
+
+    # 다이어리 조회
     diary = db.query(NightDiary).filter(NightDiary.id == diary_id, NightDiary.User_id == user.id, NightDiary.is_deleted == False).first()
+
+    # 다이어리가 없을 경우 예외 처리
     if not diary:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=4012,
         )
-    try:
-        diary.diary_name = content.diary_name
-        diary.content = content.diary_content
-        diary.modify_date = await time_now()
-        db.commit()
-    except:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=5000,
-        )
+
+    # 다이어리 수정
+    diary.diary_name = content.diary_name
+    diary.content = content.diary_content
+    diary.modify_date = await time_now()
+    diary = save_db(diary, db)
+
+    # 다이어리 id 반환
     return diary.id
 
 async def delete_night_diary(diary_id: int, user: User, db: Session) -> int:
+
+    # 다이어리 조회
     diary = db.query(NightDiary).filter(NightDiary.id == diary_id, NightDiary.User_id == user.id, NightDiary.is_deleted == False).first()
+
+    # 다이어리가 없을 경우 예외 처리
     if not diary:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=4012,
         )
-    try:
-        diary.is_deleted = True
-        db.commit()
-    except:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=5000,
-        )
+    # 다이어리 삭제
+    diary.is_deleted = True
+    save_db(diary, db)
 
 async def list_night_diary(page: int, user: User, db: Session):
-    diaries = db.query(NightDiary).filter(NightDiary.User_id == user.id, NightDiary.is_deleted == False).order_by(NightDiary.create_date.desc()).limit(5).offset((page-1)*5).all()
+
+    # 다이어리 목록 조회
+    limit = 5
+    diaries = db.query(NightDiary).filter(NightDiary.User_id == user.id, NightDiary.is_deleted == False).order_by(NightDiary.create_date.desc()).limit(limit).offset((page-1)*limit).all()
+
+    # 다이어리 목록 반환
     return diaries
 async def create_memo(content: str, user: User, db: Session) -> int:
+
     async def fetch_content_from_url(session: ClientSession, url: str) -> str:
+        # url로부터 html content를 가져옴
         async with session.get(url) as response:
             return await response.text()
-    # 메모를 생성합니다.
+
+    # url이면 title을 가져옴
     if content.startswith('http://') or content.startswith('https://'):
         async with ClientSession() as session:
             html_content = await fetch_content_from_url(session, content)
@@ -235,46 +286,57 @@ async def create_memo(content: str, user: User, db: Session) -> int:
             else:
                 content = f"title = {title}, content = {content}"
 
+    # gpt-3.5 요청
     data = await send_gpt_request(6, content, user, db)
+
+    # 메모 생성
+    now = await time_now()
     memo = Memo(
         title=data['title'],
         content=data['content'],
         User_id=user.id,
         tags=json.dumps(data['tags'], ensure_ascii=False),
-        create_date=await time_now(),
-        modify_date=await time_now(),
+        create_date=now,
+        modify_date=now,
     )
-    db.add(memo)
-    db.commit()
-    db.refresh(memo)
+    memo = save_db(memo, db)
+
+    # 메모 id 반환
     return memo.id
 
 async def read_memo(memo_id: int, user: User, db: Session) -> Memo:
+
+    # 메모 조회
     memo = db.query(Memo).filter(Memo.id == memo_id, Memo.User_id == user.id, Memo.is_deleted == False).first()
+
+    # 메모가 없을 경우 예외 처리
     if not memo:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=4016,
         )
+
+    # 메모 반환
     return memo
 
 async def delete_memo(memo_id: int, user: User, db: Session) -> int:
+
+    # 메모 조회
     memo = db.query(Memo).filter(Memo.id == memo_id, Memo.User_id == user.id, Memo.is_deleted == False).first()
+
+    # 메모가 없을 경우 예외 처리
     if not memo:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=4016,
         )
-    try:
-        memo.is_deleted = True
-        db.commit()
-    except:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=5000,
-        )
 
+    # 메모 삭제
+    memo.is_deleted = True
+    save_db(memo, db)
 async def create_calender(body: CalenderRequest, user: User, db: Session) -> int:
+
+    # 캘린더 생성
     calender = Calender(
         User_id=user.id,
         start_time=body.start_time,
@@ -282,98 +344,104 @@ async def create_calender(body: CalenderRequest, user: User, db: Session) -> int
         title=body.title,
         content=body.content,
     )
-    try:
-        db.add(calender)
-        db.commit()
-        db.refresh(calender)
-    except:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=5000,
-        )
+
+    # 캘린더 저장
+    calender = save_db(calender, db)
+
+    # 캘린더 id 반환
     return calender.id
 
 async def read_calender(calender_id: int, user: User, db: Session) -> Calender:
+
+    # 캘린더 조회
     calender = db.query(Calender).filter(Calender.id == calender_id, Calender.User_id == user.id, Calender.is_deleted == False).first()
+
+    # 캘린더가 없을 경우 예외 처리
     if not calender:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=4015,
         )
+
+    # 캘린더 반환
     return calender
 
 async def update_calender(calender_id: int, body: CalenderRequest, user: User, db: Session) -> int:
+
+    # 캘린더 조회
     calender = db.query(Calender).filter(Calender.id == calender_id, Calender.User_id == user.id, Calender.is_deleted == False).first()
+
+    # 캘린더가 없을 경우 예외 처리
     if not calender:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=4015,
         )
-    try:
-        calender.start_time = body.start_time
-        calender.end_time = body.end_time
-        calender.title = body.title
-        calender.content = body.content
-        db.commit()
-    except:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=5000,
-        )
+
+    # 캘린더 수정
+    calender.start_time = body.start_time
+    calender.end_time = body.end_time
+    calender.title = body.title
+    calender.content = body.content
+    calender = save_db(calender, db)
+
     return calender.id
 
 async def delete_calender(calender_id: int, user: User, db: Session):
+
+    # 캘린더 조회
     calender = db.query(Calender).filter(Calender.id == calender_id, Calender.User_id == user.id, Calender.is_deleted == False).first()
+
+    # 캘린더가 없을 경우 예외 처리
     if not calender:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=4015,
         )
-    try:
-        calender.is_deleted = True
-        db.commit()
-    except:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=5000,
-        )
 
-async def list_calender(user: User, db: Session):
-    calenders = db.query(Calender).filter(Calender.User_id == user.id, Calender.is_deleted == False).all()
-    return calenders
-
+    # 캘린더 삭제
+    calender.is_deleted = True
+    save_db(calender, db)
 
 async def dairy_list(list_request: ListRequest, current_user: User, db: Session):
+
+    # diary_type에 따라 쿼리 변경
     page = list_request.page
     diary_type = list_request.diary_type
     limit = 8
     offset = (page - 1) * limit
 
+    # morning diary columns
     morning_diary_columns = [
         MorningDiary.id, MorningDiary.User_id, MorningDiary.diary_name, MorningDiary.content,
         MorningDiary.resolution, MorningDiary.image_url, MorningDiary.background_color,
         MorningDiary.create_date, MorningDiary.modify_date, MorningDiary.is_deleted
     ]
 
+    # night diary columns
     night_diary_columns = [
         NightDiary.id, NightDiary.User_id, NightDiary.diary_name, NightDiary.content,
         null().label('resolution'), NightDiary.image_url, NightDiary.background_color,
         NightDiary.create_date, NightDiary.modify_date, NightDiary.is_deleted
     ]
 
+    # memo columns
     memo_columns = [
         Memo.id, Memo.User_id, Memo.title, Memo.content,
         null().label('resolution'), null().label('image_url'), null().label('background_color'),
         Memo.create_date, Memo.modify_date, Memo.is_deleted
     ]
 
+    # diary_type에 따라 diary_type 컬럼 추가
     morning_diary_columns.append(literal(1).label('diary_type'))
     night_diary_columns.append(literal(2).label('diary_type'))
     memo_columns.append(literal(3).label('diary_type'))
 
+    # diary_type에 따라 쿼리 변경
     columns_list = [morning_diary_columns, night_diary_columns, memo_columns]
     all_items = []
 
+    # diary_type이 0일 경우 모든 다이어리 조회
     if diary_type == 0:
         queries = []
         for idx, Model in enumerate([MorningDiary, NightDiary, Memo]):
@@ -395,12 +463,15 @@ async def dairy_list(list_request: ListRequest, current_user: User, db: Session)
                 key = column.key if column.key == 'diary_type' else column.key.split('_', 1)[-1]
                 parsed_row[key] = value
             all_items.append(parsed_row)
+
+        # 전체 다이어리 개수
         total_count = db.query(MorningDiary.id).filter(MorningDiary.User_id == current_user.id, MorningDiary.is_deleted == False).count() + \
                         db.query(NightDiary.id).filter(NightDiary.User_id == current_user.id, NightDiary.is_deleted == False).count() + \
                         db.query(Memo.id).filter(Memo.User_id == current_user.id, Memo.is_deleted == False).count()
 
-
+    # diary_type이 1, 2, 3일 경우 각각의 다이어리 조회
     elif diary_type in [1, 2, 3]:
+        # diary_type에 따라 Model 변경
         Model = [MorningDiary, NightDiary, Memo][diary_type - 1]
         total_count = db.query(func.count(Model.id)).filter(Model.User_id == current_user.id, Model.is_deleted == False).scalar()
         data_rows = db.query(Model).filter(Model.User_id == current_user.id, Model.is_deleted == False).order_by(Model.create_date.desc()).limit(limit).offset(offset).all()
@@ -412,17 +483,12 @@ async def dairy_list(list_request: ListRequest, current_user: User, db: Session)
                 all_items.append(item_dict)
         if diary_type == 3:
             all_items = [await transform_memo(cal) for cal in all_items]
-
     else:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=4000,
         )
-    return {
-        "list": all_items,
-        "count": len(all_items),
-        "total_count": total_count,
-    }
+    return all_items, len(all_items), total_count
 
 async def dairy_list_calender(list_request: CalenderListRequest, current_user: User, db: Session):
     if list_request.day is None:

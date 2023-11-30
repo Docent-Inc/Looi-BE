@@ -1,4 +1,4 @@
-from fastapi import Depends
+from fastapi import HTTPException, status
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from app.core.config import settings
@@ -29,10 +29,17 @@ def get_db() -> Session:
     finally:
         db.close()
 def save_db(data, db):
-    db.add(data)
-    db.commit()
-    db.refresh(data)
-    return data
+    try:
+        db.add(data)
+        db.commit()
+        db.refresh(data)
+        return data
+    except:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=5000,
+        )
 async def try_to_acquire_lock(redis_client, lock_key, lock_timeout=60):
     return await redis_client.set(lock_key, "locked", ex=lock_timeout, nx=True)
 
