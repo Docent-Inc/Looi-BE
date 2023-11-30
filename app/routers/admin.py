@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from starlette import status
 
 from app.core.security import get_current_user, get_current_user_is_admin
-from app.db.database import get_db
+from app.db.database import get_db, save_db
 from app.db.models import User, WelcomeChat, HelperChat, Dashboard, TextClassification
 from app.feature.slackBot import slack_bot
 from app.schemas.request import WelcomeRequest, HelperRequest
@@ -20,10 +20,15 @@ async def get_user_info(
     current_user: User = Depends(get_current_user_is_admin),
     db: Session = Depends(get_db),
 ):
+    # 유저 정보
     user = db.query(User).filter(User.id == user_id).first()
+
+    # 비밀 번호 제거
     if user:
         user.hashed_password = None
         return ApiResponse(data=user)
+
+    # 유저 정보 없음
     else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -36,13 +41,14 @@ async def post_welcome(
     current_user: User = Depends(get_current_user_is_admin),
     db: Session = Depends(get_db),
 ):
+    # 환영 인사 저장
     new_data = WelcomeChat(
         text=request.text,
         type=request.type,
     )
-    db.add(new_data)
-    db.commit()
-    db.refresh(new_data)
+    save_db(new_data, db)
+
+    # 응답
     return ApiResponse()
 
 @router.get("/welcome/list", response_model=ApiResponse, tags=["Admin"])
@@ -50,7 +56,10 @@ async def get_welcome_list(
     current_user: User = Depends(get_current_user_is_admin),
     db: Session = Depends(get_db),
 ):
+    # 환영 인사 리스트
     data = db.query(WelcomeChat).filter(WelcomeChat.is_deleted==False).all()
+
+    # 응답
     return ApiResponse(data=data)
 @router.delete("/welcome", response_model=ApiResponse, tags=["Admin"])
 async def delete_welcome(
@@ -58,9 +67,13 @@ async def delete_welcome(
     current_user: User = Depends(get_current_user_is_admin),
     db: Session = Depends(get_db),
 ):
+
+    # 환영 인사 삭제
     data = db.query(WelcomeChat).filter(WelcomeChat.id == welcome_id).first()
-    db.delete(data)
-    db.commit()
+    data.is_deleted = True
+    save_db(data, db)
+
+    # 응답
     return ApiResponse()
 
 @router.post("/helper", response_model=ApiResponse, tags=["Admin"])
@@ -69,21 +82,25 @@ async def post_helper(
     current_user: User = Depends(get_current_user_is_admin),
     db: Session = Depends(get_db),
 ):
+
+    # 도움말 저장
     new_data = HelperChat(
         text=request.text,
         type=request.type,
     )
-    db.add(new_data)
-    db.commit()
-    db.refresh(new_data)
+    save_db(new_data, db)
 
+    # 응답
     return ApiResponse()
 @router.get("/helper/list", response_model=ApiResponse, tags=["Admin"])
 async def get_helper_list(
     current_user: User = Depends(get_current_user_is_admin),
     db: Session = Depends(get_db),
 ):
+    # 도움말 리스트
     data = db.query(HelperChat).filter(HelperChat.is_deleted==False).all()
+
+    # 응답
     return ApiResponse(data=data)
 
 @router.delete("/helper", response_model=ApiResponse, tags=["Admin"])
@@ -92,9 +109,12 @@ async def delete_helper(
     current_user: User = Depends(get_current_user_is_admin),
     db: Session = Depends(get_db),
 ):
+    # 도움말 삭제
     data = db.query(HelperChat).filter(HelperChat.id == helper_id).first()
-    db.delete(data)
-    db.commit()
+    data.is_deleted = True
+    save_db(data, db)
+
+    # 응답
     return ApiResponse()
 
 @router.get("/user/list", response_model=ApiResponse, tags=["Admin"])
@@ -102,13 +122,17 @@ async def get_user_list(
     current_user: User = Depends(get_current_user_is_admin),
     db: Session = Depends(get_db),
 ):
+    # 유저 리스트
     users = db.query(User).all()
     user_list = []
+
+    # 비밀 번호 제거
     for user in users:
         user_dict = {c.key: getattr(user, c.key) for c in inspect(user).mapper.column_attrs}
         user_dict.pop("hashed_password", None)  # hashed_password 키를 제거합니다.
         user_list.append(user_dict)
 
+    # 응답
     response_data = {"data": user_list}
     return ApiResponse(**response_data)
 
@@ -117,7 +141,10 @@ async def get_dashboard(
     current_user: User = Depends(get_current_user_is_admin),
     db: Session = Depends(get_db),
 ):
+    # 대시보드 정보
     dashboard = db.query(Dashboard).all()
+
+    # 응답
     return ApiResponse(data=dashboard)
 
 @router.get("/text", response_model=ApiResponse, tags=["Admin"])
@@ -125,13 +152,17 @@ async def get_text(
     current_user: User = Depends(get_current_user_is_admin),
     db: Session = Depends(get_db),
 ):
+    # 텍스트 기록 정보
     text = db.query(TextClassification).all()
+
+    # 응답
     return ApiResponse(data=text)
 
 @router.post("/now", response_model=ApiResponse, tags=["Admin"])
 async def get_now(
     db: Session = Depends(get_db),
 ):
+    # 현재 서비스 정보를 응답.(슬렉 봇으로 응답)
     await slack_bot()
     return ApiResponse()
 
@@ -140,6 +171,8 @@ async def get_user_chat(
     current_user: User = Depends(get_current_user_is_admin),
     db: Session = Depends(get_db),
 ):
+
+    # 유저별 채팅 기록
     chat_data = (
         db.query(
             User.nickname,
@@ -157,4 +190,6 @@ async def get_user_chat(
         if record.nickname not in chat_dict:
             chat_dict[record.nickname] = {}
         chat_dict[record.nickname][str(record.chat_date)] = record.total_chats
+
+    # 응답
     return ApiResponse(data=chat_dict)
