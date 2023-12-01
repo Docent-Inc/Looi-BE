@@ -137,9 +137,8 @@ async def slack_bot():
         dau_count = db.query(User).filter(
             func.date(User.last_active_date) == now.date()
         ).count()
-        start_of_month = now.date().replace(day=1)
         mau_count = db.query(User).filter(
-            func.date(User.last_active_date) >= start_of_month
+            func.date(User.last_active_date) >= (now.date() - timedelta(days=30))
         ).count()
         wau_count = db.query(User).filter(
             func.date(User.last_active_date) >= (now.date() - timedelta(days=7))
