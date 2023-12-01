@@ -1,7 +1,7 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import inspect, func
+from sqlalchemy import inspect, func, case
 from sqlalchemy.orm import Session
 from starlette import status
 
@@ -171,25 +171,35 @@ async def get_user_chat(
     current_user: User = Depends(get_current_user_is_admin),
     db: Session = Depends(get_db),
 ):
-
-    # 유저별 채팅 기록
+    # 유저별 채팅 기록 및 카테고리별 기록 횟수
     chat_data = (
         db.query(
             User.nickname,
             func.date(TextClassification.create_date).label('chat_date'),
-            func.count(TextClassification.id).label('total_chats')
+            func.count(TextClassification.id).label('total_chats'),
+            func.sum(case((TextClassification.text_type == '꿈', 1), else_=0)).label('dream_count'),
+            func.sum(case((TextClassification.text_type == '일기', 1), else_=0)).label('diary_count'),
+            func.sum(case((TextClassification.text_type == '일정', 1), else_=0)).label('schedule_count'),
+            func.sum(case((TextClassification.text_type == '메모', 1), else_=0)).label('memo_count')
         )
         .join(TextClassification, User.id == TextClassification.User_id)
         .group_by(User.nickname, 'chat_date')
         .order_by(User.nickname, 'chat_date')
         .all()
     )
+
     # 결과를 딕셔너리 형태로 변환하여 반환
     chat_dict = {}
     for record in chat_data:
         if record.nickname not in chat_dict:
             chat_dict[record.nickname] = {}
-        chat_dict[record.nickname][str(record.chat_date)] = record.total_chats
+        chat_dict[record.nickname][str(record.chat_date)] = {
+            'total_chats': record.total_chats,
+            'dream_count': record.dream_count,
+            'diary_count': record.diary_count,
+            'schedule_count': record.schedule_count,
+            'memo_count': record.memo_count
+        }
 
     # 응답
     return ApiResponse(data=chat_dict)
