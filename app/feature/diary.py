@@ -59,18 +59,24 @@ async def create_morning_diary(content: str, user: User, db: Session) -> int:
 
     # db에 저장
     now = await time_now()
-    diary = MorningDiary(
-        content=content,
-        User_id=user.id,
-        image_url=L[0],
-        background_color=upper_lower_color,
-        diary_name=diary_name,
-        resolution=resolution['resolution'],
-        main_keyword=json.dumps(resolution["main_keywords"], ensure_ascii=False),
-        create_date=now,
-        modify_date=now,
-    )
-    diary = save_db(diary, db)
+    try:
+        diary = MorningDiary(
+            content=content,
+            User_id=user.id,
+            image_url=L[0],
+            background_color=upper_lower_color,
+            diary_name=diary_name,
+            resolution=resolution['resolution'],
+            main_keyword=json.dumps(resolution["main_keywords"], ensure_ascii=False),
+            create_date=now,
+            modify_date=now,
+        )
+        diary = save_db(diary, db)
+    except:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=4021,
+        )
 
     # 다이어리 id 반환
     return diary.id

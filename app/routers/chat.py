@@ -34,7 +34,7 @@ async def chat(
         )
 
     # 텍스트 분류 및 저장
-    diary_id, content, text_type = await classify_text(text, current_user, db)
+    diary_id, content, text_type = await classify_text(body.type, text, current_user, db)
 
     # 채팅 카운트 증가
     await redis.set(chat_count_key, int(current_count) + 1, ex=86400)  # 하루 동안 유효한 카운트
