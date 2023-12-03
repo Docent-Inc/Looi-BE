@@ -168,7 +168,9 @@ async def slack_bot():
         total_memo_count = db.query(Memo).count()
 
         # 전체 생성된 리포트 수
-        total_report_count = db.query(Report).count()
+        total_report_count = db.query(Report).filter(
+            Report.is_deleted == False
+        ).count()
 
         # 전체 생성된 채팅 수
         total_chat_count = db.query(TextClassification).count()
