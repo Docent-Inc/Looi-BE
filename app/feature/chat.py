@@ -10,7 +10,7 @@ async def classify_text(text_type, text, current_user, db):
     if text_type == 0:
         try:
             # 텍스트 분류
-            number = await send_gpt4_request(1, text, current_user, db)
+            number = await send_gpt4_request(1, text[:200], current_user, db)
             text_type = int(number.strip())
         except:
             # 텍스트 분류 실패
