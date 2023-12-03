@@ -6,18 +6,18 @@ from app.feature.aiRequset import send_gpt4_request
 from app.feature.diary import create_morning_diary, create_night_diary, create_memo
 from app.feature.generate import generate_schedule
 
-async def classify_text(text, current_user, db):
-    try:
-        # 텍스트 분류
-        number = await send_gpt4_request(1, text, current_user, db)
-        text_type = int(number.strip())
-    except:
-        # 텍스트 분류 실패
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=4013
-        )
-
+async def classify_text(text_type, text, current_user, db):
+    if text_type == 0:
+        try:
+            # 텍스트 분류
+            number = await send_gpt4_request(1, text, current_user, db)
+            text_type = int(number.strip())
+        except:
+            # 텍스트 분류 실패
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=4013
+            )
     # 텍스트 저장
     text_type_dict = {1: "꿈", 2: "일기", 3: "메모", 4: "일정"}
     save_chat = TextClassification(
