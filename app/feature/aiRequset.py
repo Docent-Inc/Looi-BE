@@ -19,7 +19,7 @@ prompt1 = [
     {"role": "system", "content": "내용이 짧으면 메모 또는 일정일 확률이 높고, 꿈이라는 단어가 포함되면 꿈, 오늘 내가 한 일들과 생각들이 포함되면 일기일 확률이 높다."},
     {"role": "system", "content": "날짜와 관련된 단어가 포함되면 일정일 확률이 높다."},
     {"role": "system", "content": "시간대가 오전이면 꿈일 확률이 높고 오후면 일기일 확률이 높다."},
-    {"role": "system", "content": "나머지는 메모로 분류해줘."},
+    {"role": "system", "content": "나머지는 메모로 분류해줘. return 1, 2, 3, 4"},
     {"role": "user", "content": "2023-08-20 07:00:00 엄청나게 맑고 깨끗한 낚시터에서 낚시했는데 어찌나 투명한지 물고기가 다 보이는 꿈"},
     {"role": "system", "content": "1"},
     {"role": "user", "content": "2023-08-20 22:00:00 오늘은 하루종일 코딩을 했다. 내가 만든 코드는 잘 돌아가지 않고, 너무 고통받았다. 내일은 개발을 마무리해서 얼른 서비스를 출시하고 싶다"},
@@ -129,13 +129,13 @@ prompt6 = [
 ]
 
 prompt7 = [
-    {"role": "system", "content": "Analyze the user's dreams, diary, and schedule to create a about 3500-character Concrete 'Mental State Report'. Please write korean but each title is Engilsh."},
+    {"role": "system", "content": "Analyze the user's dreams, diary, and schedule to create a about 4000-character Concrete 'Mental State Report'. Please write korean but each title is Engilsh."},
     {"role": "system", "content": "1. mental_state 2. positives  3. negatives  4. extroverted_activities 5. introverted_activities  6. recommendations 7. statistics 8. keywords"},
-    {"role": "system", "content": "Provide detailed analysis for 'Mental State'. For items 1, total summary about report and include user nickname. about 200-character" },
-    {"role": "system", "content": "For item 2-3, provide some comments about the user's extroverted and introverted activities. about 120-character. main_keyword in 2-3 is phrase or word that you choose."},
+    {"role": "system", "content": "Provide detailed analysis for 'Mental State'. For items 1, total summary about report and include user nickname. about 400-character" },
+    {"role": "system", "content": "For item 2-3, provide some comments about the user's extroverted and introverted activities. about 200-character. main_keyword in 2-3 is phrase or word that you choose."},
     {"role": "system", "content": "For item 7, provide a list 1 detail ratio dictionary for Extroversion, Introversion and for item 8 provide 5 keywords"},
     {"role": "system", "content": "공손한 말투로 만들어주세요. follow my example json format"},
-    {"role": "system", "content": "ex) if user nickname: 태완, return = {\"mental_state\":\"태완님의 최근 삶에서는 다양한 마음의 상태가 복합적으로 드러납니다. 꿈이나 일기니에서 압박, 좌절, 갈망, 열정 등의 감정이 교차하고 있으며, 일상에서는 스타트업 활동에 전념하는 열정과 동시에 간혹 불안과 고민이 느껴집니다.\", \"positives\": {\"comment\": \"태완님의 열정이 가장 두드러집니다. 그 분야에 대한 사랑과 우리 서비스에 대한 확신, 미래에 대한 기대감 모두 당신의 열정을 드러냅니다.\", \"main_keyword\": \"서비스 대한 확신\"}, \"negatives\": {\"comment\": \"꿈에서 보여지는 불안과 좌절감이 삶에서도 다소 나타나고 있는 것으로 보입니다. 투자심사와 경쟁, 고민 등에 대한 부담감도 있을 것으로 보입니다.\", \"main_keyword\": \"부담감\"}, \"extroverted_activities\": [\"스타트업 홍보\", \"미팅 참석\", \"백화점에서 여자친구와 연말 데이트\"], \"introverted_activities\": [\"영화 관람\", \"개인적인 고민 및 생각 정리\", \"가천코코네스쿨의 첫번째 아웃풋이 되기 위한 노력\"], \"recommendations\": [\"스트레스 해소를 위한 취미활동 찾기\", \"진로에 대한 명확한 계획 수립\", \"자신감을 유지하되 현실을 직시\", \"주변 사람들과의 소통과 네트워킹 꾸준히\", \"마음의 안정을 위한 심리 치료 고려\"], \"statistics\": {\"extrovert\": 60, \"introvert\": 40}, \"keywords\": [\"열정\", \"불안\", \"확신\", \"현실감\", \"자기성찰\"]}"},
+    {"role": "system", "content": "ex) if user nickname: 뀨뀨, return = {\"mental_state\":\"뀨뀨님의 최근 꿈과 일기는 복잡한 감정과 생각의 교차점을 보여줍니다. 꿈에서의 경쟁과 화해 시도는 일상 생활에서의 스트레스, 대인 관계의 어려움, 그리고 자신의 업적에 대한 내적인 기준과 기대를 반영하고 있습니다. 이는 뀨뀨님의 열정과 성취에 대한 갈망, 동시에 관계와 업무에서의 불안정성과 불확실성에 대한 고민을 나타냅니다.\", \"positives\": {\"comment\": \"학회 수료와 상 수상은 뀨뀨님의 성취감을 대표하는 중요한 사건입니다. 남자친구와의 즐거운 시간, 동료들과의 식사는 일상 속에서 즐거움과 안정감을 제공합니다. 이러한 순간들은 뀨뀨님의 긍정적인 에너지를 증폭시키며, 성공과 행복을 추구하는 데 동기를 부여합니다. \", \"main_keyword\": \"성취감과 행복\"}, \"negatives\": {\"comment\": \"일상에서 느끼는 지루함과 스트레스, 내적 갈등이 뀨뀨님의 정신적 부담을 가중시키고 있습니다. 특히, 싫어하는 사람과의 관계에서 느끼는 스트레스와 업무에서의 난감함이 부각됩니다. 이러한 부담감은 뀨뀨님의 삶에서 균형을 찾는 데 방해가 될 수 있습니다.\", \"main_keyword\": \"스트레스와 불안정성\"}, \"extroverted_activities\": [\"동료들과의 저녁식사\", \"남자친구와의 데이트\", \"가족, 친구들과의 저녁 약속\"], \"introverted_activities\": [\"독서실에서의 개별 작업\", \"일기 쓰기\", \"학회에서의 성취\"], \"recommendations\": [\"스트레스 관리를 위한 취미 활동 찾기\", \"자기계발 및 경력 계획 세우기\", \"대인 관계에서의 긴장 완화를 위한 커뮤니케이션 기술 향상\", \"규칙적인 수면 스케줄 유지\", \"필요시 전문가의 상담 고려\"], \"statistics\": {\"extrovert\": 60, \"introvert\": 40}, \"keywords\": [\"성취감\", \"행복\", \"스트레스\", \"불안정성\", \"자기 성찰\"]}"},
 ]
 
 prompt8 = [

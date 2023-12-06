@@ -1,3 +1,4 @@
+import asyncio
 from datetime import timedelta
 import aiocron
 import pytz
@@ -21,8 +22,8 @@ async def generate():
             users = db.query(User).filter(
                 User.is_deleted == False,
             ).all()
-            for user in users:
-                await generate_report(user, db)
+            tasks = [generate_report(user, db) for user in users]
+            await asyncio.gather(*tasks)
         finally:
             db.close()
             await release_lock(redis_client, lock_key)
@@ -102,7 +103,8 @@ async def generate_report(user: User, db: Session) -> str:
     night_diaries = db.query(NightDiary).filter(
         NightDiary.User_id == user.id,
         NightDiary.create_date.between(one_week_ago.date(), today),
-        NightDiary.is_deleted == False
+        NightDiary.is_deleted == False,
+        NightDiary.content != "오늘은 인상깊은 날이다. 기록 친구 Look-i와 만나게 되었다. 앞으로 기록 열심히 해야지~!"
     ).all()
 
     text += "\nDiary for the last week:\n" + "\n".join(diary.content for diary in night_diaries)

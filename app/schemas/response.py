@@ -31,28 +31,13 @@ class User(BaseModel):
     class Config:
         orm_mode = True
 
-'''
-카카오 챗봇을 위한 API 스키마
-'''
+class ChatResponse(BaseModel):
+    calls_left: int
+    text_type: int
+    diary_id: int
+    content: object
 
-class SimpleImage(BaseModel):
-    imageUrl: str
-
-class SimpleText(BaseModel):
-    text: str
-
-class Output(BaseModel):
-    simpleImage: Optional[SimpleImage] = None
-    simpleText: Optional[SimpleText] = None
-
-class Template(BaseModel):
-    outputs: list[Output]
-
-class KakaoChatbotResponseCallback(BaseModel):
-    version: str
-    useCallback: Optional[bool] = None
-    template: Optional[Template] = None
-
-class KakaoChatbotResponse(BaseModel):
-    version: str
-    template: Template
+class ListResponse(BaseModel):
+    list: object
+    count: int
+    total_count: int

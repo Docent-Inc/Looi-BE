@@ -7,7 +7,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from fastapi.security.api_key import APIKeyHeader
-from app.db.database import get_db
+from app.db.database import get_db, save_db
 from app.db.models import User
 from typing import Optional
 from app.core.config import settings
@@ -48,33 +48,48 @@ async def get_current_user(
     api_key: str = Depends(api_key_header_auth), # api_key_header_auth를 통해 api_key를 받아온다.
     db: Session = Depends(get_db),
 ) -> User:
+
+    # api_key가 없으면
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail=4220,
         headers={"WWW-Authenticate": "Bearer"},
     )
+
+    # 테스트 토큰이 아니면
     if settings.TEST_TOKEN != "test":
         api_key = settings.TEST_TOKEN
     try:
+        # 토큰을 복호화
         token = api_key.replace("Bearer ", "")
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
+
+        # 토큰에 email이 없으면
         if email is None:
             raise credentials_exception
     except:
         raise credentials_exception
 
+    # db에서 email로 유저를 찾는다.
     user = await get_user_by_email(db, email=email)
+
+    # 유저가 없거나 삭제된 유저면
     if user is None or user.is_deleted == True:
         raise credentials_exception
+
+    # 유저가 로그인이 완료되지 않은 유저라면
     if user.mbti == "0":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=4998,
         )
+
+    # 유저의 마지막 로그인 시간을 현재시간으로 변경
     user.last_active_date = await time_now()
-    db.commit()
-    db.refresh(user)
+    user = save_db(user, db)
+
+    # 유저 정보 반환
     return user
 
 async def get_update_user(
@@ -140,7 +155,7 @@ async def create_token(email):
     return expires_in_seconds, refresh_expires_in_seconds, access_token, refresh_token
 
 async def text_length(text: str, max_length: int):
-    min_length = 5
+    min_length = 0
     if len(text) < min_length or len(text) > max_length:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
