@@ -28,6 +28,6 @@ class Settings(BaseSettings):
     class Config:
         # 개발 환경은 ".env-dev" 파일
         # 서버 환경은 ".env" 파일
-        env_file = ".env"
+        env_file = ".env-dev"
 
 settings = Settings()

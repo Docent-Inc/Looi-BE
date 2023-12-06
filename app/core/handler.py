@@ -1,6 +1,5 @@
-from fastapi import Request, HTTPException, status
+from fastapi import Request, HTTPException
 from fastapi.responses import JSONResponse
-from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.core.config import settings
 from app.core.security import time_now

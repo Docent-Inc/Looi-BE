@@ -8,6 +8,7 @@ CLIENT_SECRET = settings.KAKAO_CLIENT_SECRET
 REDIRECT_URI = "https://docent.zip/callback"
 REDIRECT_URI_TEST = "http://localhost:3000/callback"
 REDIRECT_URI_VERCEL = "https://docent-front.vercel.app/callback"
+REDIRECT_URI_DEV = "https://bmongsmong.com/callback"
 KAKAO_AUTH_URL_TEST = f"https://kauth.kakao.com/oauth/authorize?client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI_TEST}&response_type=code"
 KAKAO_AUTH_URL = f"https://kauth.kakao.com/oauth/authorize?client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI}&response_type=code"
 KAKAO_AUTH_URL_VERCEL = f"https://kauth.kakao.com/oauth/authorize?client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI_VERCEL}&response_type=code"

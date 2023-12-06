@@ -64,15 +64,6 @@ async def callback(
         )
     )
 
-@router.get("/callback", tags=["Auth"])
-async def callback_test(
-    request: Request,
-    db: Session = Depends(get_db),
-):
-    client_host = request.client.host
-    print(client_host)
-    return {"Client Host": client_host}
-
 @router.post("/refresh", response_model=ApiResponse, tags=["Auth"])
 async def refresh_token(
     token_refresh: TokenRefresh,
