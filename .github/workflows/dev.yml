@@ -1,4 +1,4 @@
-name: docent
+name: dev
 
 on:
   push:
@@ -23,6 +23,7 @@ jobs:
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.NCP_HOST_DEV }}
+          port: 1024
           username: ${{ secrets.NCP_USER_DEV }}
           password: ${{ secrets.NCP_PASSWORD_DEV }}
           key: ${{ secrets.NCP_KEY }}
