@@ -1,5 +1,5 @@
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from app.feature.kakaoOAuth2 import KAKAO_AUTH_URL, get_user_kakao, KAKAO_AUTH_URL_TEST, \
     get_user_kakao_test, KAKAO_AUTH_URL_VERCEL, get_user_kakao_vercel
 from app.db.database import get_db
@@ -36,7 +36,6 @@ async def callback(
     service: str,
     code: str,
     db: Session = Depends(get_db),
-    test: Optional[bool] = False
 ):
     # 콜백을 처리합니다.
     if service == "kakao":
@@ -64,6 +63,15 @@ async def callback(
             is_signup=is_sign_up,
         )
     )
+
+@router.get("/callback", tags=["Auth"])
+async def callback_test(
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    client_host = request.client.host
+    print(client_host)
+    return {"Client Host": client_host}
 
 @router.post("/refresh", response_model=ApiResponse, tags=["Auth"])
 async def refresh_token(
