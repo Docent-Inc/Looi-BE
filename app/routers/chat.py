@@ -5,12 +5,10 @@ import random
 from app.core.config import settings
 from app.core.security import get_current_user, text_length, time_now
 from app.db.database import get_db, get_redis_client
-from app.db.models import MorningDiary, NightDiary, Memo, Calender, WelcomeChat, HelperChat, Chat, TextClassification
-from app.feature.aiRequset import send_gpt4_request
-from app.feature.diary import create_morning_diary, create_night_diary, create_memo
-from app.feature.generate import generate_schedule
+from app.db.models import WelcomeChat, HelperChat, Chat
+from app.feature.chat import classify_text
 from app.schemas.request import ChatRequest
-from app.schemas.response import ApiResponse, User
+from app.schemas.response import ApiResponse, User, ChatResponse
 
 router = APIRouter(prefix="/chat")
 
@@ -21,7 +19,11 @@ async def chat(
     db: Session = Depends(get_db),
     redis: aioredis.Redis = Depends(get_redis_client),
 ) -> ApiResponse:
+
+    # 택스트 길이 확인
     text = await text_length(body.content, settings.MAX_LENGTH)
+
+    # 하루 요청 제한 확인
     now = await time_now()
     chat_count_key = f"chat_count:{current_user.id}:{now.day}"
     current_count = await redis.get(chat_count_key) or 0
@@ -30,65 +32,22 @@ async def chat(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=4404
         )
-    try:
-        number = await send_gpt4_request(1, text, current_user, db)
-        text_type = int(number.strip())
-    except:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=4013
-        )
-    text_type_dict = {1: "꿈", 2: "일기", 3: "메모", 4: "일정"}
-    save_chat = TextClassification(
-        text=body.content,
-        User_id=current_user.id,
-        text_type=text_type_dict[text_type],
-        create_date=await time_now(),
-    )
-    db.add(save_chat)
-    db.commit()
-    db.refresh(save_chat)
-    if text_type == 1:
-        diary_id = await create_morning_diary(body.content, current_user, db)
-        content = db.query(MorningDiary).filter(MorningDiary.id == diary_id).first()
-    elif text_type == 2:
-        diary_id = await create_night_diary(body.content, current_user, db)
-        content = db.query(NightDiary).filter(NightDiary.id == diary_id).first()
-    elif text_type == 3:
-        diary_id = await create_memo(body.content, current_user, db)
-        content = db.query(Memo).filter(Memo.id == diary_id).first()
-    elif text_type == 4:
-        diary_id = await generate_schedule(body.content, current_user, db)
-        content = db.query(Calender).filter(Calender.id == diary_id).first()
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=4013
-        )
-    await redis.set(chat_count_key, int(current_count) + 1, ex=86400)  # 하루 동안 유효한 카운트
-    return ApiResponse(
-        data={
-            "calls_left": settings.MAX_CALL - int(current_count) - 1,
-            "text_type": text_type,
-            "diary_id": diary_id,
-            "content": content
-        }
-    )
 
-@router.get("/list", tags=["Chat"])
-async def generate_chat_list(
-    page: int,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-) -> ApiResponse:
-    chat = db.query(Chat).filter(Chat.User_id == current_user.id, Chat.is_deleted == False).order_by(Chat.id.desc()).offset((page-1) * 10).limit(10).all()
-    total_counts = db.query(Chat).filter(Chat.User_id == current_user.id, Chat.is_deleted == False).count()
+    # 텍스트 분류 및 저장
+    diary_id, content, text_type = await classify_text(body.type, text, current_user, db)
+
+    # 채팅 카운트 증가
+    await redis.set(chat_count_key, int(current_count) + 1, ex=86400)  # 하루 동안 유효한 카운트
+
+    # 응답
     return ApiResponse(
-        data={
-            "page_num": page,
-            "total_counts": total_counts,
-            "list": chat
-    })
+        data=ChatResponse(
+            calls_left=settings.MAX_CALL - int(current_count) - 1,
+            text_type=text_type,
+            diary_id=diary_id,
+            content=content
+        )
+    )
 
 @router.get("/welcome", tags=["Chat"])
 async def get_welcome(
@@ -96,9 +55,15 @@ async def get_welcome(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> ApiResponse:
+
+    # type에 맞는 채팅방 인사 문구 가져오기
     data = db.query(WelcomeChat).filter(WelcomeChat.is_deleted == False, WelcomeChat.type == type).all()
+
+    # 랜덤으로 하나 선택
     random_chat = random.choice(data)
     random_chat.text = random_chat.text.replace("{}", current_user.nickname)
+
+    # 응답
     return ApiResponse(
         data=random_chat
     )
@@ -109,8 +74,30 @@ async def get_helper(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> ApiResponse:
+
+    # type에 맞는 채팅 도움말 가져오기
     data = db.query(HelperChat).filter(HelperChat.is_deleted == False, HelperChat.type == type).all()
+
+    # 랜덤으로 하나 선택
     random_chat = random.choice(data)
+
+    # 응답
     return ApiResponse(
         data=random_chat
     )
+
+
+# @router.get("/list", tags=["Chat"])
+# async def generate_chat_list(
+#     page: int,
+#     current_user: User = Depends(get_current_user),
+#     db: Session = Depends(get_db),
+# ) -> ApiResponse:
+#     chat = db.query(Chat).filter(Chat.User_id == current_user.id, Chat.is_deleted == False).order_by(Chat.id.desc()).offset((page-1) * 10).limit(10).all()
+#     total_counts = db.query(Chat).filter(Chat.User_id == current_user.id, Chat.is_deleted == False).count()
+#     return ApiResponse(
+#         data={
+#             "page_num": page,
+#             "total_counts": total_counts,
+#             "list": chat
+#     })

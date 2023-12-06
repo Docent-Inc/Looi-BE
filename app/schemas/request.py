@@ -46,6 +46,7 @@ class MemoRequest(BaseModel):
     content: str
 
 class ChatRequest(BaseModel):
+    type: Optional[int] = 0
     content: str
 
 class CalenderRequest(BaseModel):
