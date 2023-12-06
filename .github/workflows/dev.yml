@@ -1,0 +1,77 @@
+name: docent
+
+on:
+  push:
+    branches: [ develop ]
+  pull_request:
+    types: [closed]
+    branches: [ develop ]
+
+jobs:
+  build:
+    runs-on: ubuntu-18.04.5
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Docker build
+        run: |
+          docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
+          docker build -t docent .
+          docker tag docent taewan2002/docent:${GITHUB_SHA::7}
+          docker push taewan2002/docent:${GITHUB_SHA::7}
+      - name: Deploy
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.NCP_HOST_DEV }}
+          username: ${{ secrets.NCP_USER_DEV }}
+          password: ${{ secrets.NCP_PASSWORD_DEV }}
+          key: ${{ secrets.NCP_KEY }}
+          envs: GITHUB_SHA
+          script: |
+            # Load the current service version (blue or green)
+            echo "🔍 Checking current_service.txt"
+            CURRENT_SERVICE=$(cat current_service.txt || echo "blue")
+            echo "Current service: ${CURRENT_SERVICE}"
+
+            # Determine the new service version
+            if [ "$CURRENT_SERVICE" = "blue" ]; then
+              NEW_SERVICE="green"
+            else
+              NEW_SERVICE="blue"
+            fi
+            echo "New service: ${NEW_SERVICE}"
+
+            # Pull the new image
+            sudo docker pull taewan2002/docent:${GITHUB_SHA::7}
+            
+            # Determine the new port
+            if [ "$NEW_SERVICE" = "blue" ]; then
+              NEW_PORT="8001"
+            else
+              NEW_PORT="8002"
+            fi
+
+            # Run the new service
+            sudo docker run -d --rm --name ${NEW_SERVICE} -p ${NEW_PORT}:8000 taewan2002/docent:${GITHUB_SHA::7}
+
+            # Update the NGINX configuration
+            sudo sed -i "s/server localhost:800[1-2];/server localhost:${NEW_PORT};/g" /etc/nginx/nginx.conf
+
+            # Update the service-url.inc file
+            echo "set \$service_url http://127.0.0.1:${NEW_PORT};" | sudo tee /etc/nginx/conf.d/service-url.inc
+
+            # Reload the NGINX service
+            sudo systemctl reload nginx
+
+            # Stop the previous service
+            if sudo docker ps -a --filter "name=^/${CURRENT_SERVICE}$" --format '{{.Names}}' | grep -qw "${CURRENT_SERVICE}"; then
+              sudo docker stop ${CURRENT_SERVICE}
+            fi
+
+            # Save the new service version
+            echo "📝 Saving new service version to current_service.txt"
+            echo "${NEW_SERVICE}" > current_service.txt
+
+            # Cleanup old images
+            echo "🧹 Cleaning up old Docker images"
+            sudo docker rmi -f $(sudo docker images -q) || true

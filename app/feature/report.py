@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 import json
 
 from app.core.security import time_now
-from app.db.database import get_SessionLocal, get_redis_client, try_to_acquire_lock, release_lock
+from app.db.database import get_SessionLocal, get_redis_client, try_to_acquire_lock, release_lock, save_db
 from app.db.models import Report, MorningDiary, NightDiary, Calender
 from app.feature.aiRequset import send_gpt4_request
 from app.db.models import User
@@ -110,8 +110,8 @@ async def generate_report(user: User, db: Session) -> str:
     text += "\nDiary for the last week:\n" + "\n".join(diary.content for diary in night_diaries)
     total_count += len(night_diaries)
 
-    if total_count < 5:
-        return False
+    # if total_count < 5:
+    #     return False
 
     # Process Calender
     calenders = db.query(Calender).filter(
@@ -120,8 +120,8 @@ async def generate_report(user: User, db: Session) -> str:
         Calender.is_deleted == False
     ).all()
 
-    text += "\nSchedule for the last week:\n" + "\n".join(content.title for content in calenders)
-
+    text += "\nSchedule for the last week:\n" + "\n".join(f"{content.title}: {content.content}" for content in calenders)
+    print(text)
     retries = 0
     is_success = False
     MAX_RETRIES = 3
@@ -146,9 +146,8 @@ async def generate_report(user: User, db: Session) -> str:
         image_url=L[0],
         is_deleted=False,
     )
-    db.add(mental_report)
-    db.commit()
-    return True
+    save_db(mental_report, db)
+    return mental_report.id
 
 async def read_report(id: int, user: User, db: Session) -> dict:
     report = db.query(Report).filter(
