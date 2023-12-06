@@ -1,14 +1,15 @@
-name: docent
+name: dev
 
 on:
   push:
-    branches: [ main ]
+    branches: [ develop ]
   pull_request:
-    branches: [ main ]
+    types: [closed]
+    branches: [ develop ]
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-18.04
 
     steps:
       - uses: actions/checkout@v2
@@ -21,9 +22,10 @@ jobs:
       - name: Deploy
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.NCP_HOST }}
-          username: ${{ secrets.NCP_USER }}
-          password: ${{ secrets.NCP_PASSWORD }}
+          host: ${{ secrets.NCP_HOST_DEV }}
+          port: 1024
+          username: ${{ secrets.NCP_USER_DEV }}
+          password: ${{ secrets.NCP_PASSWORD_DEV }}
           key: ${{ secrets.NCP_KEY }}
           envs: GITHUB_SHA
           script: |
