@@ -17,26 +17,22 @@ router = APIRouter(prefix="/auth")
 @router.get("/login/{service}/{env}", response_model=ApiResponse, tags=["Auth"])
 async def login(
     service: str,
-    request: Request,
+    env: str,
 ):
-    print(request)
-    print(request.base_url)
     if service == "kakao":
-        if request.base_url == "http://bmongsmong.com/api/":
+        if env == "local":
+            url = KAKAO_AUTH_URL_TEST
+        elif env == "dev":
             url = KAKAO_AUTH_URL_DEV
-    #     if env == "local":
-    #         url = KAKAO_AUTH_URL_TEST
-    #     elif env == "dev":
-    #         url = KAKAO_AUTH_URL_DEV
-    #     elif env == "prod":
-    #         url = KAKAO_AUTH_URL
-    # elif service == "line":
-    #     if env == "local":
-    #         url = LINE_AUTH_URL_TEST
-    #     # elif env == "dev":
-    #     #     url = LINE_AUTH_URL_DEV
-    #     elif env == "prod":
-    #         url = LINE_AUTH_URL
+        elif env == "prod":
+            url = KAKAO_AUTH_URL
+    elif service == "line":
+        if env == "local":
+            url = LINE_AUTH_URL_TEST
+        # elif env == "dev":
+        #     url = LINE_AUTH_URL_DEV
+        elif env == "prod":
+            url = LINE_AUTH_URL
     else:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=4403)
     return ApiResponse(data={"url": url})
