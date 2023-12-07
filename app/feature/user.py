@@ -26,7 +26,6 @@ BASE_PROFILE_SCOPES = ["kakao_account.email"]
 LINE_CHANNEL_ID = settings.LINE_CHANNEL_ID
 LINE_SECRET = settings.LINE_SECRET
 PROFILE_ENDPOINT_LINE = "https://api.line.me/v2/profile"
-REDIRECT_URI_TEST = "http://localhost:3000/line"
 LINE_AUTH_URL = f"https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id={LINE_CHANNEL_ID}&redirect_uri={REDIRECT_URI}&state={random.randint(1000000000, 9999999999)}&scope=profile%20openid%20email"
 LINE_AUTH_URL_TEST = f"https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id={LINE_CHANNEL_ID}&redirect_uri={REDIRECT_URI_TEST}&state={random.randint(1000000000, 9999999999)}&scope=profile%20openid%20email"
 
