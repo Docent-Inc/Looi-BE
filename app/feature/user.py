@@ -4,9 +4,86 @@ from app.schemas.request import UserCreate, UserUpdateRequest, PushUpdateRequest
 from typing import Optional
 from app.core.security import get_user_by_email, get_user_by_nickname
 from app.db.models import User, NightDiary
+import requests
 from fastapi import HTTPException, status
+from httpx_oauth.errors import GetIdEmailError
+from app.core.config import settings
+import random
+
+CLIENT_ID = settings.KAKAO_API_KEY
+CLIENT_SECRET = settings.KAKAO_CLIENT_SECRET
+REDIRECT_URI = "https://docent.zip/callback"
+REDIRECT_URI_TEST = "http://localhost:3000/callback"
+REDIRECT_URI_DEV = "https://bmongsmong.com/callback"
+KAKAO_AUTH_URL_TEST = f"https://kauth.kakao.com/oauth/authorize?client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI_TEST}&response_type=code"
+KAKAO_AUTH_URL = f"https://kauth.kakao.com/oauth/authorize?client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI}&response_type=code"
+KAKAO_AUTH_URL_DEV = f"https://kauth.kakao.com/oauth/authorize?client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI_DEV}&response_type=code"
+AUTHORIZE_ENDPOINT = "https://kauth.kakao.com/oauth/authorize"
+ACCESS_TOKEN_ENDPOINT = "https://kauth.kakao.com/oauth/token"
+PROFILE_ENDPOINT_KAKAO = "https://kapi.kakao.com/v2/user/me"
+BASE_SCOPES = ["account_email"]
+BASE_PROFILE_SCOPES = ["kakao_account.email"]
+LINE_CHANNEL_ID = settings.LINE_CHANNEL_ID
+LINE_SECRET = settings.LINE_SECRET
+PROFILE_ENDPOINT_LINE = "https://api.line.me/v2/profile"
+REDIRECT_URI_TEST = "http://localhost:3000/line"
+LINE_AUTH_URL = f"https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id={LINE_CHANNEL_ID}&redirect_uri={REDIRECT_URI}&state={random.randint(1000000000, 9999999999)}&scope=profile%20openid%20email"
+LINE_AUTH_URL_TEST = f"https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id={LINE_CHANNEL_ID}&redirect_uri={REDIRECT_URI_TEST}&state={random.randint(1000000000, 9999999999)}&scope=profile%20openid%20email"
+
+
 
 mbti_list = ['istj', 'isfj', 'infj', 'intj', 'istp', 'isfp', 'infp', 'intp', 'estp', 'esfp', 'enfp', 'entp', 'estj', 'esfj', 'enfj', 'entj']
+
+async def get_user_kakao(request: str, env: str):
+    if env == "local":
+        REDIRECT_URI = REDIRECT_URI_TEST
+    elif env == "dev":
+        REDIRECT_URI = REDIRECT_URI_DEV
+    try:
+        data = {
+            "grant_type": "authorization_code",
+            "client_id": CLIENT_ID,
+            "redirect_uri": REDIRECT_URI,
+            "code": request,
+        }
+        response = requests.post(ACCESS_TOKEN_ENDPOINT, data=data)
+        token = response.json().get("access_token")
+
+        headers = {"Authorization": f"Bearer {token}"}
+        user_info = requests.get(PROFILE_ENDPOINT_KAKAO, headers=headers).json()
+        return user_info
+    except GetIdEmailError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=4010,
+        )
+
+async def get_user_line(request: str, env: str):
+    if env == "local":
+        REDIRECT_URI = REDIRECT_URI_TEST
+    elif env == "dev":
+        REDIRECT_URI = REDIRECT_URI_DEV
+    try:
+        data = {
+            "grant_type": "authorization_code",
+            "client_id": LINE_CHANNEL_ID,
+            "client_secret": LINE_SECRET,
+            "redirect_uri": REDIRECT_URI,
+            "code": request,
+        }
+        response = requests.get("https://api.line.me/oauth2/v2.1/token", data=data)
+
+        token = response.json().get("access_token")
+        print(token)
+
+        # headers = {"Authorization": f"Bearer {token}"}
+        # user_info = requests.get(PROFILE_ENDPOINT_LINE, headers=headers).json()
+        # return user_info
+    except GetIdEmailError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=4010,
+        )
 
 async def create_user(db: Session, user: UserCreate) -> User:
     hashed_password = get_password_hash(user.password)

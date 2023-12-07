@@ -8,7 +8,7 @@ import extcolors
 from app.core.config import settings
 from app.core.security import time_now
 from app.db.database import get_redis_client
-from app.db.models import MorningDiary, NightDiary, Calender, Report, Luck, Chat, Prompt
+from app.db.models import MorningDiary, NightDiary, Calender, Report, Luck, Prompt
 from app.feature.aiRequset import send_gpt_request, send_gpt4_request, send_dalle3_request
 import uuid
 from io import BytesIO
@@ -95,29 +95,6 @@ async def generate_schedule(text: str, user: User, db: Session) -> str:
         db.add(calender)
         db.commit()
 
-        chat = Chat(
-            User_id=user.id,
-            content=text,
-            create_date=datetime.now(pytz.timezone('Asia/Seoul')),
-            is_chatbot=False,
-            is_deleted=False
-        )
-        db.add(chat)
-        db.commit()
-
-        chat = Chat(
-            User_id=user.id,
-            content_type=4,
-            Calender_id=calender.id,
-            content=schedule['title'],
-            event_time=schedule['start_time'],
-            is_chatbot=True,
-            create_date=datetime.now(pytz.timezone('Asia/Seoul')),
-            is_deleted=False
-        )
-        db.add(chat)
-        db.commit()
-        db.refresh(chat)
         return calender.id
     except:
         raise HTTPException(

@@ -5,7 +5,7 @@ import random
 from app.core.config import settings
 from app.core.security import get_current_user, text_length, time_now
 from app.db.database import get_db, get_redis_client
-from app.db.models import WelcomeChat, HelperChat, Chat
+from app.db.models import WelcomeChat, HelperChat
 from app.feature.chat import classify_text
 from app.schemas.request import ChatRequest
 from app.schemas.response import ApiResponse, User, ChatResponse
@@ -85,19 +85,3 @@ async def get_helper(
     return ApiResponse(
         data=random_chat
     )
-
-
-# @router.get("/list", tags=["Chat"])
-# async def generate_chat_list(
-#     page: int,
-#     current_user: User = Depends(get_current_user),
-#     db: Session = Depends(get_db),
-# ) -> ApiResponse:
-#     chat = db.query(Chat).filter(Chat.User_id == current_user.id, Chat.is_deleted == False).order_by(Chat.id.desc()).offset((page-1) * 10).limit(10).all()
-#     total_counts = db.query(Chat).filter(Chat.User_id == current_user.id, Chat.is_deleted == False).count()
-#     return ApiResponse(
-#         data={
-#             "page_num": page,
-#             "total_counts": total_counts,
-#             "list": chat
-#     })
