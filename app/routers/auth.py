@@ -19,6 +19,7 @@ async def login(
     service: str,
     request: Request,
 ):
+    print(request)
     print(request.base_url)
     if service == "kakao":
         if request.base_url == "http://bmongsmong.com/api/":
