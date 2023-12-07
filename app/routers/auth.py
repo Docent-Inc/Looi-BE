@@ -21,9 +21,8 @@ async def login(
 ):
     print(request.base_url)
     if service == "kakao":
-        if request.base_url == "http://172.17.0.1":
+        if request.base_url == "http://bmongsmong.com/api/":
             url = KAKAO_AUTH_URL_DEV
-
     #     if env == "local":
     #         url = KAKAO_AUTH_URL_TEST
     #     elif env == "dev":
