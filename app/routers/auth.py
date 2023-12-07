@@ -1,15 +1,13 @@
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Request
-from app.feature.kakaoOAuth2 import KAKAO_AUTH_URL, get_user_kakao, KAKAO_AUTH_URL_TEST, \
-    get_user_kakao_test, KAKAO_AUTH_URL_DEV, get_user_kakao_dev
 from app.db.database import get_db
 from sqlalchemy.orm import Session
-from app.core.security import decode_access_token, create_token, get_update_user
-from app.feature.lineOAuth2 import LINE_AUTH_URL, LINE_AUTH_URL_TEST, get_user_line, get_user_line_test
+from app.core.security import decode_access_token, create_token, get_update_user, check_token
 from app.schemas.response import TokenData, ApiResponse, KakaoTokenData
 from app.schemas.request import TokenRefresh, UserUpdateRequest, PushUpdateRequest
 from app.feature.user import get_user_by_email, changeNickName, \
-    deleteUser, user_kakao, changeMbti, updateUser, updatePush, user_line
+    deleteUser, user_kakao, changeMbti, updateUser, updatePush, user_line, get_user_kakao, KAKAO_AUTH_URL_TEST, \
+    KAKAO_AUTH_URL_DEV, KAKAO_AUTH_URL, LINE_AUTH_URL_TEST, LINE_AUTH_URL, get_user_line
 from app.schemas.request import NicknameChangeRequest, \
     MbtiChangeRequest
 from app.core.security import get_current_user
@@ -48,20 +46,10 @@ async def callback(
 ):
     # 콜백을 처리합니다.
     if service == "kakao":
-        if env == "local":
-            data = await get_user_kakao_test(code)
-        elif env == "dev":
-            data = await get_user_kakao_dev(code)
-        elif env == "prod":
-            data = await get_user_kakao(code)
+        data = await get_user_kakao(code, env)
         user, is_sign_up = await user_kakao(data, db)
     elif service == "line":
-        if env == "local":
-            data = await get_user_line_test(code)
-        # elif env == "dev":
-        #     data = await get_user_line_dev(code)
-        elif env == "prod":
-            data = await get_user_line(code)
+        data = await get_user_line(code, env)
         user, is_sign_up = await user_line(data, db)
     else:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=4403)
@@ -85,25 +73,8 @@ async def refresh_token(
     token_refresh: TokenRefresh,
     db: Session = Depends(get_db),
 ):
-    payload = await decode_access_token(token_refresh.refresh_token)
-    if payload is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=4004,
-        )
-    email: str = payload.get("sub")
-    user = await get_user_by_email(db, email=email)
-    if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=4005,
-        )
-    if user.is_sign_up == True:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=4998,
-        )
-    expires_in, refresh_expires_in, access_token, refresh_token = await create_token(user.email) # 토큰을 생성합니다.
+    user = await check_token(token_refresh, db)
+    expires_in, refresh_expires_in, access_token, refresh_token = await create_token(user.email)
     return ApiResponse(
         data=TokenData(
             access_token=access_token,

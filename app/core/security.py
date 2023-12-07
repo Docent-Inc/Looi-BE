@@ -11,6 +11,8 @@ from app.db.database import get_db, save_db
 from app.db.models import User
 from typing import Optional
 from app.core.config import settings
+from app.schemas.request import TokenRefresh
+
 access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
 refresh_token_expires = timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
 API_KEY_NAME = "Authorization"
@@ -43,6 +45,27 @@ async def decode_access_token(token: str) -> Union[str, Any]:
         return payload
     except JWTError:
         return None
+
+async def check_token(token_refresh: TokenRefresh, db: Session) -> User:
+    payload = await decode_access_token(token_refresh.refresh_token)
+    if payload is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=4004,
+        )
+    email: str = payload.get("sub")
+    user = await get_user_by_email(db, email=email)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=4005,
+        )
+    if user.is_sign_up == True:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=4998,
+        )
+    return user
 
 async def get_current_user(
     api_key: str = Depends(api_key_header_auth), # api_key_header_auth를 통해 api_key를 받아온다.
@@ -146,7 +169,7 @@ async def create_token(email):
     access_token, expires_in = await create_access_token(  # 액세스 토큰을 생성합니다.
         data={"sub": email}, expires_delta=access_token_expires
     )
-    refresh_token,refresh_expires_in = await create_refresh_token(  # 리프레시 토큰을 생성합니다.
+    refresh_token, refresh_expires_in = await create_refresh_token(  # 리프레시 토큰을 생성합니다.
         data={"sub": email}, expires_delta=refresh_token_expires
     )
     expires_in_seconds = int((expires_in - datetime.utcnow()).total_seconds()) + 1
