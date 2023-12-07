@@ -8,7 +8,7 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     nickname = Column(String(25), index=True, nullable=False)
     email = Column(String(25), index=True, nullable=False)
-    hashed_password = Column(Text, nullable=False)
+    hashed_password = Column(String(100), nullable=False)
     gender = Column(String(10), nullable=True)
     age_range = Column(String(10), nullable=True)
     mbti = Column(String(4), nullable=True)
@@ -35,9 +35,9 @@ class MorningDiary(Base):
     id = Column(Integer, primary_key=True)
     User = relationship('User', backref='morning_diaries')
     User_id = Column(Integer, ForeignKey('User.id'), nullable=False, index=True)
-    diary_name = Column(String(50), nullable=False)
-    content = Column(Text, nullable=False)
-    resolution = Column(Text, nullable=True)
+    diary_name = Column(String(255), nullable=False)
+    content = Column(String(1000), nullable=False)
+    resolution = Column(String(1000), nullable=True)
     image_url = Column(String(100), nullable=True)
     background_color = Column(String(50), nullable=True)
     create_date = Column(DateTime, nullable=False)
@@ -58,8 +58,8 @@ class NightDiary(Base):
     id = Column(Integer, primary_key=True)
     User = relationship('User', backref='night_diaries')
     User_id = Column(Integer, ForeignKey('User.id'), nullable=False)
-    diary_name = Column(Text, nullable=False)
-    content = Column(Text, nullable=False)
+    diary_name = Column(String(255), nullable=False)
+    content = Column(String(1000), nullable=False)
     image_url = Column(String(100), nullable=True)
     background_color = Column(String(50), nullable=True)
     create_date = Column(DateTime, nullable=False)
@@ -78,8 +78,8 @@ class Memo(Base):
     id = Column(Integer, primary_key=True)
     User = relationship('User', backref='memos')
     User_id = Column(Integer, ForeignKey('User.id'), nullable=False, index=True)
-    title = Column(Text, nullable=False)
-    content = Column(Text, nullable=False)
+    title = Column(String(255), nullable=False)
+    content = Column(String(1000), nullable=False)
     create_date = Column(DateTime, nullable=False)
     modify_date = Column(DateTime, nullable=False)
     is_deleted = Column(Boolean, default=False, index=True)
@@ -96,33 +96,10 @@ class Calender(Base):
     User_id = Column(Integer, ForeignKey('User.id'), nullable=False, index=True)
     start_time = Column(DateTime, nullable=False)
     end_time = Column(DateTime, nullable=False)
-    title = Column(Text, nullable=False)
-    content = Column(Text, nullable=False)
+    title = Column(String(255), nullable=False)
+    content = Column(String(255), nullable=False)
     is_deleted = Column(Boolean, default=False, index=True)
     create_date = Column(DateTime, nullable=False)
-
-
-class Chat(Base):
-    __tablename__ = "Chat"
-
-    id = Column(Integer, primary_key=True)
-    User = relationship('User', backref='chats')
-    User_id = Column(Integer, ForeignKey('User.id'), nullable=False, index=True)
-    MorningDiary = relationship('MorningDiary', backref='chats')
-    MorningDiary_id = Column(Integer, ForeignKey('MorningDiary.id'), nullable=True, index=True)
-    NightDiary = relationship('NightDiary', backref='chats')
-    NightDiary_id = Column(Integer, ForeignKey('NightDiary.id'), nullable=True, index=True)
-    Memo = relationship('Memo', backref='chats')
-    Memo_id = Column(Integer, ForeignKey('Memo.id'), nullable=True, index=True)
-    Calender = relationship('Calender', backref='chats')
-    Calender_id = Column(Integer, ForeignKey('Calender.id'), nullable=True, index=True)
-    is_chatbot = Column(Boolean, nullable=False)
-    content_type = Column(Integer, nullable=True)
-    content = Column(Text, nullable=False)
-    event_time = Column(DateTime, nullable=True)
-    image_url = Column(String(100), nullable=True)
-    create_date = Column(DateTime, nullable=False)
-    is_deleted = Column(Boolean, default=False, index=True)
 
 class Report(Base):
     __tablename__ = "Report"
@@ -130,7 +107,7 @@ class Report(Base):
     id = Column(Integer, primary_key=True)
     User = relationship('User', backref='reports')
     User_id = Column(Integer, ForeignKey('User.id'), nullable=False, index=True)
-    content = Column(Text, nullable=False)
+    content = Column(String(5000), nullable=False)
     image_url = Column(String(100), nullable=True)
     create_date = Column(DateTime, nullable=False)
     is_deleted = Column(Boolean, default=False, index=True)
@@ -142,8 +119,8 @@ class Luck(Base):
     id = Column(Integer, primary_key=True)
     User = relationship('User', backref='lucks')
     User_id = Column(Integer, ForeignKey('User.id'), nullable=False, index=True)
-    text = Column(Text, nullable=False)
-    content = Column(Text, nullable=False)
+    text = Column(String(1000), nullable=False)
+    content = Column(String(500), nullable=False)
     create_date = Column(Date, nullable=False)
     is_deleted = Column(Boolean, default=False, index=True)
 
@@ -151,8 +128,8 @@ class Prompt(Base):
     __tablename__ = "Prompt"
 
     id = Column(Integer, primary_key=True)
-    text = Column(Text, nullable=False)
-    prompt = Column(Text, nullable=False)
+    text = Column(String(1000), nullable=False)
+    prompt = Column(String(1000), nullable=False)
 
 class WelcomeChat(Base):
     __tablename__ = "WelcomeChat"
@@ -206,7 +183,7 @@ class TextClassification(Base):
 
     id = Column(Integer, primary_key=True)
     User_id = Column(Integer, ForeignKey('User.id'), nullable=False, index=True)
-    text = Column(Text, nullable=False)
+    text = Column(String(1000), nullable=False)
     text_type = Column(String(10), nullable=False)
     create_date = Column(DateTime, nullable=False)
 
@@ -215,7 +192,7 @@ class ErrorLog(Base):
 
     id = Column(Integer, primary_key=True)
     error_code = Column(Integer, nullable=False)
-    error_message = Column(Text, nullable=False)
+    error_message = Column(String(255), nullable=False)
     create_date = Column(DateTime, nullable=False)
 
 def get_Base():
