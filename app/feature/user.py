@@ -60,6 +60,7 @@ async def get_user_kakao(request: str, env: str):
         )
 
 async def get_user_line(request: str, env: str):
+    global REDIRECT_URI
     if env == "local":
         REDIRECT_URI = REDIRECT_URI_TEST
     elif env == "dev":

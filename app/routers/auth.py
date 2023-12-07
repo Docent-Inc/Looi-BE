@@ -14,92 +14,43 @@ from app.core.security import get_current_user
 from app.schemas.response import User
 router = APIRouter(prefix="/auth")
 
-# @router.get("/login/{service}/{env}", response_model=ApiResponse, tags=["Auth"])
-# async def login(
-#     service: str,
-#     env: str,
-# ):
-#     if service == "kakao":
-#         if env == "local":
-#             url = KAKAO_AUTH_URL_TEST
-#         elif env == "dev":
-#             url = KAKAO_AUTH_URL_DEV
-#         elif env == "prod":
-#             url = KAKAO_AUTH_URL
-#     elif service == "line":
-#         if env == "local":
-#             url = LINE_AUTH_URL_TEST
-#         # elif env == "dev":
-#         #     url = LINE_AUTH_URL_DEV
-#         elif env == "prod":
-#             url = LINE_AUTH_URL
-#     else:
-#         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=4403)
-#     return ApiResponse(data={"url": url})
-#
-# @router.get("/callback/{service}/{env}", response_model=ApiResponse, tags=["Auth"])
-# async def callback(
-#     service: str,
-#     env: str,
-#     code: str,
-#     db: Session = Depends(get_db),
-# ):
-#     # 콜백을 처리합니다.
-#     if service == "kakao":
-#         data = await get_user_kakao(code, env)
-#         user, is_sign_up = await user_kakao(data, db)
-#     elif service == "line":
-#         data = await get_user_line(code, env)
-#         user, is_sign_up = await user_line(data, db)
-#     else:
-#         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=4403)
-#
-#     expires_in, refresh_expires_in, access_token, refresh_token = await create_token(user.email)
-#     return ApiResponse(
-#         success=True,
-#         data=KakaoTokenData(
-#             user_name=user.nickname,
-#             access_token=access_token,
-#             expires_in=expires_in,
-#             refresh_token=refresh_token,
-#             refresh_expires_in=refresh_expires_in,
-#             token_type="Bearer",
-#             is_signup=is_sign_up,
-#         )
-#     )
-
-@router.get("/login/{service}", response_model=ApiResponse, tags=["Auth"])
+@router.get("/login/{service}/{env}", response_model=ApiResponse, tags=["Auth"])
 async def login(
     service: str,
-    test: Optional[bool] = False
+    env: str,
 ):
     if service == "kakao":
-        return ApiResponse(data={"url": KAKAO_AUTH_URL_TEST if test else KAKAO_AUTH_URL})
+        if env == "local":
+            url = KAKAO_AUTH_URL_TEST
+        elif env == "dev":
+            url = KAKAO_AUTH_URL_DEV
+        elif env == "prod":
+            url = KAKAO_AUTH_URL
     elif service == "line":
-        return ApiResponse(data={"url": LINE_AUTH_URL_TEST if test else LINE_AUTH_URL})
-    # elif service == "vercel":
-    #     return ApiResponse(data={"url": KAKAO_AUTH_URL_VERCEL})
-
+        if env == "local":
+            url = LINE_AUTH_URL_TEST
+        # elif env == "dev":
+        #     url = LINE_AUTH_URL_DEV
+        elif env == "prod":
+            url = LINE_AUTH_URL
     else:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=4403)
+    return ApiResponse(data={"url": url})
 
-@router.get("/callback/{service}", response_model=ApiResponse, tags=["Auth"])
+@router.get("/callback/{service}/{env}", response_model=ApiResponse, tags=["Auth"])
 async def callback(
     service: str,
+    env: str,
     code: str,
     db: Session = Depends(get_db),
-    test: Optional[bool] = False
 ):
     # 콜백을 처리합니다.
     if service == "kakao":
-        data = await get_user_kakao(code, "local") if test else await get_user_kakao(code, "prod")
+        data = await get_user_kakao(code, env)
         user, is_sign_up = await user_kakao(data, db)
-    # elif service == "line":
-    #     data = await get_user_line_test(code) if test else await get_user_line(code)
-    #     user, is_sign_up = await user_line(data, db)
-    # elif service == "vercel":
-    #     data = await get_user_kakao_vercel(code)
-    #     user, is_sign_up = await user_kakao(data, db)
+    elif service == "line":
+        data = await get_user_line(code, env)
+        user, is_sign_up = await user_line(data, db)
     else:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=4403)
 
