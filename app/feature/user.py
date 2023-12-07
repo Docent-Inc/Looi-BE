@@ -35,6 +35,7 @@ LINE_AUTH_URL_TEST = f"https://access.line.me/oauth2/v2.1/authorize?response_typ
 mbti_list = ['istj', 'isfj', 'infj', 'intj', 'istp', 'isfp', 'infp', 'intp', 'estp', 'esfp', 'enfp', 'entp', 'estj', 'esfj', 'enfj', 'entj']
 
 async def get_user_kakao(request: str, env: str):
+    global REDIRECT_URI
     if env == "local":
         REDIRECT_URI = REDIRECT_URI_TEST
     elif env == "dev":
