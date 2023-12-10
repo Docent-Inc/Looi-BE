@@ -48,14 +48,14 @@ async def create_morning_diary(content: str, user: User, db: Session) -> int:
     mbti_content = content if user.mbti is None else user.mbti + ", " + content
 
     # 다이어리 제목, 이미지, 해몽 생성
-    diary_name, L, resolution = await asyncio.gather(
+    diary_name, image_info, resolution = await asyncio.gather(
         generate_diary_name(content, user, db),
         generate_image(user.image_model, content, user, db),
         generate_resolution_gpt(mbti_content, user, db)
     )
 
     # 이미지 background color 문자열로 변환
-    upper_lower_color = "[\"" + str(L[1]) + "\", \"" + str(L[2]) + "\"]"
+    upper_lower_color = "[\"" + str(image_info[1]) + "\", \"" + str(image_info[2]) + "\"]"
 
     # db에 저장
     now = await time_now()
@@ -63,7 +63,7 @@ async def create_morning_diary(content: str, user: User, db: Session) -> int:
         diary = MorningDiary(
             content=content,
             User_id=user.id,
-            image_url=L[0],
+            image_url=image_info[0],
             background_color=upper_lower_color,
             diary_name=diary_name,
             resolution=resolution['resolution'],
