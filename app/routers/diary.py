@@ -128,7 +128,7 @@ async def memo_create(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> ApiResponse:
-    memo = await create_memo(body.content, current_user, db)
+    memo = await create_memo(body, current_user, db)
     return ApiResponse(
         data={"memo": memo}
     )

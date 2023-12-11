@@ -48,6 +48,7 @@ class UpdateDiaryRequest(BaseModel):
     content: str
 
 class MemoRequest(BaseModel):
+    title: Optional[str] = None
     content: str
 
 class ChatRequest(BaseModel):
