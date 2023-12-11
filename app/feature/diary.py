@@ -310,6 +310,23 @@ async def create_memo(content: str, user: User, db: Session) -> int:
     # 메모 id 반환
     return memo
 
+async def create_memo(content: str, user: User, db: Session) -> Memo:
+
+        # 메모 생성
+        now = await time_now()
+        memo = Memo(
+            title=content,
+            content=content,
+            User_id=user.id,
+            create_date=now,
+            modify_date=now,
+        )
+        memo = save_db(memo, db)
+
+        # 메모 반환
+        return memo
+
+
 async def read_memo(memo_id: int, user: User, db: Session) -> Memo:
 
     # 메모 조회

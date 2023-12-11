@@ -57,7 +57,7 @@ class ChatRequest(BaseModel):
 class CalenderRequest(BaseModel):
     start_time: str
     end_time: str
-    title: str
+    title: Optional[str] = None
     content: str
 
 class ListRequest(BaseModel):
