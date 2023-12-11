@@ -110,8 +110,8 @@ async def generate_report(user: User, db: Session) -> str:
     text += "\nDiary for the last week:\n" + "\n".join(diary.content for diary in night_diaries)
     total_count += len(night_diaries)
 
-    # if total_count < 5:
-    #     return False
+    if total_count < 3:
+        return False
 
     # Process Calender
     calenders = db.query(Calender).filter(

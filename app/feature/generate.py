@@ -7,7 +7,7 @@ from fastapi import HTTPException, status
 import extcolors
 from app.core.config import settings
 from app.core.security import time_now
-from app.db.database import get_redis_client
+from app.db.database import get_redis_client, save_db
 from app.db.models import MorningDiary, NightDiary, Calender, Report, Luck, Prompt
 from app.feature.aiRequset import send_gpt_request, send_gpt4_request, send_dalle3_request
 import uuid
@@ -92,15 +92,13 @@ async def generate_schedule(text: str, user: User, db: Session) -> str:
             content=schedule['description'],
             create_date=await time_now(),
         )
-        db.add(calender)
-        db.commit()
-
-        return calender.id
+        save_db(calender, db)
     except:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=4014
         )
+    return calender
 
 async def generate_luck(user: User, db: Session):
     today = await time_now()

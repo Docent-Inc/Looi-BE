@@ -38,9 +38,14 @@ Diary 관련 Response
 class CreateDiaryRequest(BaseModel):
     content: str
 
+class CreateNightDiaryRequest(BaseModel):
+    date: str
+    title: Optional[str] = None
+    content: str
+
 class UpdateDiaryRequest(BaseModel):
     diary_name: str
-    diary_content: str
+    content: str
 
 class MemoRequest(BaseModel):
     content: str
