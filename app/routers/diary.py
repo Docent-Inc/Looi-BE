@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from app.feature.diary import create_night_diary, create_morning_diary, read_morning_diary, read_night_diary, \
     update_morning_diary, delete_morning_diary, update_night_diary, delete_night_diary, create_memo, list_morning_diary, \
     list_night_diary, create_calender, update_calender, read_calender, delete_calender, dairy_list, read_memo, \
-    dairy_list_calender, get_diary_ratio, delete_memo, share_read_morning_diary, share_read_night_diary
+    dairy_list_calender, get_diary_ratio, delete_memo, share_read_morning_diary, share_read_night_diary, update_memo
 from app.db.database import get_db
 from sqlalchemy.orm import Session
 from app.core.security import get_current_user
@@ -72,7 +72,7 @@ async def night_create(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> ApiResponse:
-    diary = await create_night_diary(body.content, current_user, db)
+    diary = await create_night_diary(body, current_user, db)
     return ApiResponse(
         data={"diary": diary}
     )
@@ -144,17 +144,17 @@ async def memo_read(
         data={"memo": memo}
     )
 
-# @router.post("/memo/update", response_model=ApiResponse, tags=["Memo"])
-# async def memo_update(
-#     body: MemoRequest,
-#     memo_id: int,
-#     current_user: User = Depends(get_current_user),
-#     db: Session = Depends(get_db),
-# ) -> ApiResponse:
-#     memo_id = await update_memo(memo_id, body.content, current_user, db)
-#     return ApiResponse(
-#         data={"id": memo_id}
-#     )
+@router.post("/memo/update", response_model=ApiResponse, tags=["Memo"])
+async def memo_update(
+    body: MemoRequest,
+    memo_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> ApiResponse:
+    memo = await update_memo(memo_id, body, current_user, db)
+    return ApiResponse(
+        data={"memo": memo}
+    )
 
 @router.delete("/memo/delete", response_model=ApiResponse, tags=["Memo"])
 async def memo_delete(

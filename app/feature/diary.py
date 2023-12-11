@@ -15,7 +15,8 @@ from app.db.models import NightDiary, MorningDiary, Memo, Calender
 from app.feature.aiRequset import send_gpt_request
 from app.feature.generate import generate_image, generate_diary_name, generate_resolution_gpt
 import datetime
-from app.schemas.request import UpdateDiaryRequest, CalenderRequest, ListRequest, CalenderListRequest, MemoRequest
+from app.schemas.request import UpdateDiaryRequest, CalenderRequest, ListRequest, CalenderListRequest, MemoRequest, \
+    CreateNightDiaryRequest
 from app.schemas.response import User
 
 async def add_one_month(original_date):
@@ -48,14 +49,26 @@ async def create_morning_diary(content: str, user: User, db: Session) -> int:
     mbti_content = content if user.mbti is None else user.mbti + ", " + content
 
     # 다이어리 제목, 이미지, 해몽 생성
-    diary_name, L, resolution = await asyncio.gather(
+    diary_name, image_info, resolution = await asyncio.gather(
         generate_diary_name(content, user, db),
         generate_image(user.image_model, content, user, db),
         generate_resolution_gpt(mbti_content, user, db)
     )
 
+    if len(diary_name) >= 255:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=4023,
+        )
+
+    if len(content) >= 1000:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=4221,
+        )
+
     # 이미지 background color 문자열로 변환
-    upper_lower_color = "[\"" + str(L[1]) + "\", \"" + str(L[2]) + "\"]"
+    upper_lower_color = "[\"" + str(image_info[1]) + "\", \"" + str(image_info[2]) + "\"]"
 
     # db에 저장
     now = await time_now()
@@ -63,7 +76,7 @@ async def create_morning_diary(content: str, user: User, db: Session) -> int:
         diary = MorningDiary(
             content=content,
             User_id=user.id,
-            image_url=L[0],
+            image_url=image_info[0],
             background_color=upper_lower_color,
             diary_name=diary_name,
             resolution=resolution['resolution'],
@@ -164,23 +177,23 @@ async def list_morning_diary(page: int, user: User, db: Session):
     # 다이어리 목록 반환
     return diaries
 
-async def create_night_diary(content: str, user: User, db: Session):
+async def create_night_diary_ai(content: str, user: User, db: Session):
 
     # 이미지와 다이어리 제목 생성
-    L, diary_name = await asyncio.gather(
+    image_info, diary_name = await asyncio.gather(
         generate_image(user.image_model, content, user, db),
         generate_diary_name(content, user, db)
     )
 
     # 이미지 background color 문자열로 변환
-    upper_lower_color = "[\"" + str(L[1]) + "\", \"" + str(L[2]) + "\"]"
+    upper_lower_color = "[\"" + str(image_info[1]) + "\", \"" + str(image_info[2]) + "\"]"
     now = await time_now()
 
     # 저녁 일기 db에 저장
     diary = NightDiary(
         content=content,
         User_id=user.id,
-        image_url=L[0],
+        image_url=image_info[0],
         background_color=upper_lower_color,
         diary_name=diary_name,
         create_date=now,
@@ -190,6 +203,49 @@ async def create_night_diary(content: str, user: User, db: Session):
 
     # 다이어리 반환
     return diary
+
+async def create_night_diary(body: CreateNightDiaryRequest, user: User, db: Session):
+        if not body.title:
+            # 이미지와 다이어리 제목 생성
+            content = body.content
+            image_info, diary_name = await asyncio.gather(
+                generate_image(user.image_model, content, user, db),
+                generate_diary_name(content, user, db)
+            )
+        else:
+            diary_name = body.title
+            content = body.content
+            image_info = await generate_image(user.image_model, content, user, db)
+
+        if len(diary_name) >= 255:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=4023,
+            )
+
+        if len(content) >= 1000:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=4221,
+            )
+
+        # 이미지 background color 문자열로 변환
+        upper_lower_color = "[\"" + str(image_info[1]) + "\", \"" + str(image_info[2]) + "\"]"
+        now = await time_now()
+        # 저녁 일기 db에 저장
+        diary = NightDiary(
+            content=content,
+            User_id=user.id,
+            image_url=image_info[0],
+            background_color=upper_lower_color,
+            diary_name=diary_name,
+            create_date=body.date,
+            modify_date=now,
+        )
+        diary = save_db(diary, db)
+
+        # 다이어리 반환
+        return diary
 
 async def read_night_diary(diary_id: int, user:User, db: Session) -> NightDiary:
 
@@ -328,6 +384,17 @@ async def create_memo(body: MemoRequest, user: User, db: Session) -> Memo:
     if not body.title:
         body.title = data['title']
 
+    if len(body.title) >= 255:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=4023,
+        )
+    if len(body.content) >= 1000:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=4221,
+        )
+
     # 메모 생성
     now = await time_now()
     memo = Memo(
@@ -355,6 +422,27 @@ async def read_memo(memo_id: int, user: User, db: Session) -> Memo:
             status_code=status.HTTP_404_NOT_FOUND,
             detail=4016,
         )
+
+    # 메모 반환
+    return memo
+
+async def update_memo(memo_id: int, body: MemoRequest, user: User, db: Session) -> Memo:
+
+    # 메모 조회
+    memo = db.query(Memo).filter(Memo.id == memo_id, Memo.User_id == user.id, Memo.is_deleted == False).first()
+
+    # 메모가 없을 경우 예외 처리
+    if not memo:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=4016,
+        )
+
+    # 메모 수정
+    memo.title = body.title
+    memo.content = body.content
+    memo.modify_date = await time_now()
+    memo = save_db(memo, db)
 
     # 메모 반환
     return memo
