@@ -78,8 +78,8 @@ async def create_morning_diary(content: str, user: User, db: Session) -> int:
             detail=4021,
         )
 
-    # 다이어리 id 반환
-    return diary.id
+    # 다이어리 반환
+    return diary
 
 async def read_morning_diary(diary_id: int, user:User, db: Session) -> MorningDiary:
 
@@ -133,12 +133,12 @@ async def update_morning_diary(diary_id: int, content: UpdateDiaryRequest, user:
 
     # 다이어리 수정
     diary.diary_name = content.diary_name
-    diary.content = content.diary_content
+    diary.content = content.content
     diary.modify_date = await time_now()
     diary = save_db(diary, db)
 
-    # 다이어리 id 반환
-    return diary.id
+    # 다이어리 반환
+    return diary
 
 async def delete_morning_diary(diary_id: int, user: User, db: Session):
 
@@ -188,8 +188,8 @@ async def create_night_diary(content: str, user: User, db: Session):
     )
     diary = save_db(diary, db)
 
-    # 다이어리 id 반환
-    return diary.id
+    # 다이어리 반환
+    return diary
 
 async def read_night_diary(diary_id: int, user:User, db: Session) -> NightDiary:
 
@@ -244,12 +244,12 @@ async def update_night_diary(diary_id: int, content: UpdateDiaryRequest, user: U
 
     # 다이어리 수정
     diary.diary_name = content.diary_name
-    diary.content = content.diary_content
+    diary.content = content.content
     diary.modify_date = await time_now()
     diary = save_db(diary, db)
 
-    # 다이어리 id 반환
-    return diary.id
+    # 다이어리 반환
+    return diary
 
 async def delete_night_diary(diary_id: int, user: User, db: Session) -> int:
 
@@ -308,7 +308,7 @@ async def create_memo(content: str, user: User, db: Session) -> int:
     memo = save_db(memo, db)
 
     # 메모 id 반환
-    return memo.id
+    return memo
 
 async def read_memo(memo_id: int, user: User, db: Session) -> Memo:
 
@@ -340,8 +340,17 @@ async def delete_memo(memo_id: int, user: User, db: Session) -> int:
     # 메모 삭제
     memo.is_deleted = True
     save_db(memo, db)
-async def create_calender(body: CalenderRequest, user: User, db: Session) -> int:
-
+async def create_calender(body: CalenderRequest, user: User, db: Session) -> Calender:
+    if body.start_time >= body.end_time:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=4022,
+        )
+    if len(body.title) > 255 or len(body.content) > 255:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=4023,
+        )
     # 캘린더 생성
     calender = Calender(
         User_id=user.id,
@@ -349,13 +358,13 @@ async def create_calender(body: CalenderRequest, user: User, db: Session) -> int
         end_time=body.end_time,
         title=body.title,
         content=body.content,
+        create_date=await time_now(),
     )
-
     # 캘린더 저장
     calender = save_db(calender, db)
 
-    # 캘린더 id 반환
-    return calender.id
+    # 캘린더 반환
+    return calender
 
 async def read_calender(calender_id: int, user: User, db: Session) -> Calender:
 
@@ -391,7 +400,7 @@ async def update_calender(calender_id: int, body: CalenderRequest, user: User, d
     calender.content = body.content
     calender = save_db(calender, db)
 
-    return calender.id
+    return calender
 
 async def delete_calender(calender_id: int, user: User, db: Session):
 
