@@ -3,9 +3,9 @@ from typing import Any
 from fastapi import HTTPException, status
 from app.core.security import time_now
 from app.db.database import save_db
-from app.db.models import TextClassification, MorningDiary, NightDiary, Memo, Calender
+from app.db.models import TextClassification
 from app.feature.aiRequset import send_gpt4_request
-from app.feature.diary import create_morning_diary, create_night_diary, create_memo
+from app.feature.diary import create_morning_diary, create_night_diary, create_memo_ai
 from app.feature.generate import generate_schedule
 
 async def classify_text(text_type, text, current_user, db):
@@ -40,7 +40,7 @@ async def generate_diary(text, text_type, current_user, db) -> Any:
     elif text_type == 2:
         diary = await create_night_diary(text, current_user, db)
     elif text_type == 3:
-        diary = await create_memo(text, current_user, db)
+        diary = await create_memo_ai(text, current_user, db)
     elif text_type == 4:
         diary = await generate_schedule(text, current_user, db)
     else:

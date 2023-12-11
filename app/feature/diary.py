@@ -15,7 +15,7 @@ from app.db.models import NightDiary, MorningDiary, Memo, Calender
 from app.feature.aiRequset import send_gpt_request
 from app.feature.generate import generate_image, generate_diary_name, generate_resolution_gpt
 import datetime
-from app.schemas.request import UpdateDiaryRequest, CalenderRequest, ListRequest, CalenderListRequest
+from app.schemas.request import UpdateDiaryRequest, CalenderRequest, ListRequest, CalenderListRequest, MemoRequest
 from app.schemas.response import User
 
 async def add_one_month(original_date):
@@ -274,13 +274,11 @@ async def list_night_diary(page: int, user: User, db: Session):
 
     # 다이어리 목록 반환
     return diaries
-async def create_memo(content: str, user: User, db: Session) -> int:
-
-    async def fetch_content_from_url(session: ClientSession, url: str) -> str:
-        # url로부터 html content를 가져옴
-        async with session.get(url) as response:
-            return await response.text()
-
+async def fetch_content_from_url(session: ClientSession, url: str) -> str:
+    # url로부터 html content를 가져옴
+    async with session.get(url) as response:
+        return await response.text()
+async def create_memo_ai(content: str, user: User, db: Session) -> int:
     # url이면 title을 가져옴
     if content.startswith('http://') or content.startswith('https://'):
         async with ClientSession() as session:
@@ -310,21 +308,40 @@ async def create_memo(content: str, user: User, db: Session) -> int:
     # 메모 id 반환
     return memo
 
-async def create_memo(content: str, user: User, db: Session) -> Memo:
+async def create_memo(body: MemoRequest, user: User, db: Session) -> Memo:
+    content = body.content
 
-        # 메모 생성
-        now = await time_now()
-        memo = Memo(
-            title=content,
-            content=content,
-            User_id=user.id,
-            create_date=now,
-            modify_date=now,
-        )
-        memo = save_db(memo, db)
+    # url이면 title을 가져옴
+    if content.startswith('http://') or content.startswith('https://'):
+        async with ClientSession() as session:
+            html_content = await fetch_content_from_url(session, content)
+            soup = BeautifulSoup(html_content, 'html.parser')
+            title = soup.title.string if soup.title else "No title"
+            if title == "No title":
+                content = f"title = URL 주소, content = {content}"
+            else:
+                content = f"title = {title}, content = {content}"
 
-        # 메모 반환
-        return memo
+    # gpt-3.5 요청
+    data = await send_gpt_request(6, content, user, db)
+
+    if not body.title:
+        body.title = data['title']
+
+    # 메모 생성
+    now = await time_now()
+    memo = Memo(
+        title=body.title,
+        content=data['content'],
+        User_id=user.id,
+        tags=json.dumps(data['tags'], ensure_ascii=False),
+        create_date=now,
+        modify_date=now,
+    )
+    memo = save_db(memo, db)
+
+    # 메모 반환
+    return memo
 
 
 async def read_memo(memo_id: int, user: User, db: Session) -> Memo:
@@ -363,7 +380,9 @@ async def create_calender(body: CalenderRequest, user: User, db: Session) -> Cal
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=4022,
         )
-    if len(body.title) > 255 or len(body.content) > 255:
+    if body.title == None:
+        body.title = await send_gpt_request(7, body.content, user, db)
+    if len(body.title) >= 255 or len(body.content) >= 255:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=4023,
