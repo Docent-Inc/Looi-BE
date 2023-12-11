@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.security import time_now
+from app.db.database import save_db
 from app.db.models import ApiRequestLog, User
 
 openai.api_key = settings.GPT_API_KEY
@@ -151,6 +152,20 @@ prompt8 = [
     {"role": "system", "content": "{\"title\": \"읽을 책\", \"content\":\"오리지널스 - Adam Grant\", \"tags\": [\"애덤 그랜트\", \"오리지널스\"]}"},
 ]
 
+prompt9 = [
+    {"role": "system", "content": "create date's title. please write only korean"},
+    {"role": "user", "content": "크리솔 10기 팀원들과 회식"},
+    {"role": "system", "content": "회식"},
+    {"role": "user", "content": "1주년 기념 데이트"},
+    {"role": "system", "content": "데이트"},
+    {"role": "user", "content": "이대 엄주용 졸업 연주회"},
+    {"role": "system", "content": "연주회"},
+    {"role": "user", "content": "학생 연구센터에서 빌린 자료 반납"},
+    {"role": "system", "content": "자료 반납"},
+    {"role": "user", "content": "컴퓨터 구조 책 다 읽고 정리하기"},
+    {"role": "system", "content": "책 내용 정리하기"},
+]
+
 async def api_log(request_type: str, request_token: int, response_token: int, response_time_ms: int, model: str, user_id: int, db: Session):
     api_request_log = ApiRequestLog(
         request_type=request_type,
@@ -162,12 +177,10 @@ async def api_log(request_type: str, request_token: int, response_token: int, re
         create_date=await time_now(),
         User_id=user_id
     )
-    db.add(api_request_log)
-    db.commit()
-    db.refresh(api_request_log)
+    save_db(api_request_log, db)
 
 async def send_gpt_request(prompt_num: int , messages_prompt: str, current_user: User, db: Session, retries=3):
-    prompt_dict = {2: "제목", 3: "이미지 프롬프트", 4: "일정", 5: "오늘의 운세", 6: "메모"}
+    prompt_dict = {2: "제목", 3: "이미지 프롬프트", 4: "일정", 5: "오늘의 운세", 6: "메모", 7: "일정 제목 생성"}
     if prompt_num == 2:
         prompt = prompt2.copy()
     elif prompt_num == 3:
@@ -179,6 +192,8 @@ async def send_gpt_request(prompt_num: int , messages_prompt: str, current_user:
         prompt = prompt4.copy()
     elif prompt_num == 6:
         prompt = prompt8.copy()
+    elif prompt_num == 7:
+        prompt = prompt9.copy()
     else:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
