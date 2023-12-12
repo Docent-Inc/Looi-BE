@@ -153,7 +153,7 @@ prompt8 = [
 ]
 
 prompt9 = [
-    {"role": "system", "content": "create date's title. please write only korean"},
+    {"role": "system", "content": "create date's title. please write only korean, and return only title. if cant find title, return same content."},
     {"role": "user", "content": "크리솔 10기 팀원들과 회식"},
     {"role": "system", "content": "회식"},
     {"role": "user", "content": "1주년 기념 데이트"},
@@ -164,6 +164,10 @@ prompt9 = [
     {"role": "system", "content": "자료 반납"},
     {"role": "user", "content": "컴퓨터 구조 책 다 읽고 정리하기"},
     {"role": "system", "content": "책 내용 정리하기"},
+    {"role": "user", "content": "테스트"},
+    {"role": "system", "content": "테스트"},
+    {"role": "user", "content": "하루단백바 치즈베리맛 또는 솔직단백 쿠키앤크림맛"},
+    {"role": "system", "content": "식단"},
 ]
 
 async def api_log(request_type: str, request_token: int, response_token: int, response_time_ms: int, model: str, user_id: int, db: Session):
