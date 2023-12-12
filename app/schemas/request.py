@@ -40,7 +40,7 @@ class CreateDiaryRequest(BaseModel):
 
 class CreateNightDiaryRequest(BaseModel):
     date: str
-    title: Optional[str] = None
+    title: Optional[str] = ""
     content: str
 
 class UpdateDiaryRequest(BaseModel):
@@ -48,7 +48,7 @@ class UpdateDiaryRequest(BaseModel):
     content: str
 
 class MemoRequest(BaseModel):
-    title: Optional[str] = None
+    title: Optional[str] = ""
     content: str
 
 class ChatRequest(BaseModel):
@@ -58,7 +58,7 @@ class ChatRequest(BaseModel):
 class CalenderRequest(BaseModel):
     start_time: str
     end_time: str
-    title: Optional[str] = None
+    title: Optional[str] = ""
     content: str
 
 class ListRequest(BaseModel):

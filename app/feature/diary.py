@@ -205,7 +205,7 @@ async def create_night_diary_ai(content: str, user: User, db: Session):
     return diary
 
 async def create_night_diary(body: CreateNightDiaryRequest, user: User, db: Session):
-        if not body.title:
+        if body.title == "":
             # 이미지와 다이어리 제목 생성
             content = body.content
             image_info, diary_name = await asyncio.gather(
@@ -381,7 +381,7 @@ async def create_memo(body: MemoRequest, user: User, db: Session) -> Memo:
     # gpt-3.5 요청
     data = await send_gpt_request(6, content, user, db)
 
-    if not body.title:
+    if body.title == "":
         body.title = data['title']
 
     if len(body.title) >= 255:
@@ -468,7 +468,8 @@ async def create_calender(body: CalenderRequest, user: User, db: Session) -> Cal
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=4022,
         )
-    if body.title == None:
+    print(body.title)
+    if body.title == "":
         body.title = await send_gpt_request(7, body.content, user, db)
     if len(body.title) >= 255 or len(body.content) >= 255:
         raise HTTPException(
