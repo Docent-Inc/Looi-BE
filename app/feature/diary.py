@@ -353,7 +353,7 @@ async def create_memo_ai(content: str, user: User, db: Session) -> int:
     now = await time_now()
     memo = Memo(
         title=data['title'],
-        content=data['content'],
+        content=content,
         User_id=user.id,
         tags=json.dumps(data['tags'], ensure_ascii=False),
         create_date=now,
@@ -399,7 +399,7 @@ async def create_memo(body: MemoRequest, user: User, db: Session) -> Memo:
     now = await time_now()
     memo = Memo(
         title=body.title,
-        content=data['content'],
+        content=content,
         User_id=user.id,
         tags=json.dumps(data['tags'], ensure_ascii=False),
         create_date=now,

@@ -28,9 +28,6 @@ async def generate():
             db.close()
             await release_lock(redis_client, lock_key)
 
-# cron_task = aiocron.crontab('0 19 * * 0', func=generate, start=False, tz=pytz.timezone('Asia/Seoul'))
-# cron_task.start()
-
 def validate_report_structure(report_data):
     try:
         report_data = json.loads(report_data)

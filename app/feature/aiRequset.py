@@ -141,15 +141,15 @@ prompt7 = [
 
 prompt8 = [
     {"role": "system", "content": "Analyze the user's memo and create json format of the memo. please write korean and return only json format, fill all the contents."},
-    {"role": "system", "content": "{\"title\": \"메모에 대한 제목 생성\", \"content\":\"사용자 메모\", \"tags\":[\"??\", \"??\"]}"},
+    {"role": "system", "content": "{\"title\": \"메모에 대한 제목 생성\", \"tags\":[\"??\", \"??\"]}"},
     {"role": "user", "content": "곽서준, 01046306320"},
-    {"role": "system", "content": "{\"title\": \"곽서준님의 전화번호\", \"content\":\"01046306320\", \"tags\":[\"곽서준\", \"전화번호\"]}"},
+    {"role": "system", "content": "{\"title\": \"곽서준님의 전화번호\", \"tags\":[\"곽서준\", \"전화번호\"]}"},
     {"role": "user", "content": "컴퓨터 구조 책 다 읽고 정리하기"},
-    {"role": "system", "content": "{\"title\": \"해야될 일\", \"content\":\"컴퓨터 구조 책 다 읽고 정리하기\", \"tags\":[\"컴퓨터 구조\", \"책\", \"정리\"]}"},
+    {"role": "system", "content": "{\"title\": \"해야될 일\", \"tags\":[\"컴퓨터 구조\", \"책\", \"정리\"]}"},
     {"role": "user", "content": "title = 아이유(IU)의 킬링보이스를 라이브로! - 하루 끝, 너의 의미, 스물셋, 밤편지, 팔레트, 가을 아침, 삐삐, Blueming, 에잇, Coin, 라일락 ㅣ 딩고뮤직 - YouTube, content = https://www.youtube.com/watch?v=wDfqXR_5yyQ"},
-    {"role": "system", "content": "{\"title\": \아이유(IU)의 킬링보이스를 라이브로!\", \"content\":\"https://www.youtube.com/watch?v=K4yY5aVarhA\", \"tags\": [\"아이유\", \"킬링보이스\", \"라이브\"]}"},
+    {"role": "system", "content": "{\"title\": \아이유(IU)의 킬링보이스를 라이브로!\", \"tags\": [\"아이유\", \"킬링보이스\", \"라이브\"]}"},
     {"role": "user", "content": "애덤 그랜트 오리지널스"},
-    {"role": "system", "content": "{\"title\": \"읽을 책\", \"content\":\"오리지널스 - Adam Grant\", \"tags\": [\"애덤 그랜트\", \"오리지널스\"]}"},
+    {"role": "system", "content": "{\"title\": \"읽을 책\", \"tags\": [\"애덤 그랜트\", \"오리지널스\"]}"},
 ]
 
 prompt9 = [
