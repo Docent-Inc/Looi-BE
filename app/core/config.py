@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     SLACK_ID: str
     SLACK_BOT_TOKEN: str
     WEATHER_API_KEY: str
+    SERVER_TYPE: str
     class Config:
         env_file = ".env"
 
