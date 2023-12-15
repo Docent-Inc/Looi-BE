@@ -4,13 +4,13 @@ from sqlalchemy import desc, literal, func, or_, and_
 from sqlalchemy import null
 from dateutil.relativedelta import relativedelta
 from aiohttp import ClientSession
-from fastapi import HTTPException
+from fastapi import HTTPException, Depends, Body, Path
 from bs4 import BeautifulSoup
 from sqlalchemy.orm import Session
 from sqlalchemy import union_all
 from starlette import status
-from app.core.security import time_now
-from app.db.database import save_db
+from app.core.security import time_now, get_current_user, check_length
+from app.db.database import save_db, get_db
 from app.db.models import NightDiary, MorningDiary, Memo, Calender
 from app.feature.aiRequset import send_gpt_request
 from app.feature.generate import generate_image, generate_diary_name, generate_resolution_gpt
@@ -364,7 +364,11 @@ async def create_memo_ai(content: str, user: User, db: Session) -> int:
     # 메모 id 반환
     return memo
 
-async def create_memo(body: MemoRequest, user: User, db: Session) -> Memo:
+async def create_memo(
+    body: MemoRequest = Body(...),
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> Memo:
     content = body.content
 
     # url이면 title을 가져옴
@@ -381,19 +385,13 @@ async def create_memo(body: MemoRequest, user: User, db: Session) -> Memo:
     # gpt-3.5 요청
     data = await send_gpt_request(6, content, user, db)
 
+    # 제목이 없다면 자동 생성
     if body.title == "":
         body.title = data['title']
 
-    if len(body.title) >= 255:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=4023,
-        )
-    if len(body.content) >= 1000:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=4221,
-        )
+    # 제목, 내용 길이 체크
+    await check_length(text=body.title, max_length=255, error_code=4023)
+    await check_length(text=body.content, max_length=1000, error_code=4221)
 
     # 메모 생성
     now = await time_now()
@@ -411,7 +409,11 @@ async def create_memo(body: MemoRequest, user: User, db: Session) -> Memo:
     return memo
 
 
-async def read_memo(memo_id: int, user: User, db: Session) -> Memo:
+async def read_memo(
+    memo_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+) -> Memo:
 
     # 메모 조회
     memo = db.query(Memo).filter(Memo.id == memo_id, Memo.User_id == user.id, Memo.is_deleted == False).first()
@@ -426,7 +428,12 @@ async def read_memo(memo_id: int, user: User, db: Session) -> Memo:
     # 메모 반환
     return memo
 
-async def update_memo(memo_id: int, body: MemoRequest, user: User, db: Session) -> Memo:
+async def update_memo(
+    memo_id: int,
+    body: MemoRequest = Body(...),
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+) -> Memo:
 
     # 메모 조회
     memo = db.query(Memo).filter(Memo.id == memo_id, Memo.User_id == user.id, Memo.is_deleted == False).first()
@@ -437,6 +444,10 @@ async def update_memo(memo_id: int, body: MemoRequest, user: User, db: Session) 
             status_code=status.HTTP_404_NOT_FOUND,
             detail=4016,
         )
+
+    # 제목, 내용 길이 체크
+    await check_length(text=body.title, max_length=255, error_code=4023)
+    await check_length(text=body.content, max_length=1000, error_code=4221)
 
     # 메모 수정
     memo.title = body.title
@@ -447,7 +458,11 @@ async def update_memo(memo_id: int, body: MemoRequest, user: User, db: Session) 
     # 메모 반환
     return memo
 
-async def delete_memo(memo_id: int, user: User, db: Session) -> int:
+async def delete_memo(
+    memo_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+) -> None:
 
     # 메모 조회
     memo = db.query(Memo).filter(Memo.id == memo_id, Memo.User_id == user.id, Memo.is_deleted == False).first()
@@ -462,13 +477,14 @@ async def delete_memo(memo_id: int, user: User, db: Session) -> int:
     # 메모 삭제
     memo.is_deleted = True
     save_db(memo, db)
+
+
 async def create_calender(body: CalenderRequest, user: User, db: Session) -> Calender:
     if body.start_time >= body.end_time:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=4022,
         )
-    print(body.title)
     if body.title == "":
         body.title = await send_gpt_request(7, body.content, user, db)
     if len(body.title) >= 255 or len(body.content) >= 255:

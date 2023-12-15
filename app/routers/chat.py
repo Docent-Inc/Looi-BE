@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 import random
 from app.core.config import settings
-from app.core.security import get_current_user, text_length, time_now
+from app.core.security import get_current_user, time_now, check_length
 from app.db.database import get_db, get_redis_client
 from app.db.models import WelcomeChat, HelperChat
 from app.feature.chat import classify_text
@@ -21,7 +21,7 @@ async def chat(
 ) -> ApiResponse:
 
     # 택스트 길이 확인
-    text = await text_length(body.content, settings.MAX_LENGTH)
+    await check_length(body.content, settings.MAX_LENGTH, 4221)
 
     # 하루 요청 제한 확인
     now = await time_now()
@@ -34,7 +34,7 @@ async def chat(
         )
 
     # 텍스트 분류 및 저장
-    diary_id, content, text_type = await classify_text(body.type, text, current_user, db)
+    diary_id, content, text_type = await classify_text(body.type, body.content, current_user, db)
 
     # 채팅 카운트 증가
     await redis.set(chat_count_key, int(current_count) + 1, ex=86400)  # 하루 동안 유효한 카운트

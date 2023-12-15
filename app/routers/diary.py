@@ -1,4 +1,6 @@
 from fastapi import APIRouter, Depends
+
+from app.db.models import Memo
 from app.feature.diary import create_night_diary, create_morning_diary, read_morning_diary, read_night_diary, \
     update_morning_diary, delete_morning_diary, update_night_diary, delete_night_diary, create_memo, list_morning_diary, \
     list_night_diary, create_calender, update_calender, read_calender, delete_calender, dairy_list, read_memo, \
@@ -120,49 +122,36 @@ async def night_list(
         data={"diaries": diaries}
     )
 '''
-memo diary crud
+memo  crud
 '''
 @router.post("/memo/create", response_model=ApiResponse, tags=["Memo"])
-async def memo_create(
-    body: MemoRequest,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+async def post_memo_create(
+    memo: Memo = Depends(create_memo)
 ) -> ApiResponse:
-    memo = await create_memo(body, current_user, db)
     return ApiResponse(
         data={"memo": memo}
     )
 
 @router.get("/memo/read", response_model=ApiResponse, tags=["Memo"])
-async def memo_read(
-    memo_id: int,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+async def get_memo_read(
+    memo: Memo = Depends(read_memo)
 ) -> ApiResponse:
-    memo = await read_memo(memo_id, current_user, db)
     return ApiResponse(
         data={"memo": memo}
     )
 
 @router.post("/memo/update", response_model=ApiResponse, tags=["Memo"])
-async def memo_update(
-    body: MemoRequest,
-    memo_id: int,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+async def post_memo_update(
+    memo: Memo = Depends(update_memo)
 ) -> ApiResponse:
-    memo = await update_memo(memo_id, body, current_user, db)
     return ApiResponse(
         data={"memo": memo}
     )
 
 @router.delete("/memo/delete", response_model=ApiResponse, tags=["Memo"])
-async def memo_delete(
-    memo_id: int,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+async def delete_memo_delete(
+    memo: Memo = Depends(delete_memo)
 ) -> ApiResponse:
-    await delete_memo(memo_id, current_user, db)
     return ApiResponse()
 '''
 calender diary crud
