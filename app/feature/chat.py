@@ -4,7 +4,7 @@ from fastapi import HTTPException, status
 from app.core.security import time_now
 from app.db.database import save_db
 from app.db.models import TextClassification
-from app.feature.aiRequset import send_gpt4_request
+from app.feature.aiRequset import GPTService
 from app.feature.diary import create_morning_diary, create_memo_ai, create_night_diary_ai
 from app.feature.generate import generate_schedule
 
@@ -12,7 +12,8 @@ async def classify_text(text_type, text, current_user, db):
     if text_type == 0:
         try:
             # 텍스트 분류
-            number = await send_gpt4_request(1, text[:200], current_user, db)
+            gpt_service = GPTService(current_user, db)
+            number = await gpt_service.send_gpt_request(1, text[:200])
             text_type = int(number.strip())
         except:
             # 텍스트 분류 실패

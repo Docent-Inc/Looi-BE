@@ -44,8 +44,8 @@ class CreateNightDiaryRequest(BaseModel):
     content: str
 
 class UpdateDiaryRequest(BaseModel):
-    diary_name: str
-    content: str
+    diary_name: Optional[str] = ""
+    content: Optional[str] = ""
 
 class MemoRequest(BaseModel):
     title: Optional[str] = ""
