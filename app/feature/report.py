@@ -1,7 +1,5 @@
 import asyncio
 from datetime import timedelta
-import aiocron
-import pytz
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 import json
@@ -9,9 +7,8 @@ import json
 from app.core.security import time_now
 from app.db.database import get_SessionLocal, get_redis_client, try_to_acquire_lock, release_lock, save_db
 from app.db.models import Report, MorningDiary, NightDiary, Calender
-from app.feature.aiRequset import send_gpt4_request
 from app.db.models import User
-from app.feature.generate import generate_image
+from app.feature.aiRequset import GPTService
 async def generate():
     redis_client = await get_redis_client()
     lock_key = "generate_report_lock"
@@ -118,12 +115,12 @@ async def generate_report(user: User, db: Session) -> str:
     ).all()
 
     text += "\nSchedule for the last week:\n" + "\n".join(f"{content.title}: {content.content}" for content in calenders)
-    print(text)
     retries = 0
     is_success = False
     MAX_RETRIES = 3
     while is_success == False and retries < MAX_RETRIES:
-        report_data = await send_gpt4_request(3, text, user, db)
+        gpt_service = GPTService(user, db)
+        report_data = await gpt_service.send_gpt_request(7, text)
         if not validate_report_structure(report_data):
             print(f"Invalid report structure for user {user.nickname}, retrying...{retries+1}")
             retries += 1

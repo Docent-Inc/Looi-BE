@@ -1,15 +1,23 @@
 import asyncio
 import json
+import uuid
+from io import BytesIO
+
 import openai
+import requests
+from PIL import Image
 from fastapi import HTTPException, status
 import datetime
 import pytz
+from google.cloud import storage
+from google.oauth2 import service_account
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.security import time_now
 from app.db.database import save_db
-from app.db.models import ApiRequestLog, User
+from app.db.models import ApiRequestLog, User, Prompt
+SERVICE_ACCOUNT_INFO = json.loads(settings.GOOGLE_APPLICATION_CREDENTIALS_JSON)
 
 openai.api_key = settings.GPT_API_KEY
 
@@ -106,7 +114,7 @@ prompt5 = [
     {"role": "user", "content": "intp, 어젯밤 나는 처음 꿈을 꾸었다. 누군가 날 안아주는 꿈 포근한 가슴에 얼굴을 묻고 웃었다. 나 그 꿈에서 살수는 없었나"},
     {"role": "system", "content": "{\"resolution\":\"이 꿈은 당신이 애틋한 정서와 친밀감에 대한 갈망을 나타내고 있을 수 있습니다. 포근한 가슴에 얼굴을 묻고 웃는 상황은 당신이 편안함과 사랑, 보호를 갈망하고 있음을 보여줍니다. 그리고 이것이 행복하고 안정적인 상태를 연상시키기도 합니다. 그러나 꿈에서 일어난 후의 물음은 당신이 현재의 생활 상황에서 이러한 감정을 찾는 데 어려움을 겪고 있음을 나타낼 수 있습니다. 당신이 그 꿈에서 살 수 없었다는 문구는 현실과 이상 사이의 괴리감을 나타낼 수 있으며, 이것은 일반적으로 현재의 생활 상황에 대한 불만족을 나타냅니다. 이 꿈은 당신에게 현재의 생활에서 원하는 감정과 상황을 찾기 위해 무엇을 할 수 있는지 고민해보라는 메시지를 전달하고 있을 수 있습니다.\", \"main_keywords\": [\"사랑\", \"편안함\", \"안정적인 상태\", \"보호\", \"현실과 이상\"]}"},
     {"role": "user", "content": "entj, 난 운전하고 있었고 예람누나가 전화로 자기 도슨트 못하겠다고 얘기하고 있었는데, 옆으로 아이오닉5 한대가 ㅈㄴ빠르게 달려가더니 저 앞에가서 공중으러 날고 내려꽃혀서 터짐. 그뒤로 사람 세명이 바구니같은곳에 실려나오는데 두명은 산거같기는한데 한명이 의식이 없어"},
-    {"role": "system", "content": "{\"resolution\":\"이 꿈은 주변 환경 변화에 따른 불안감이나 스트레스를 나타내는 것일 수 있습니다. 운전 중인 모습은 일상생활에서의 책임감 및 부담감을 상징하며, 이로 인해 발생한 사건들은 예상치 못한 일들로 인한 충격 또는 당황스러움을 표현합니다. 특히 마지막 부분에서 등장인물들이 사망하거나 부상당하는 장면은 실제로 그런 일이 일어날 가능성보다는 그러한 두려움을 반영한다고 볼 수 있습니다. 따라서 이 꿈은 당신이 최근 들어 직면하게 된 문제나 걱정거리 때문에 심리적 압박감을 느끼고 있다는 것을 암시하므로, 잠시 휴식을 취하면서 마음을 가다듬는 시간을 갖는 것이 필요하다는 조언을 담고 있다고 해석될 수 있습니다.\", \"main_keywords\": [\"예상치 못한 일\", \"심리적 압박감\"]}"},
+    {"role": "system", "content": "{\"resolution\":\"이 꿈은 주변 환경 변화에 따른 불안감이나 스트레스를 나타내는 것일 수 있습니다. 운전 중인 모습은 일상생활에서의 책임감 및 부담감을 상징하며, 이로 인해 발생한 사건들은 예상치 못한 일들로 인한 충격 또는 당황스러움을 표현합니다. 특히 마지막 부분에서 등장인물들이 사망하거나 부상당하는 장면은 실제로 그런 일이 일어날 가능성보다는 그러한 두려움을 반영한다고 볼 수 있습니다. 따라서 이 꿈은 당신이 최근 들어 직면하게 된 문제나 걱정거리 때문에 심리적 압박감을 느끼고 있다는 것을 암시하므로, 잠시 휴식을 취하면서 마음을 가다듬는 시간을 갖는 것이 필요하다는 조언을 담고 있다고 해석될 수 있습니다.\", \"main_keywords\": [\"예상치 못한 일\", \"심리적 압박감\", \"휴식\"]}"},
 ]
 
 prompt6 = [
@@ -174,153 +182,131 @@ prompt9 = [
     {"role": "system", "content": "식단"},
 ]
 
-async def api_log(request_type: str, request_token: int, response_token: int, response_time_ms: int, model: str, user_id: int, db: Session):
-    api_request_log = ApiRequestLog(
-        request_type=request_type,
-        request_token=request_token,
-        response_token=response_token,
-        response_time_ms=response_time_ms,
-        model=model,
-        is_success=True,
-        create_date=await time_now(),
-        User_id=user_id
-    )
-    save_db(api_request_log, db)
+class GPTService:
+    def __init__(self, user: User, db: Session):
+        self.user = user
+        self.db = db
 
-async def send_gpt_request(prompt_num: int , messages_prompt: str, current_user: User, db: Session, retries=3):
-    prompt_dict = {2: "제목", 3: "이미지 프롬프트", 4: "일정", 5: "오늘의 운세", 6: "메모", 7: "일정 제목 생성"}
-    if prompt_num == 2:
-        prompt = prompt2.copy()
-    elif prompt_num == 3:
-        prompt = prompt3.copy()
-    elif prompt_num == 4:
-        messages_prompt = f"local time: {datetime.datetime.now(pytz.timezone('Asia/Seoul'))} {days[datetime.datetime.now(pytz.timezone('Asia/Seoul')).weekday()]}, {messages_prompt}"
-        prompt = prompt6.copy()
-    elif prompt_num == 5:
-        prompt = prompt4.copy()
-    elif prompt_num == 6:
-        prompt = prompt8.copy()
-    elif prompt_num == 7:
-        prompt = prompt9.copy()
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=4000,
+    async def api_log(self, request_type: str, request_token: int, response_token: int, response_time_ms: int, model: str, user_id: int, db: Session):
+        api_request_log = ApiRequestLog(
+            request_type=request_type,
+            request_token=request_token,
+            response_token=response_token,
+            response_time_ms=response_time_ms,
+            model=model,
+            is_success=True,
+            create_date=await time_now(),
+            User_id=user_id
         )
-    prompt.append({"role": "user", "content": messages_prompt})
-    for i in range(retries):
-        try:
-            start_time = await time_now()
-            model = "gpt-3.5-turbo-1106" if prompt_num in [4, 6] else "gpt-3.5-turbo"
-            response_format = {"type": "json_object"} if prompt_num in [4, 6] else None
-            chat = await asyncio.to_thread(
-                openai.ChatCompletion.create,
-                model=model,
-                messages=prompt,
-                response_format=response_format
-            )
-            end_time = await time_now()
-            await api_log(
-                user_id=current_user.id,
-                request_type=prompt_dict[prompt_num],
-                request_token=chat.usage.prompt_tokens,
-                response_token=chat.usage.completion_tokens,
-                response_time_ms=int((end_time - start_time).total_seconds() * 1000),
-                model=chat.model,
-                db=db
-            )
-            if prompt_num in [4, 6]:
-                return json.loads(chat.choices[0].message.content)
-            else:
+        save_db(api_request_log, db)
+
+    async def send_gpt_request(self, prompt_num: int, messages_prompt: str, retries=3):
+        prompt_dict = {
+            1: (prompt1, "텍스트 분류", "gpt-4-1106-preview", None),
+            2: (prompt2, "제목", "gpt-3.5-turbo", None),
+            3: (prompt3, "이미지 프롬프트", "gpt-3.5-turbo", None),
+            4: (prompt4, "오늘의 운세", "gpt-3.5-turbo", None),
+            5: (prompt5, "해몽", "gpt-4-1106-preview", None),
+            6: (prompt6, "일정", "gpt-3.5-turbo-1106", {"type": "json_object"}),
+            7: (prompt7, "한 주 돌아보기", "gpt-4-1106-preview", {"type": "json_object"}),
+            8: (prompt8, "메모", "gpt-3.5-turbo-1106", {"type": "json_object"}),
+            9: (prompt9, "일정 제목", "gpt-3.5-turbo", None),
+        }
+        if prompt_num == 1 or prompt_num == 6:
+            messages_prompt = f"{datetime.datetime.now(pytz.timezone('Asia/Seoul'))}, {messages_prompt}"
+        prompt = prompt_dict[prompt_num][0].copy()
+        prompt.append({"role": "user", "content": messages_prompt})
+        for i in range(retries):
+            try:
+                start_time = await time_now()
+                chat = await asyncio.to_thread(
+                    openai.ChatCompletion.create,
+                    model=prompt_dict[prompt_num][2],
+                    messages=prompt,
+                    response_format=prompt_dict[prompt_num][3]
+                )
+                end_time = await time_now()
+                await self.api_log(
+                    user_id=self.user.id,
+                    request_type=prompt_dict[prompt_num][1],
+                    request_token=chat.usage.prompt_tokens,
+                    response_token=chat.usage.completion_tokens,
+                    response_time_ms=int((end_time - start_time).total_seconds() * 1000),
+                    model=chat.model,
+                    db=self.db
+                )
                 return chat.choices[0].message.content
-        except Exception as e:
-            print(f"GPT API Error {e}")
-            if i < retries - 1:
-                print(f"Retrying {i + 1} of {retries}...")
-            else:
-                print("Failed to get response after maximum retries")
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=4501,
-                )
-async def send_gpt4_request(prompt_num: int, messages_prompt: str, current_user: User, db: Session, retries=3):
-    prompt_dict = {1: "텍스트 분류", 2: "해몽", 3: "한 주 돌아보기"}
-    if prompt_num == 1:
-        prompt = prompt1.copy()
-        messages_prompt = f"{datetime.datetime.now(pytz.timezone('Asia/Seoul'))}, {messages_prompt}"
-    elif prompt_num == 2:
-        prompt = prompt5.copy()
-    elif prompt_num == 3:
-        prompt = prompt7.copy()
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=4000,
-        )
-    prompt.append({"role": "user", "content": messages_prompt})
+            except Exception as e:
+                print(f"GPT API Error {e}")
+                if i < retries - 1:
+                    print(f"Retrying {i + 1} of {retries}...")
+                else:
+                    print("Failed to get response after maximum retries")
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail=4501,
+                    )
 
-    for i in range(retries):
-        try:
-            start_time = await time_now()
-            chat = await asyncio.to_thread(
-                openai.ChatCompletion.create,
-                model="gpt-4-1106-preview",
-                messages=prompt,
-                response_format={"type": "json_object"} if prompt_num in [2, 3] else None
-            )
-            end_time = await time_now()
-            await api_log(
-                user_id=current_user.id,
-                request_type=prompt_dict[prompt_num],
-                request_token=chat.usage.prompt_tokens,
-                response_token=chat.usage.completion_tokens,
-                response_time_ms=int((end_time - start_time).total_seconds() * 1000),
-                model=chat.model,
-                db=db
-            )
-            content = chat.choices[0].message.content
-            return content
-        except Exception as e:
-            print(f"GPT API Error {e}")
-            if i < retries - 1:
-                print(f"Retrying {i + 1} of {retries}...")
-            else:
-                print("Failed to get response after maximum retries")
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=4501,
+    async def send_dalle_request(self, messages_prompt: str, retries=3):
+        for i in range(retries):
+            try:
+                start_time = await time_now()
+                response = await asyncio.to_thread(
+                    openai.Image.create,
+                    model="dall-e-3",
+                    prompt=f"{messages_prompt[:255]}",
+                    n=1,
+                    size="1024x1024",
+                    response_format="url"
+                )
+                end_time = await time_now()
+                await self.api_log(
+                    user_id=self.user.id,
+                    request_type="이미지 생성",
+                    request_token=0,
+                    response_token=0,
+                    response_time_ms=int((end_time - start_time).total_seconds() * 1000),
+                    model="DaLLE-3",
+                    db=self.db
                 )
 
-async def send_dalle3_request(messages_prompt: str, user: User, db: Session, retries=3):
-    for i in range(retries):
-        try:
-            start_time = await time_now()
-            response = await asyncio.to_thread(
-                openai.Image.create,
-                model="dall-e-3",
-                prompt=f"{messages_prompt[:255]}",
-                n=1,
-                size="1024x1024",
-                response_format="url"
-            )
-            end_time = await time_now()
-            await api_log(
-                user_id=user.id,
-                request_type="이미지 생성",
-                request_token=0,
-                response_token=0,
-                response_time_ms=int((end_time - start_time).total_seconds() * 1000),
-                model="DaLLE-3",
-                db=db
-            )
-            return response['data'][0]['revised_prompt'], response['data'][0]['url']
-        except Exception as e:
-            print(f"DALL-E API Error{e}")
-            if i < retries - 1:
-                print(f"Retrying {i + 1} of {retries}...")
-            else:
-                print("Failed to get response after maximum retries")
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=4505,
+                # 이미지 생성 프롬프트 저장
+                save_promt = Prompt(
+                    text=messages_prompt[:255],
+                    prompt=response['data'][0]['revised_prompt'],
                 )
+                save_db(save_promt, self.db)
+
+                # 클라우드 버킷에 이미지 저장
+                response = await asyncio.to_thread(requests.get, response['data'][0]['url'])
+                img = Image.open(BytesIO(response.content))
+                img = img.resize((512, 512), Image.ANTIALIAS)
+
+                unique_id = uuid.uuid4()
+                destination_blob_name = str(unique_id) + ".png"
+                bucket_name = "docent"  # 구글 클라우드 버킷 이름
+                credentials = service_account.Credentials.from_service_account_info(SERVICE_ACCOUNT_INFO)
+                client = storage.Client(credentials=credentials, project=SERVICE_ACCOUNT_INFO['project_id'])
+
+                buffer = BytesIO()
+                img.save(buffer, format="PNG")
+
+                with BytesIO(buffer.getvalue()) as image_file:
+                    image_file.seek(0)
+                    bucket = client.get_bucket(bucket_name)
+                    blob = bucket.blob(destination_blob_name)
+                    blob.upload_from_file(image_file)
+                    blob.make_public()
+
+                # public url 반환
+                return blob.public_url
+            except Exception as e:
+                print(f"DALL-E API Error{e}")
+                if i < retries - 1:
+                    print(f"Retrying {i + 1} of {retries}...")
+                else:
+                    print("Failed to get response after maximum retries")
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail=4505,
+                    )

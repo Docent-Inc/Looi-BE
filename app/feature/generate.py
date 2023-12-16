@@ -1,7 +1,4 @@
 from datetime import datetime, timedelta
-
-import aioredis
-import pytz
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 import extcolors
@@ -9,47 +6,18 @@ from app.core.config import settings
 from app.core.security import time_now
 from app.db.database import get_redis_client, save_db
 from app.db.models import MorningDiary, NightDiary, Calender, Report, Luck, Prompt
-from app.feature.aiRequset import send_gpt_request, send_gpt4_request, send_dalle3_request
-import uuid
 from io import BytesIO
 import asyncio
 import requests
 from PIL import Image
-from google.cloud import storage
-from google.oauth2 import service_account
 import json
+
+from app.feature.aiRequset import GPTService
 from app.schemas.response import User
-SERVICE_ACCOUNT_INFO = json.loads(settings.GOOGLE_APPLICATION_CREDENTIALS_JSON)
 
-async def generate_resolution_gpt(text: str, user: User, db: Session) -> str:
-    dream_resolution = await send_gpt4_request(2, text, user, db)
-    return json.loads(dream_resolution)
-async def generate_diary_name(message: str, user: User, db: Session) -> str:
-    dreamName = await send_gpt_request(2, message, user, db)
-    return dreamName
-async def generate_image(image_model: int, message: str, user: User, db: Session):
-    # prompt = await send_gpt_request(3, message, user, db)
-    if image_model == 1:
-        prompt, dream_image_url = await send_dalle3_request(message, user, db)
-
-    save_promt = Prompt(
-        text=message,
-        prompt=prompt,
-    )
-    db.add(save_promt)
-    db.commit()
-    db.refresh(save_promt)
-
-    try:
-        response = await asyncio.to_thread(requests.get, dream_image_url)
-    except:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=4500
-        )
+async def image_background_color(image_url: str):
+    response = await asyncio.to_thread(requests.get, image_url)
     img = Image.open(BytesIO(response.content))
-    img = img.resize((512, 512), Image.ANTIALIAS)
-
     width, height = img.size
 
     # 이미지를 상하로 2등분
@@ -63,26 +31,12 @@ async def generate_image(image_model: int, message: str, user: User, db: Session
     upper_dominant_color = upper_colors[0][0]
     lower_dominant_color = lower_colors[0][0]
 
-    unique_id = uuid.uuid4()
-    destination_blob_name = str(unique_id) + ".png"
-    bucket_name = "docent"  # 구글 클라우드 버킷 이름
-    credentials = service_account.Credentials.from_service_account_info(SERVICE_ACCOUNT_INFO)
-    client = storage.Client(credentials=credentials, project=SERVICE_ACCOUNT_INFO['project_id'])
-
-    buffer = BytesIO()
-    img.save(buffer, format="PNG")
-
-    with BytesIO(buffer.getvalue()) as image_file:
-        image_file.seek(0)
-        bucket = client.get_bucket(bucket_name)
-        blob = bucket.blob(destination_blob_name)
-        blob.upload_from_file(image_file)
-        blob.make_public()
-
-    return [blob.public_url, upper_dominant_color, lower_dominant_color]
+    return upper_dominant_color, lower_dominant_color
 
 async def generate_schedule(text: str, user: User, db: Session) -> str:
-    schedule = await send_gpt_request(4, text, user, db)
+    gpt_service = GPTService(user, db)
+    schedule = await gpt_service.send_gpt_request(6, text)
+    schedule = json.loads(schedule)
     try:
         calender = Calender(
             User_id=user.id,
@@ -113,14 +67,13 @@ async def generate_luck(user: User, db: Session):
     else:
         if morning:
             text = morning.content
-    data = await send_gpt_request(5, text, user, db)
+    gpt_service = GPTService(user, db)
+    data = await gpt_service.send_gpt_request(4, text)
     luck = Luck(
         User_id=user.id,
         text=text,
         content=data,
         create_date=today.date(),
     )
-    db.add(luck)
-    db.commit()
-    db.refresh(luck)
+    save_db(luck, db)
     return data
