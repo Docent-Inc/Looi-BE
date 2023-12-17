@@ -570,8 +570,12 @@ async def dairy_list(list_request: ListRequest, current_user: User, db: Session)
     # diary_type에 따라 쿼리 변경
     page = list_request.page
     diary_type = list_request.diary_type
-    limit = 8
-    offset = (page - 1) * limit
+    if page == 1:
+        limit = 7
+        offset = 0
+    else:
+        limit = 8
+        offset = 7 + (page - 2) * limit
 
     # morning diary columns
     morning_diary_columns = [
