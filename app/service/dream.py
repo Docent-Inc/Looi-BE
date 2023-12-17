@@ -146,24 +146,3 @@ class DreamService(AbstractDiaryService):
 
         # 변환된 꿈 리스트 반환
         return dreams_dict_list
-
-
-# async def share_read_morning_diary(diary_id: int, db: Session) -> MorningDiary:
-#
-#     # 다이어리 조회
-#     diary = db.query(MorningDiary).filter(MorningDiary.id == diary_id, MorningDiary.is_deleted == False).first()
-#
-#     # 다이어리가 없을 경우 예외 처리
-#     if not diary:
-#         raise HTTPException(
-#             status_code=status.HTTP_404_NOT_FOUND,
-#             detail=4011,
-#         )
-#
-#     # 조회수 증가
-#     diary.share_count += 1
-#     diary = save_db(diary, db)
-#
-#     # 다이어리 반환
-#     diary.User_id = None
-#     return diary

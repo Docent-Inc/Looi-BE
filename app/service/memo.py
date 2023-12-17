@@ -26,7 +26,8 @@ class MemoService(AbstractDiaryService):
         # url이면 title을 가져옴
         if content.startswith('http://') or content.startswith('https://'):
             async with ClientSession() as session:
-                html_content = await fetch_content_from_url(session, content)
+                async with session.get(content) as response:
+                    html_content = await response.text()
                 soup = BeautifulSoup(html_content, 'html.parser')
                 title = soup.title.string if soup.title else "No title"
                 if title == "No title":

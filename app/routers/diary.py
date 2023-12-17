@@ -1,12 +1,7 @@
 from typing import Annotated
-
 from fastapi import APIRouter, Depends
-from app.feature.diary import get_diary_ratio, share_read_night_diary
-from app.db.database import get_db
-from sqlalchemy.orm import Session
-from app.core.security import get_current_user
 from app.schemas.request import CreateDiaryRequest, UpdateDiaryRequest
-from app.schemas.response import User, ApiResponse
+from app.schemas.response import ApiResponse
 from app.service.diary import DiaryService
 
 router = APIRouter(prefix="/diary")
@@ -31,7 +26,7 @@ async def night_read(
         data={"diary": diary}
     )
 
-@router.post("/update", response_model=ApiResponse, tags=["Diary"])
+@router.patch("/update", response_model=ApiResponse, tags=["Diary"])
 async def night_update(
     diary_id: int,
     diary_data: UpdateDiaryRequest,
@@ -58,38 +53,4 @@ async def night_list(
     diaries = await diary_service.list(page)
     return ApiResponse(
         data={"diaries": diaries}
-    )
-
-
-
-
-
-@router.get("/ratio", response_model=ApiResponse, tags=["Diary"])
-async def get_ratio(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-) -> ApiResponse:
-    ratio = await get_diary_ratio(current_user, db)
-    return ApiResponse(
-        data={"ratio": ratio}
-    )
-
-@router.get("/morning/share/{diary_id}", response_model=ApiResponse, tags=["Diary"])
-async def share_morning_diary(
-    diary_id: int,
-    db: Session = Depends(get_db),
-) -> ApiResponse:
-    diary = await share_read_morning_diary(diary_id, db)
-    return ApiResponse(
-        data={"diary": diary}
-    )
-
-@router.get("/night/share/{diary_id}", response_model=ApiResponse, tags=["Diary"])
-async def share_night_diary(
-    diary_id: int,
-    db: Session = Depends(get_db),
-) -> ApiResponse:
-    diary = await share_read_night_diary(diary_id, db)
-    return ApiResponse(
-        data={"diary": diary}
     )

@@ -26,7 +26,7 @@ async def get_calender_read(
         data={"calender": calender}
     )
 
-@router.post("/update", response_model=ApiResponse, tags=["Calender"])
+@router.patch("/update", response_model=ApiResponse, tags=["Calender"])
 async def post_calender_update(
     calender_id: int,
     calender_data: UpdateCalenderRequest,

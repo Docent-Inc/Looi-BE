@@ -27,7 +27,7 @@ async def get_dream_read(
         data={"diary": diary}
     )
 
-@router.post("/update", response_model=ApiResponse, tags=["Dream"])
+@router.patch("/update", response_model=ApiResponse, tags=["Dream"])
 async def post_dream_update(
     dream_id: int,
     dream_data: UpdateDreamRequest,
