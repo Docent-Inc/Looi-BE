@@ -1,87 +1,34 @@
-import aioredis
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-import random
-from app.core.config import settings
-from app.core.security import get_current_user, time_now, check_length
-from app.db.database import get_db, get_redis_client
-from app.db.models import WelcomeChat, HelperChat
-from app.feature.chat import classify_text
+from typing import Annotated
+from fastapi import APIRouter, Depends
 from app.schemas.request import ChatRequest
-from app.schemas.response import ApiResponse, User, ChatResponse
+from app.schemas.response import ApiResponse
+from app.service.chat import ChatService
 
 router = APIRouter(prefix="/chat")
 
 @router.post("", tags=["Chat"])
 async def chat(
-    body: ChatRequest,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-    redis: aioredis.Redis = Depends(get_redis_client),
+    chat_data: ChatRequest,
+    chat_service: Annotated[ChatService, Depends()],
 ) -> ApiResponse:
-
-    # 택스트 길이 확인
-    await check_length(body.content, settings.MAX_LENGTH, 4221)
-
-    # 하루 요청 제한 확인
-    now = await time_now()
-    chat_count_key = f"chat_count:{current_user.id}:{now.day}"
-    current_count = await redis.get(chat_count_key) or 0
-    if int(current_count) > settings.MAX_CALL:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=4404
-        )
-
-    # 텍스트 분류 및 저장
-    diary_id, content, text_type = await classify_text(body.type, body.content, current_user, db)
-
-    # 채팅 카운트 증가
-    await redis.set(chat_count_key, int(current_count) + 1, ex=86400)  # 하루 동안 유효한 카운트
-
-    # 응답
     return ApiResponse(
-        data=ChatResponse(
-            calls_left=settings.MAX_CALL - int(current_count) - 1,
-            text_type=text_type,
-            diary_id=diary_id,
-            content=content
-        )
+        data=await chat_service.create(chat_data)
     )
 
 @router.get("/welcome", tags=["Chat"])
 async def get_welcome(
     type: int,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    chat_service: Annotated[ChatService, Depends()],
 ) -> ApiResponse:
-
-    # type에 맞는 채팅방 인사 문구 가져오기
-    data = db.query(WelcomeChat).filter(WelcomeChat.is_deleted == False, WelcomeChat.type == type).all()
-
-    # 랜덤으로 하나 선택
-    random_chat = random.choice(data)
-    random_chat.text = random_chat.text.replace("{}", current_user.nickname)
-
-    # 응답
     return ApiResponse(
-        data=random_chat
+        data=await chat_service.welcome(type)
     )
 
 @router.get("/helper", tags=["Chat"])
 async def get_helper(
     type: int,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    chat_service: Annotated[ChatService, Depends()],
 ) -> ApiResponse:
-
-    # type에 맞는 채팅 도움말 가져오기
-    data = db.query(HelperChat).filter(HelperChat.is_deleted == False, HelperChat.type == type).all()
-
-    # 랜덤으로 하나 선택
-    random_chat = random.choice(data)
-
-    # 응답
     return ApiResponse(
-        data=random_chat
+        data=await chat_service.helper(type)
     )

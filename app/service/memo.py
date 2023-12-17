@@ -15,44 +15,39 @@ class MemoService(AbstractDiaryService):
         self.user = user
         self.db = db
 
-    async def create(self, body: CreateMemoRequest) -> Memo:
-        async def fetch_content_from_url(session: ClientSession, url: str) -> str:
-            # url로부터 html content를 가져옴
-            async with session.get(url) as response:
-                return await response.text()
-
-        content = body.content
+    async def create(self, memo_data: CreateMemoRequest) -> Memo:
 
         # url이면 title을 가져옴
-        if content.startswith('http://') or content.startswith('https://'):
+        gpt_service = GPTService(self.user, self.db)
+        if memo_data.content.startswith('http://') or memo_data.content.startswith('https://'):
             async with ClientSession() as session:
-                async with session.get(content) as response:
+                async with session.get(memo_data.content) as response:
                     html_content = await response.text()
                 soup = BeautifulSoup(html_content, 'html.parser')
                 title = soup.title.string if soup.title else "No title"
-                if title == "No title":
-                    content = f"title = URL 주소, content = {content}"
-                else:
-                    content = f"title = {title}, content = {content}"
+            if title == "No title":
+                content = f"title = URL 주소, content = {memo_data.content}"
+            else:
+                content = f"title = {title}, content = {memo_data.content}"
+            data = await gpt_service.send_gpt_request(8, content)
 
-        # gpt-3.5 요청
-        gpt_service = GPTService(self.user, self.db)
-        data = await gpt_service.send_gpt_request(8, content)
-        data = json.loads(data)
+        else:
+            data = await gpt_service.send_gpt_request(8, memo_data.content)
 
         # 제목이 없다면 자동 생성
-        if body.title == "":
-            body.title = data['title']
+        data = json.loads(data)
+        if memo_data.title == "":
+            memo_data.title = data['title']
 
         # 제목, 내용 길이 체크
-        await check_length(text=body.title, max_length=255, error_code=4023)
-        await check_length(text=body.content, max_length=1000, error_code=4221)
+        await check_length(text=memo_data.title, max_length=255, error_code=4023)
+        await check_length(text=memo_data.content, max_length=1000, error_code=4221)
 
         # 메모 생성
         now = await time_now()
         memo = Memo(
-            title=body.title,
-            content=content,
+            title=memo_data.title,
+            content=memo_data.content,
             User_id=self.user.id,
             tags=json.dumps(data['tags'], ensure_ascii=False),
             create_date=now,
@@ -76,7 +71,7 @@ class MemoService(AbstractDiaryService):
         # 메모 반환
         return memo
 
-    async def update(self, memo_id: int, body: UpdateMemoRequest) -> Memo:
+    async def update(self, memo_id: int, memo_data: UpdateMemoRequest) -> Memo:
         # 메모 조회
         memo = self.db.query(Memo).filter(Memo.id == memo_id, Memo.User_id == self.user.id, Memo.is_deleted == False).first()
 
@@ -88,12 +83,12 @@ class MemoService(AbstractDiaryService):
             )
 
         # 메모 수정
-        if body.title != "":
-            await check_length(text=body.title, max_length=255, error_code=4023)
-            memo.title = body.title
-        if body.content != "":
-            await check_length(text=body.content, max_length=1000, error_code=4221)
-            memo.content = body.content
+        if memo_data.title != "":
+            await check_length(text=memo_data.title, max_length=255, error_code=4023)
+            memo.title = memo_data.title
+        if memo_data.content != "":
+            await check_length(text=memo_data.content, max_length=1000, error_code=4221)
+            memo.content = memo_data.content
         memo.modify_date = await time_now()
         memo = save_db(memo, self.db)
 

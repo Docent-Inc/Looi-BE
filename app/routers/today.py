@@ -14,7 +14,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 from app.core.security import get_current_user, time_now
 from app.db.database import get_db, get_redis_client
-from app.db.models import Calender, MorningDiary, NightDiary, Report, Luck
+from app.db.models import Calendar, MorningDiary, NightDiary, Report, Luck
 from app.feature.generate import generate_luck
 from app.schemas.response import User, ApiResponse
 import pytz
