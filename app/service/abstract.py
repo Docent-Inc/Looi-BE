@@ -36,7 +36,32 @@ class AbstractChatService(ABC):
     async def create(self, data: BaseModel) -> object:
         pass
 
+    @abstractmethod
+    async def welcome(self, text_type: int) -> object:
+        pass
+
+    @abstractmethod
+    async def helper(self, text_type: int) -> object:
+        pass
+
 class AbstractStatisticsService(ABC):
     @abstractmethod
     async def ratio(self) -> object:
+        pass
+
+class AbstractReportService(ABC):
+    @abstractmethod
+    async def create(self, data: BaseModel) -> object:
+        pass
+
+    @abstractmethod
+    async def read(self, id: int) -> object:
+        pass
+
+    @abstractmethod
+    async def delete(self, id: int) -> None:
+        pass
+
+    @abstractmethod
+    async def list(self, page: int) -> list:
         pass

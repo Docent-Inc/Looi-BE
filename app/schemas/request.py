@@ -59,19 +59,19 @@ class UpdateMemoRequest(BaseModel):
     title: Optional[str] = ""
     content: Optional[str] = ""
 
-class CreateCalenderRequest(BaseModel):
-    start_time: str
-    end_time: str
+class CreateCalendarRequest(BaseModel):
+    start_time: Optional[str] = ""
+    end_time: Optional[str] = ""
     title: Optional[str] = ""
     content: str
 
-class UpdateCalenderRequest(BaseModel):
+class UpdateCalendarRequest(BaseModel):
     start_time: Optional[str] = ""
     end_time: Optional[str] = ""
     title: Optional[str] = ""
     content: Optional[str] = ""
 
-class ListCalenderRequest(BaseModel):
+class ListCalendarRequest(BaseModel):
     year: int
     month: int
     day: Optional[int] = 0

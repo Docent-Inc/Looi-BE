@@ -5,7 +5,7 @@ import extcolors
 from app.core.config import settings
 from app.core.security import time_now
 from app.db.database import get_redis_client, save_db
-from app.db.models import MorningDiary, NightDiary, Calender, Report, Luck, Prompt
+from app.db.models import MorningDiary, NightDiary, Calendar, Report, Luck, Prompt
 from io import BytesIO
 import asyncio
 import requests
@@ -32,27 +32,6 @@ async def image_background_color(image_url: str):
     lower_dominant_color = lower_colors[0][0]
 
     return upper_dominant_color, lower_dominant_color
-
-async def generate_schedule(text: str, user: User, db: Session) -> str:
-    gpt_service = GPTService(user, db)
-    schedule = await gpt_service.send_gpt_request(6, text)
-    schedule = json.loads(schedule)
-    try:
-        calender = Calender(
-            User_id=user.id,
-            title=schedule['title'],
-            start_time=schedule['start_time'],
-            end_time=schedule['end_time'],
-            content=schedule['description'],
-            create_date=await time_now(),
-        )
-        save_db(calender, db)
-    except:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=4014
-        )
-    return calender
 
 async def generate_luck(user: User, db: Session):
     today = await time_now()

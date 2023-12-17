@@ -42,6 +42,8 @@ class DiaryService(AbstractDiaryService):
         await check_length(diary_name, 255, 4023)
         await check_length(content, 1000, 4221)
         now = await time_now()
+        if diary_data.date == "":
+            diary_data.date = now
         diary = NightDiary(
             content=content,
             User_id=self.user.id,

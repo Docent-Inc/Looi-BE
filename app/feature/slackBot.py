@@ -9,7 +9,7 @@ from sqlalchemy import func
 from app.core.config import settings
 from app.core.security import time_now
 from app.db.database import get_SessionLocal, get_redis_client, try_to_acquire_lock, release_lock, get_db, save_db
-from app.db.models import User, ApiRequestLog, MorningDiary, NightDiary, Calender, Memo, Report, Dashboard, \
+from app.db.models import User, ApiRequestLog, MorningDiary, NightDiary, Calendar, Memo, Report, Dashboard, \
     TextClassification
 
 
@@ -121,8 +121,8 @@ async def slack_bot():
         evening_diary_count -= today_users_count
 
         # 오늘 생성된 캘린더 수
-        calender_count = db.query(Calender).filter(
-            func.date(Calender.create_date) == now.date(),
+        calender_count = db.query(Calendar).filter(
+            func.date(Calendar.create_date) == now.date(),
         ).count()
 
         # 오늘 생성된 메모 수
@@ -162,7 +162,7 @@ async def slack_bot():
         total_evening_diary_count -= total_users_count
 
         # 전체 생성된 캘린더 수
-        total_calender_count = db.query(Calender).count()
+        total_calender_count = db.query(Calendar).count()
 
         # 전체 생성된 메모 수
         total_memo_count = db.query(Memo).count()

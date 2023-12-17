@@ -1,4 +1,5 @@
 import datetime
+import json
 
 from dateutil.relativedelta import relativedelta
 from fastapi import Depends, HTTPException, status
@@ -7,18 +8,39 @@ from sqlalchemy.orm import Session
 
 from app.core.security import get_current_user, check_length, time_now
 from app.db.database import get_db, save_db
-from app.db.models import User, Calender
+from app.db.models import User, Calendar
 from app.feature.aiRequset import GPTService
-from app.schemas.request import CreateCalenderRequest, UpdateCalenderRequest, ListCalenderRequest
+from app.schemas.request import CreateCalendarRequest, UpdateCalendarRequest, ListCalendarRequest
 from app.service.abstract import AbstractDiaryService
 
 
-class CalenderService(AbstractDiaryService):
+class CalendarService(AbstractDiaryService):
     def __init__(self, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
         self.user = user
         self.db = db
 
-    async def create(self, calender_data: CreateCalenderRequest) -> Calender:
+    async def create(self, calender_data: CreateCalendarRequest) -> Calendar:
+
+        gpt_service = GPTService(self.user, self.db)
+        if calender_data.start_time == "" or calender_data.end_time == "":
+            schedule = await gpt_service.send_gpt_request(6, calender_data.content)
+            schedule = json.loads(schedule)
+            try:
+                calender = Calendar(
+                    User_id=self.user.id,
+                    title=schedule['title'],
+                    start_time=schedule['start_time'],
+                    end_time=schedule['end_time'],
+                    content=schedule['description'],
+                    create_date=await time_now(),
+                )
+                save_db(calender, self.db)
+            except:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=4014
+                )
+            return calender
 
         # 잘못된 날짜 입력시 예외처리
         if calender_data.start_time >= calender_data.end_time:
@@ -29,7 +51,6 @@ class CalenderService(AbstractDiaryService):
 
         # 제목이 없을 경우 자동 생성
         if calender_data.title == "":
-            gpt_service = GPTService(self.user, self.db)
             calender_data.title = await gpt_service.send_gpt_request(9, calender_data.content)
 
         # db에 저장
@@ -49,10 +70,10 @@ class CalenderService(AbstractDiaryService):
         # 캘린더 반환
         return calender
 
-    async def read(self, calender_id: int) -> Calender:
+    async def read(self, calender_id: int) -> Calendar:
 
         # 캘린더 조회
-        calender = self.db.query(Calender).filter(Calender.id == calender_id, Calender.User_id == self.user.id, Calender.is_deleted == False).first()
+        calender = self.db.query(Calendar).filter(Calendar.id == calender_id, Calendar.User_id == self.user.id, Calender.is_deleted == False).first()
 
         # 캘린더가 없을 경우 예외 처리
         if not calender:
@@ -64,10 +85,10 @@ class CalenderService(AbstractDiaryService):
         # 캘린더 반환
         return calender
 
-    async def update(self, calender_id: int, calender_data: UpdateCalenderRequest) -> Calender:
+    async def update(self, calender_id: int, calender_data: UpdateCalendarRequest) -> Calendar:
 
         # 캘린더 조회
-        calender = self.db.query(Calender).filter(Calender.id == calender_id, Calender.User_id == self.user.id, Calender.is_deleted == False).first()
+        calender = self.db.query(Calendar).filter(Calendar.id == calender_id, Calendar.User_id == self.user.id, Calendar.is_deleted == False).first()
 
         # 캘린더가 없을 경우 예외 처리
         if not calender:
@@ -113,7 +134,7 @@ class CalenderService(AbstractDiaryService):
     async def delete(self, calender_id: int) -> None:
 
         # 캘린더 조회
-        calender = self.db.query(Calender).filter(Calender.id == calender_id, Calender.User_id == self.user.id, Calender.is_deleted == False).first()
+        calender = self.db.query(Calendar).filter(Calendar.id == calender_id, Calendar.User_id == self.user.id, Calender.is_deleted == False).first()
 
         # 캘린더가 없을 경우 예외 처리
         if not calender:
@@ -126,7 +147,7 @@ class CalenderService(AbstractDiaryService):
         calender.is_deleted = True
         save_db(calender, self.db)
 
-    async def list(self, page: int, calender_data: ListCalenderRequest) -> list:
+    async def list(self, page: int, calender_data: ListCalendarRequest) -> list:
 
         # day가 0일 경우 월간 캘린더 조회
         if calender_data.day == 0:
@@ -135,14 +156,14 @@ class CalenderService(AbstractDiaryService):
             start_of_month = datetime.datetime(year, month, 1)
             end_of_month = start_of_month + relativedelta(months=1)
 
-            calenders = self.db.query(Calender).filter(
-                Calender.User_id == self.user.id,
-                Calender.is_deleted == False,
+            calenders = self.db.query(Calendar).filter(
+                Calendar.User_id == self.user.id,
+                Calendar.is_deleted == False,
                 or_(
-                    Calender.start_time.between(start_of_month, end_of_month),
-                    Calender.end_time.between(start_of_month, end_of_month)
+                    Calendar.start_time.between(start_of_month, end_of_month),
+                    Calendar.end_time.between(start_of_month, end_of_month)
                 )
-            ).order_by(Calender.start_time).all()
+            ).order_by(Calendar.start_time).all()
         # day가 0이 아닐 경우 일간 캘린더 조회
         else:
             year = calender_data.year
@@ -150,14 +171,14 @@ class CalenderService(AbstractDiaryService):
             day = calender_data.day
             start_of_day = datetime.datetime(year, month, day)
             end_of_day = start_of_day + datetime.timedelta(days=1)
-            calenders = self.db.query(Calender).filter(
-                Calender.User_id == self.user.id,
-                Calender.is_deleted == False,
+            calendars = self.db.query(Calendar).filter(
+                Calendar.User_id == self.user.id,
+                Calendar.is_deleted == False,
                 or_(
-                    and_(Calender.start_time >= start_of_day, Calender.start_time < end_of_day),
-                    and_(Calender.end_time > start_of_day, Calender.end_time <= end_of_day),
-                    and_(Calender.start_time <= start_of_day, Calender.end_time >= end_of_day)
+                    and_(Calendar.start_time >= start_of_day, Calendar.start_time < end_of_day),
+                    and_(Calendar.end_time > start_of_day, Calendar.end_time <= end_of_day),
+                    and_(Calendar.start_time <= start_of_day, Calendar.end_time >= end_of_day)
                 )
-            ).order_by(Calender.start_time).all()
+            ).order_by(Calendar.start_time).all()
 
-        return calenders
+        return calendars
