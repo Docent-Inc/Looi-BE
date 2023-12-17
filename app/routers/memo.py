@@ -26,7 +26,7 @@ async def get_memo_read(
         data={"memo": memo}
     )
 
-@router.post("/update", response_model=ApiResponse, tags=["Memo"])
+@router.patch("/update", response_model=ApiResponse, tags=["Memo"])
 async def post_memo_update(
     memo_id: int,
     memo_data: UpdateMemoRequest,

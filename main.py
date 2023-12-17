@@ -6,7 +6,7 @@ from fastapi import FastAPI
 
 from app.feature.report import generate
 from app.feature.slackBot import scheduled_task
-from app.routers import auth, report, diary, today, admin, chat, memo, dream, calender
+from app.routers import auth, report, diary, today, admin, chat, memo, dream, calender, statistics
 from app.core.middleware import TimingMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
@@ -22,12 +22,12 @@ app = FastAPI(title="Look API",
 app.include_router(auth.router)
 app.include_router(today.router)
 app.include_router(chat.router)
+app.include_router(statistics.router)
 app.include_router(dream.router)
 app.include_router(diary.router)
 app.include_router(memo.router)
 app.include_router(calender.router)
 app.include_router(report.router)
-
 app.include_router(admin.router)
 register_exception_handlers(app)
 app.add_middleware(TimingMiddleware)
