@@ -31,44 +31,57 @@ class PushUpdateRequest(BaseModel):
     type: str
     value: bool
 
+'''
+Diary 관련 Request
+'''
 
-'''
-Diary 관련 Response
-'''
-class CreateDiaryRequest(BaseModel):
+class CreateDreamRequest(BaseModel):
     content: str
 
-class CreateNightDiaryRequest(BaseModel):
-    date: str
-    title: Optional[str] = ""
-    content: str
-
-class UpdateDiaryRequest(BaseModel):
+class UpdateDreamRequest(BaseModel):
     diary_name: Optional[str] = ""
     content: Optional[str] = ""
 
-class MemoRequest(BaseModel):
+class CreateDiaryRequest(BaseModel):
+    date: Optional[str] = ""
+    title: Optional[str] = ""
+    content: str
+class UpdateDiaryRequest(BaseModel):
+    date: Optional[str] = ""
+    title: Optional[str] = ""
+    content: Optional[str] = ""
+
+class CreateMemoRequest(BaseModel):
     title: Optional[str] = ""
     content: str
 
-class ChatRequest(BaseModel):
-    type: Optional[int] = 0
-    content: str
+class UpdateMemoRequest(BaseModel):
+    title: Optional[str] = ""
+    content: Optional[str] = ""
 
-class CalenderRequest(BaseModel):
+class CreateCalenderRequest(BaseModel):
     start_time: str
     end_time: str
     title: Optional[str] = ""
     content: str
 
-class ListRequest(BaseModel):
-    page: int
-    diary_type: int
+class UpdateCalenderRequest(BaseModel):
+    start_time: Optional[str] = ""
+    end_time: Optional[str] = ""
+    title: Optional[str] = ""
+    content: Optional[str] = ""
 
-class CalenderListRequest(BaseModel):
+class ListCalenderRequest(BaseModel):
     year: int
     month: int
-    day: Optional[int] = None
+    day: Optional[int] = 0
+
+
+
+
+class ChatRequest(BaseModel):
+    type: Optional[int] = 0
+    content: str
 
 class WelcomeRequest(BaseModel):
     text: str

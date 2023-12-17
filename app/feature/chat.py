@@ -5,7 +5,7 @@ from app.core.security import time_now
 from app.db.database import save_db
 from app.db.models import TextClassification
 from app.feature.aiRequset import GPTService
-from app.feature.diary import create_morning_diary, create_memo_ai, create_night_diary_ai
+from app.feature.diary import create_memo_ai, create_night_diary_ai
 from app.feature.generate import generate_schedule
 
 async def classify_text(text_type, text, current_user, db):
