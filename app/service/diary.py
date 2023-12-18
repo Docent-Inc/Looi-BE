@@ -7,7 +7,6 @@ from app.core.security import get_current_user, check_length, time_now
 from app.db.database import get_db, save_db
 from app.db.models import User, NightDiary, MorningDiary, Memo
 from app.feature.aiRequset import GPTService
-from app.feature.generate import image_background_color
 from app.schemas.request import CreateDiaryRequest
 from app.service.abstract import AbstractDiaryService
 
@@ -23,19 +22,17 @@ class DiaryService(AbstractDiaryService):
         if diary_data.title == "":
             # 이미지와 다이어리 제목 생성
             content = diary_data.content
-            image_url, diary_name = await asyncio.gather(
+            image_info, diary_name = await asyncio.gather(
                 gpt_service.send_dalle_request(content),
                 gpt_service.send_gpt_request(2, content)
             )
         else:
             diary_name = diary_data.title
             content = diary_data.content
-            image_url = await gpt_service.send_dalle_request(content)
-
-        # 이미지 배경색 추출
-        upper_dominant_color, lower_dominant_color = await image_background_color(image_url)
+            image_info = await gpt_service.send_dalle_request(content)
 
         # 이미지 background color 문자열로 변환
+        image_url, upper_dominant_color, lower_dominant_color = image_info
         upper_lower_color = "[\"" + str(upper_dominant_color) + "\", \"" + str(lower_dominant_color) + "\"]"
 
         # 저녁 일기 db에 저장

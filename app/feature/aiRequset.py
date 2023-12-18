@@ -3,6 +3,7 @@ import json
 import uuid
 from io import BytesIO
 
+import extcolors
 import openai
 import requests
 from PIL import Image
@@ -247,7 +248,7 @@ class GPTService:
                         detail=4501,
                     )
 
-    async def send_dalle_request(self, messages_prompt: str, retries=3):
+    async def send_dalle_request(self, messages_prompt: str, background=True, retries=3):
         for i in range(retries):
             try:
                 start_time = await time_now()
@@ -282,6 +283,20 @@ class GPTService:
                 img = Image.open(BytesIO(response.content))
                 img = img.resize((512, 512), Image.ANTIALIAS)
 
+                if background:
+                    width, height = img.size
+
+                    # 이미지를 상하로 2등분
+                    upper_half = img.crop((0, 0, width, height // 2))
+                    lower_half = img.crop((0, height // 2, width, height))
+
+                    # 각 부분의 대표색 추출
+                    upper_colors, _ = extcolors.extract_from_image(upper_half)
+                    lower_colors, _ = extcolors.extract_from_image(lower_half)
+
+                    upper_dominant_color = upper_colors[0][0]
+                    lower_dominant_color = lower_colors[0][0]
+
                 unique_id = uuid.uuid4()
                 destination_blob_name = str(unique_id) + ".png"
                 bucket_name = "docent"  # 구글 클라우드 버킷 이름
@@ -299,7 +314,10 @@ class GPTService:
                     blob.make_public()
 
                 # public url 반환
-                return blob.public_url
+                if background:
+                    return [blob.public_url, upper_dominant_color, lower_dominant_color]
+                else:
+                    return blob.public_url
             except Exception as e:
                 print(f"DALL-E API Error{e}")
                 if i < retries - 1:

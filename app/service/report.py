@@ -227,7 +227,7 @@ async def generate_report(user: User, db: Session) -> str:
     data = json.loads(report_data)
     text = "다음 내용을 바탕으로 추상적인 이미지를 생성해주세요"
     text += data["mental_state"]
-    image_url = await gpt_service.send_dalle_request(text)
+    image_url = await gpt_service.send_dalle_request(messages_prompt=text, background=False)
 
     mental_report = Report(
         User_id=user.id,
