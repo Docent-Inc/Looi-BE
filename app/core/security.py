@@ -12,7 +12,6 @@ from app.db.models import User
 from typing import Optional
 from app.core.config import settings
 from app.schemas.request import TokenRefresh
-
 access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
 refresh_token_expires = timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
 API_KEY_NAME = "Authorization"
