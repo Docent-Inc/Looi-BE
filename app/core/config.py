@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     SLACK_BOT_TOKEN: str
     WEATHER_API_KEY: str
     SERVER_TYPE: str
+    APPLE_LOGIN_KEY: str
     class Config:
         env_file = ".env"
 

@@ -7,7 +7,8 @@ from app.schemas.response import TokenData, ApiResponse, KakaoTokenData
 from app.schemas.request import TokenRefresh, UserUpdateRequest, PushUpdateRequest
 from app.feature.user import get_user_by_email, changeNickName, \
     deleteUser, user_kakao, changeMbti, updateUser, updatePush, user_line, get_user_kakao, KAKAO_AUTH_URL_TEST, \
-    KAKAO_AUTH_URL_DEV, KAKAO_AUTH_URL, LINE_AUTH_URL_TEST, LINE_AUTH_URL, get_user_line
+    KAKAO_AUTH_URL_DEV, KAKAO_AUTH_URL, LINE_AUTH_URL_TEST, LINE_AUTH_URL, get_user_line, APPLE_AUTH_URL_DEV, \
+    APPLE_AUTH_URL, get_user_apple, user_apple
 from app.schemas.request import NicknameChangeRequest, \
     MbtiChangeRequest
 from app.core.security import get_current_user
@@ -33,6 +34,13 @@ async def login(
         #     url = LINE_AUTH_URL_DEV
         elif env == "prod":
             url = LINE_AUTH_URL
+    elif service == "apple":
+        if env == "local":
+            url = APPLE_AUTH_URL_DEV
+        elif env == "dev":
+            url = APPLE_AUTH_URL_DEV
+        elif env == "prod":
+            url = APPLE_AUTH_URL
     else:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=4403)
     return ApiResponse(data={"url": url})
@@ -51,6 +59,9 @@ async def callback(
     elif service == "line":
         data = await get_user_line(code, env)
         user, is_sign_up = await user_line(data, db)
+    elif service == "apple":
+        data = await get_user_apple(code, env)
+        user, is_sign_up = await user_apple(data, db)
     else:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=4403)
 
