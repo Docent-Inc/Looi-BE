@@ -51,10 +51,6 @@ class AbstractStatisticsService(ABC):
 
 class AbstractReportService(ABC):
     @abstractmethod
-    async def create(self, data: BaseModel) -> object:
-        pass
-
-    @abstractmethod
     async def read(self, id: int) -> object:
         pass
 
