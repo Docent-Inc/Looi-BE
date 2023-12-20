@@ -1,6 +1,9 @@
 from pydantic import BaseModel
 from abc import ABC, abstractmethod
 
+from app.db.models import User
+
+
 class AbstractDiaryService(ABC):
     @abstractmethod
     async def create(self, data: BaseModel) -> object:
@@ -55,13 +58,51 @@ class AbstractReportService(ABC):
         pass
 
     @abstractmethod
-    async def create(self) -> bool:
-        pass
-
-    @abstractmethod
     async def delete(self, id: int) -> None:
         pass
 
     @abstractmethod
     async def list(self, page: int) -> list:
+        pass
+
+class AbstractAuthService(ABC):
+    @abstractmethod
+    async def login(self, service: str, env: str) -> str:
+        pass
+
+    @abstractmethod
+    async def callback(self, service: str, env: str, code: str) -> object:
+        pass
+
+    @abstractmethod
+    async def refresh(self, refresh_token: str) -> object:
+        pass
+
+    @abstractmethod
+    async def info(self, user: User) -> object:
+        pass
+
+    @abstractmethod
+    async def update(self, data: BaseModel, user: User) -> None:
+        pass
+
+    @abstractmethod
+    async def update_push(self, data: BaseModel, user: User) -> None:
+        pass
+
+    @abstractmethod
+    async def delete(self, user: User) -> None:
+        pass
+
+class AbstractTodayService(ABC):
+    @abstractmethod
+    async def luck(self) -> object:
+        pass
+
+    @abstractmethod
+    async def history(self) -> object:
+        pass
+
+    @abstractmethod
+    async def calendar(self) -> object:
         pass

@@ -1,7 +1,6 @@
 from fastapi import Depends
 from app.core.security import get_current_user
 from app.db.database import get_db
-from app.schemas.response import User
 from datetime import timedelta
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
@@ -10,7 +9,7 @@ from app.core.security import time_now
 from app.db.database import get_SessionLocal, get_redis_client, try_to_acquire_lock, release_lock, save_db
 from app.db.models import Report, MorningDiary, NightDiary, Calendar
 from app.db.models import User
-from app.feature.aiRequset import GPTService
+from app.core.aiRequset import GPTService
 
 async def calculate_period(start_date):
     start_of_week = start_date - timedelta(days=start_date.weekday())
@@ -51,8 +50,6 @@ class ReportService:
             "create_date": report.create_date.strftime("%Y년 %m월 %d일"),
             "period": await calculate_period(report.create_date)
         }
-
-    async def create(self) -> bool:
 
     async def list(self, page: int) -> list:
         limit = 6
@@ -122,8 +119,17 @@ async def generate():
             users = db.query(User).filter(
                 User.is_deleted == False,
             ).all()
+            total_count = 0
+            generate_user_list = []
             for user in users:
+                if await check_count(user, db):
+                    total_count += 1
+                    generate_user_list.append(user)
+            print(f"total_count: {total_count}")
+            for user in generate_user_list:
                 await generate_report(user, db)
+                print(f"{user.nickname} 유저 리포트 생성 완료")
+                print(f"progress: {generate_user_list.index(user) + 1}/{total_count}")
         finally:
             db.close()
             await release_lock(redis_client, lock_key)
@@ -162,22 +168,36 @@ def validate_report_structure(report_data):
         return False
     return True
 
-async def generate_report(user: User, db: Session) -> str:
+async def check_count(user: User, db: Session) -> bool:
+    today = await time_now()
+    one_week_ago = today - timedelta(days=6)
+
+    # Process Morning Diary
+    morning_diaries = db.query(MorningDiary).filter(
+        MorningDiary.User_id == user.id,
+        MorningDiary.create_date.between(one_week_ago.date(), today),
+        MorningDiary.is_deleted == False
+    ).count()
+
+    # Process Night Diary
+    night_diaries = db.query(NightDiary).filter(
+        NightDiary.User_id == user.id,
+        NightDiary.create_date.between(one_week_ago.date(), today),
+        NightDiary.is_deleted == False,
+        NightDiary.diary_name != "나만의 기록 친구 Look-i와의 특별한 첫 만남",
+    ).count()
+
+    total_count = morning_diaries + night_diaries
+
+    if total_count < 5:
+        return False
+
+    return True
+
+async def generate_report(user: User, db: Session) -> bool:
     text = f"nickname: {user.nickname}\n"
     today = await time_now()
     one_week_ago = today - timedelta(days=6)
-    total_count = 0
-
-    # 6일 이내의 데이터가 있으면 에러 반환
-    report = db.query(Report).filter(
-        Report.User_id == user.id,
-        Report.create_date <= today,
-        Report.create_date >= one_week_ago.date(),
-        Report.is_deleted == False
-    ).first()
-
-    if report:
-        return False
 
     # Process Morning Diary
     morning_diaries = db.query(MorningDiary).filter(
@@ -187,7 +207,6 @@ async def generate_report(user: User, db: Session) -> str:
     ).all()
 
     text += "Dreams of the last week:\n" + "\n".join(diary.content for diary in morning_diaries)
-    total_count += len(morning_diaries)
 
     # Process Night Diary
     night_diaries = db.query(NightDiary).filter(
@@ -198,10 +217,6 @@ async def generate_report(user: User, db: Session) -> str:
     ).all()
 
     text += "\nDiary for the last week:\n" + "\n".join(diary.content for diary in night_diaries)
-    total_count += len(night_diaries)
-
-    if total_count < 5:
-        return False
 
     # Process Calendar
     calenders = db.query(Calendar).filter(
@@ -224,6 +239,7 @@ async def generate_report(user: User, db: Session) -> str:
             is_success = True
 
     if retries >= MAX_RETRIES:
+        print(f"Failed to generate report for user {user.nickname}")
         return False
 
     data = json.loads(report_data)
@@ -239,4 +255,4 @@ async def generate_report(user: User, db: Session) -> str:
         is_deleted=False,
     )
     save_db(mental_report, db)
-    return mental_report.id
+    return True

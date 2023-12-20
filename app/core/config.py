@@ -27,6 +27,16 @@ class Settings(BaseSettings):
     WEATHER_API_KEY: str
     SERVER_TYPE: str
     APPLE_LOGIN_KEY: str
+    KAKAO_REDIRECT_URI_LOCAL: str
+    KAKAO_REDIRECT_URI_DEV: str
+    KAKAO_REDIRECT_URI_PROD: str
+    LINE_REDIRECT_URI_LOCAL: str
+    LINE_REDIRECT_URI_DEV: str
+    LINE_REDIRECT_URI_PROD: str
+    APPLE_REDIRECT_URI_DEV: str
+    APPLE_REDIRECT_URI_PROD: str
+
+
     class Config:
         env_file = ".env"
 

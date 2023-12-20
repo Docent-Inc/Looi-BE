@@ -22,10 +22,10 @@ class TokenRefresh(BaseModel):
     refresh_token: str
 
 class UserUpdateRequest(BaseModel):
-    nickname: str
-    mbti: str
-    gender: str
-    birth: str
+    nickname: Optional[str] = ""
+    mbti: Optional[str] = ""
+    gender: Optional[str] = ""
+    birth: Optional[str] = ""
 
 class PushUpdateRequest(BaseModel):
     type: str

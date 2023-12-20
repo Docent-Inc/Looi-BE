@@ -8,5 +8,12 @@
       <jdbc-url>jdbc:mysql://db-h50qv-kr.vpc-pub-cdb.ntruss.com:3306/docent</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
+    <data-source source="LOCAL" name="0@localhost" uuid="a9aec34d-b194-4a8f-9ae6-a942c8c74689">
+      <driver-ref>redis</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>jdbc.RedisDriver</jdbc-driver>
+      <jdbc-url>jdbc:redis://localhost:6379/0</jdbc-url>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
   </component>
 </project>

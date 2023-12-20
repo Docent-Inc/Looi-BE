@@ -19,6 +19,7 @@ Base.metadata.create_all(bind=engine)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 def get_SessionLocal():
     return SessionLocal
+
 async def get_redis_client():
     return aioredis.from_url(f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}/{settings.REDIS_DB}", encoding="utf-8", decode_responses=True)
 
@@ -34,7 +35,8 @@ def save_db(data, db):
         db.commit()
         db.refresh(data)
         return data
-    except:
+    except Exception as e:
+        print(e)
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
