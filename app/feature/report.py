@@ -118,8 +118,8 @@ async def generate_report(user: User, db: Session) -> str:
     retries = 0
     is_success = False
     MAX_RETRIES = 3
+    gpt_service = GPTService(user, db)
     while is_success == False and retries < MAX_RETRIES:
-        gpt_service = GPTService(user, db)
         report_data = await gpt_service.send_gpt_request(7, text)
         if not validate_report_structure(report_data):
             print(f"Invalid report structure for user {user.nickname}, retrying...{retries+1}")
@@ -131,13 +131,13 @@ async def generate_report(user: User, db: Session) -> str:
         return False
     data = json.loads(report_data)
     text = data["mental_state"]
-    L = await generate_image(1, text, user, db)
+    image_url = await gpt_service.send_dalle_request(text, background=False)
 
     mental_report = Report(
         User_id=user.id,
         content=json.dumps(data, ensure_ascii=False),
         create_date=today,
-        image_url=L[0],
+        image_url=image_url,
         is_deleted=False,
     )
     save_db(mental_report, db)
