@@ -126,12 +126,9 @@ async def get_user_apple(code: str, env: str):
             "code": code,
         }
         # Make the token request
-        print(f"data: {data}")
         response = requests.post("https://appleid.apple.com/auth/token", data=data)
         id_token = response.json().get("id_token")
-        print(f"id_token: {id_token}")
         unverified_claims = jwt.decode(id_token, options={"verify_signature": False}, audience="looi.docent.zip")
-        print(f"unverified_claims: {unverified_claims}")
         user_id = unverified_claims.get('sub')
         email = unverified_claims.get('email')
         return {"user_id": user_id, "email": email}
