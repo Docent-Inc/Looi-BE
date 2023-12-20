@@ -160,6 +160,8 @@ prompt8 = [
     {"role": "system", "content": "{\"title\": \아이유(IU)의 킬링보이스를 라이브로!\", \"tags\": [\"아이유\", \"킬링보이스\", \"라이브\"]}"},
     {"role": "user", "content": "애덤 그랜트 오리지널스"},
     {"role": "system", "content": "{\"title\": \"읽을 책\", \"tags\": [\"애덤 그랜트\", \"오리지널스\"]}"},
+    {"role": "user", "content": "안녕"},
+    {"role": "system", "content": "{\"title\": \"안녕\", \"tags\": [\"안녕\"]}"},
 ]
 
 prompt9 = [

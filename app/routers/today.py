@@ -1,6 +1,7 @@
 import json
 from datetime import datetime, timedelta
 from random import randint
+from typing import Annotated
 
 import aioredis
 import requests
@@ -14,11 +15,13 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 from app.core.security import get_current_user, time_now
 from app.db.database import get_db, get_redis_client
-from app.db.models import Calendar, MorningDiary, NightDiary, Report, Luck
-from app.feature.generate import generate_luck
-from app.schemas.response import User, ApiResponse
+from app.db.models import Calendar, MorningDiary, NightDiary, Report, Luck, User
+from app.schemas.response import ApiResponse
 import pytz
 import math
+
+from app.service.today import TodayService
+
 
 async def dfs_xy_conv(code, v1, v2):
     # LCC DFS 좌표변환을 위한 기초 자료
@@ -104,87 +107,28 @@ async def get_api_date() :
 
 router = APIRouter(prefix="/today")
 
-@router.get("/calender", tags=["Today"])
-async def get_calender(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+@router.get("/calendar", tags=["Today"])
+async def get_today_calendar(
+    today_service: Annotated[TodayService, Depends()],
 ) -> ApiResponse:
-    today = await time_now()
-    upcoming_events = db.query(Calender).filter(
-        Calender.User_id == current_user.id,
-        Calender.start_time >= today,
-        Calender.is_deleted == False
-    ).order_by(Calender.start_time).limit(5).all()
     return ApiResponse(
-        data=upcoming_events
+        data=await today_service.calendar()
+    )
+@router.get("/history", tags=["Today"])
+async def get_today_history(
+    today_service: Annotated[TodayService, Depends()],
+) -> ApiResponse:
+    return ApiResponse(
+        data=await today_service.history()
     )
 
-def default_converter(o):
-    if isinstance(o, datetime):
-        return o.isoformat()
-    raise TypeError(f"Object of type {o.__class__.__name__} is not JSON serializable")
-
-@router.get("/history", tags=["Today"])
-async def get_record(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-    redis: aioredis.Redis = Depends(get_redis_client),
-) -> ApiResponse:
-    now = await time_now()
-    today_str = now.strftime('%Y-%m-%d')
-    redis_key = f"history:{today_str}:user_{current_user.id}"
-
-    cached_data_json = await redis.get(redis_key)
-
-    if cached_data_json:
-        cached_data = json.loads(cached_data_json)
-        return ApiResponse(data=cached_data)
-
-    n = randint(1, 2)
-    if n == 1:
-        count_morning = 1
-        count_night = 2
-    else:
-        count_morning = 2
-        count_night = 1
-
-    random_morning_diaries = db.query(MorningDiary).filter(
-        MorningDiary.is_deleted == False,
-        MorningDiary.User_id == current_user.id
-    ).order_by(func.random()).limit(count_morning).all()
-    random_night_diaries = db.query(NightDiary).filter(
-        NightDiary.is_deleted == False,
-        NightDiary.User_id == current_user.id
-    ).order_by(func.random()).limit(count_night).all()
-
-    data = {
-        "MorningDiary": [{"diary_type": 1, **diary.as_dict()} for diary in random_morning_diaries],
-        "NightDiary": [{"diary_type": 2, **diary.as_dict()} for diary in random_night_diaries]
-    }
-    end_of_today = now.replace(hour=23, minute=59, second=59, microsecond=999999)
-    ttl = int((end_of_today - now).total_seconds()) + 1  # 하루의 끝까지의 시간을 초로 계산
-    data_json = json.dumps(data, default=default_converter)
-    await redis.setex(redis_key, ttl, data_json)
-
-    return ApiResponse(data=data)
-
 @router.get("/luck", tags=["Today"])
-async def luck(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+async def get_today_luck(
+    today_service: Annotated[TodayService, Depends()],
 ) -> ApiResponse:
-    now = await time_now()
-    cached_luck = db.query(Luck).filter(
-        Luck.User_id == current_user.id,
-        Luck.create_date == now.date(),
-        Luck.is_deleted == False
-    ).first()
-
-    if cached_luck:
-        return ApiResponse(data={"luck": cached_luck.content, "isCheckedToday": True})
-
-    luck_content = await generate_luck(current_user, db)
-    return ApiResponse(data={"luck": luck_content,  "isCheckedToday": False})
+    return ApiResponse(
+        data={"luck": await today_service.luck()}
+    )
 
 @router.get("/weather", tags=["Today"])
 async def get_weather(

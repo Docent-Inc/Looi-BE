@@ -8,7 +8,7 @@ from app.core.config import settings
 from app.core.security import get_current_user, time_now, check_length
 from app.db.database import get_db, get_redis_client, save_db
 from app.db.models import User, TextClassification, WelcomeChat, HelperChat
-from app.feature.aiRequset import GPTService
+from app.core.aiRequset import GPTService
 from app.schemas.request import ChatRequest, CreateCalendarRequest, CreateDreamRequest, CreateDiaryRequest, \
     CreateMemoRequest
 from app.schemas.response import ChatResponse

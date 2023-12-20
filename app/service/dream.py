@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.core.security import get_current_user, check_length, time_now
 from app.db.database import get_db, save_db
 from app.db.models import User, MorningDiary
-from app.feature.aiRequset import GPTService
+from app.core.aiRequset import GPTService
 from app.schemas.request import CreateDreamRequest, UpdateDreamRequest
 from app.service.abstract import AbstractDiaryService
 

@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app.core.security import get_current_user, check_length, time_now
 from app.db.database import get_db, save_db
 from app.db.models import User, Calendar
-from app.feature.aiRequset import GPTService
+from app.core.aiRequset import GPTService
 from app.schemas.request import CreateCalendarRequest, UpdateCalendarRequest, ListCalendarRequest
 from app.service.abstract import AbstractDiaryService
 
@@ -57,7 +57,7 @@ class CalendarService(AbstractDiaryService):
         await check_length(text=calender_data.title, max_length=255, error_code=4023)
         await check_length(text=calender_data.content, max_length=255, error_code=4023)
         now = await time_now()
-        calender = Calender(
+        calender = Calendar(
             User_id=self.user.id,
             start_time=calender_data.start_time,
             end_time=calender_data.end_time,
