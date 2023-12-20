@@ -90,7 +90,7 @@ async def get_user_line(request: str, env: str):
             detail=4010,
         )
 
-async def get_user_apple(login_data: dict, env: str):
+async def get_user_apple(code: str, env: str):
     private_key = settings.APPLE_LOGIN_KEY
     headers = {
         'kid': '9SSBB74MBU'
@@ -123,7 +123,7 @@ async def get_user_apple(login_data: dict, env: str):
             "client_id": "looi.docent.zip",
             "client_secret": client_secret,
             "redirect_uri": REDIRECT_URI + "/apple",
-            "code": login_data["code"],
+            "code": code,
         }
         # Make the token request
         response = requests.post("https://appleid.apple.com/auth/token", data=data)
