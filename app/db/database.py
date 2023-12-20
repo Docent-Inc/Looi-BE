@@ -35,8 +35,7 @@ def save_db(data, db):
         db.commit()
         db.refresh(data)
         return data
-    except Exception as e:
-        print(e)
+    except:
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
