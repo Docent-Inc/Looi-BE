@@ -1,6 +1,5 @@
 import datetime
 
-from deep_translator.exceptions import AuthorizationException
 from sqlalchemy.orm import Session
 from app.core.security import verify_password, get_password_hash, time_now
 from app.schemas.request import UserCreate, UserUpdateRequest, PushUpdateRequest
@@ -12,10 +11,7 @@ from fastapi import HTTPException, status
 from httpx_oauth.errors import GetIdEmailError
 from app.core.config import settings
 import random
-import json
 import jwt
-from cryptography.hazmat.primitives import serialization
-from jwt.algorithms import RSAAlgorithm
 
 CLIENT_ID = settings.KAKAO_API_KEY
 CLIENT_SECRET = settings.KAKAO_CLIENT_SECRET
