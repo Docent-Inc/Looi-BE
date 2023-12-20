@@ -113,16 +113,16 @@ async def get_user_apple(code: str, env: str):
 
     global REDIRECT_URI
     if env == "dev":
-        REDIRECT_URI = REDIRECT_URI_DEV
+        REDIRECT_URI = "https://bmongsmong.com/api/auth/callback/apple/dev"
     elif env == "local":
-        REDIRECT_URI = REDIRECT_URI_TEST
+        REDIRECT_URI = "https://bmongsmong.com/api/auth/callback/apple/prod"
     try:
         # Prepare data for the token request
         data = {
             "grant_type": "authorization_code",
             "client_id": "looi.docent.zip",
             "client_secret": client_secret,
-            "redirect_uri": REDIRECT_URI + "/apple",
+            "redirect_uri": REDIRECT_URI,
             "code": code,
         }
         # Make the token request
