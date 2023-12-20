@@ -1,5 +1,5 @@
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Form
 from app.db.database import get_db
 from sqlalchemy.orm import Session
 from app.core.security import decode_access_token, create_token, get_update_user, check_token
@@ -45,12 +45,11 @@ async def login(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=4403)
     return ApiResponse(data={"url": url})
 
-@router.post("/callback/{service}/{env}", response_model=ApiResponse, tags=["Auth"])
+@router.get("/callback/{service}/{env}", response_model=ApiResponse, tags=["Auth"])
 async def callback(
     service: str,
     env: str,
-    code: Optional[str] = None,
-    login_data: Optional[dict] = None,
+    code: str,
     db: Session = Depends(get_db),
 ):
     # 콜백을 처리합니다.
@@ -60,9 +59,6 @@ async def callback(
     elif service == "line":
         data = await get_user_line(code, env)
         user, is_sign_up = await user_line(data, db)
-    elif service == "apple":
-        data = await get_user_apple(login_data, env)
-        user, is_sign_up = await user_apple(data, db)
     else:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=4403)
 
@@ -79,6 +75,29 @@ async def callback(
             is_signup=is_sign_up,
         )
     )
+
+@router.post("/callback/apple/{env}", response_model=ApiResponse, tags=["Auth"])
+async def callback_apple(
+    env: str,
+    code: str = Form(...),
+    db: Session = Depends(get_db),
+):
+    data = await get_user_apple(code, env)
+    user, is_sign_up = await user_apple(data, db)
+    expires_in, refresh_expires_in, access_token, refresh_token = await create_token(user.email)
+    return ApiResponse(
+        success=True,
+        data=KakaoTokenData(
+            user_name=user.nickname,
+            access_token=access_token,
+            expires_in=expires_in,
+            refresh_token=refresh_token,
+            refresh_expires_in=refresh_expires_in,
+            token_type="Bearer",
+            is_signup=is_sign_up,
+        )
+    )
+
 
 
 @router.post("/refresh", response_model=ApiResponse, tags=["Auth"])
