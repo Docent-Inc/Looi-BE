@@ -2,7 +2,6 @@ import asyncio
 import json
 import uuid
 from io import BytesIO
-
 import extcolors
 import openai
 import requests
@@ -13,13 +12,11 @@ import pytz
 from google.cloud import storage
 from google.oauth2 import service_account
 from sqlalchemy.orm import Session
-
 from app.core.config import settings
 from app.core.security import time_now
 from app.db.database import save_db
 from app.db.models import ApiRequestLog, User, Prompt
 SERVICE_ACCOUNT_INFO = json.loads(settings.GOOGLE_APPLICATION_CREDENTIALS_JSON)
-
 openai.api_key = settings.GPT_API_KEY
 
 days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
