@@ -10,6 +10,8 @@ from app.db.database import get_SessionLocal, get_redis_client, try_to_acquire_l
 from app.db.models import Report, MorningDiary, NightDiary, Calendar
 from app.db.models import User
 from app.core.aiRequset import GPTService
+from app.service.abstract import AbstractReportService
+
 
 async def calculate_period(start_date):
     start_of_week = start_date - timedelta(days=start_date.weekday())
@@ -19,7 +21,7 @@ async def calculate_period(start_date):
         "end_date": end_of_week.strftime("%Y년 %m월 %d일")
     }
 
-class ReportService:
+class ReportService(AbstractReportService):
     def __init__(self, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
         self.user = user
         self.db = db

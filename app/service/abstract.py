@@ -58,10 +58,6 @@ class AbstractReportService(ABC):
         pass
 
     @abstractmethod
-    async def delete(self, id: int) -> None:
-        pass
-
-    @abstractmethod
     async def list(self, page: int) -> list:
         pass
 
@@ -96,13 +92,17 @@ class AbstractAuthService(ABC):
 
 class AbstractTodayService(ABC):
     @abstractmethod
-    async def luck(self) -> object:
+    async def luck(self) -> dict:
         pass
 
     @abstractmethod
-    async def history(self) -> object:
+    async def history(self) -> dict:
         pass
 
     @abstractmethod
     async def calendar(self) -> object:
+        pass
+
+    @abstractmethod
+    async def weather(self, x: float, y: float) -> dict:
         pass
