@@ -112,11 +112,17 @@ class DiaryService(AbstractDiaryService):
         diary = save_db(diary, self.db)
 
         now = await time_now()
-        redis_key = f"history:{diary.id}:{now.day}"
+        redis_key = f"history:{self.user.id}:{now.day}"
         datas = json.loads(await redis.get(redis_key))
-        for data in datas["NightDiary"]["id"]:
+        is_exist = False
+        for data in datas["NightDiary"]:
             if data["id"] == diary.id:
-                break
+                is_exist = True
+        for data in datas["NightDiary"]:
+            if data["id"] == diary.id:
+                is_exist = True
+        if is_exist:
+            await redis.delete(redis_key)
     async def list(self, page: int) -> list:
 
         # 다이어리 조회
