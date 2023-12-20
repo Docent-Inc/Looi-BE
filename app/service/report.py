@@ -25,7 +25,7 @@ class ReportService:
         self.user = user
         self.db = db
 
-    async def read(self, report_id: int):
+    async def read(self, report_id: int) -> dict:
         report = self.db.query(Report).filter(
             Report.User_id == self.user.id,
             Report.id == report_id,
@@ -52,7 +52,9 @@ class ReportService:
             "period": await calculate_period(report.create_date)
         }
 
-    async def list(self, page: int):
+    async def create(self) -> bool:
+
+    async def list(self, page: int) -> list:
         limit = 6
         offset = (page - 1) * limit
         reports = self.db.query(Report).filter(
@@ -225,7 +227,7 @@ async def generate_report(user: User, db: Session) -> str:
         return False
 
     data = json.loads(report_data)
-    text = "다음 내용을 바탕으로 추상적인 이미지를 생성해주세요"
+    text = "다음 내용을 바탕으로 추상적인 이미지를 생성해주세요.\n"
     text += data["mental_state"]
     image_url = await gpt_service.send_dalle_request(messages_prompt=text, background=False)
 

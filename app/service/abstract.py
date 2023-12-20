@@ -51,7 +51,11 @@ class AbstractStatisticsService(ABC):
 
 class AbstractReportService(ABC):
     @abstractmethod
-    async def read(self, id: int) -> object:
+    async def read(self, id: int) -> dict:
+        pass
+
+    @abstractmethod
+    async def create(self) -> bool:
         pass
 
     @abstractmethod
