@@ -31,8 +31,8 @@ LINE_SECRET = settings.LINE_SECRET
 PROFILE_ENDPOINT_LINE = "https://api.line.me/v2/profile"
 LINE_AUTH_URL = f"https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id={LINE_CHANNEL_ID}&redirect_uri={REDIRECT_URI}&state={random.randint(1000000000, 9999999999)}&scope=profile%20openid%20email"
 LINE_AUTH_URL_TEST = f"https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id={LINE_CHANNEL_ID}&redirect_uri={REDIRECT_URI_TEST}&state={random.randint(1000000000, 9999999999)}&scope=profile%20openid%20email"
-APPLE_AUTH_URL_DEV = f"https://appleid.apple.com/auth/authorize?client_id=looi.docent.zip&redirect_uri=https://bmongsmong.com/api/auth/callback/apple/dev&response_type=code%20id_token&scope=name%20email&response_mode=form_post"
-APPLE_AUTH_URL = f"https://appleid.apple.com/auth/authorize?client_id=looi.docent.zip&redirect_uri=https://bmongsmong.com/api/auth/callback/apple/prod&response_type=code%20id_token&scope=name%20email&response_mode=form_post"
+APPLE_AUTH_URL_DEV = f"https://appleid.apple.com/auth/authorize?client_id=looi.docent.zip&redirect_uri=https://bmongsmong.com/callback/apple&response_type=code%20id_token&scope=name%20email&response_mode=form_post"
+APPLE_AUTH_URL = f"https://appleid.apple.com/auth/authorize?client_id=looi.docent.zip&redirect_uri=https://docent.zip/callback/apple&response_type=code%20id_token&scope=name%20email&response_mode=form_post"
 
 
 mbti_list = ['istj', 'isfj', 'infj', 'intj', 'istp', 'isfp', 'infp', 'intp', 'estp', 'esfp', 'enfp', 'entp', 'estj', 'esfj', 'enfj', 'entj']
@@ -113,9 +113,9 @@ async def get_user_apple(code: str, env: str):
 
     global REDIRECT_URI
     if env == "dev":
-        REDIRECT_URI = "https://bmongsmong.com/api/auth/callback/apple/dev"
-    elif env == "local":
-        REDIRECT_URI = "https://bmongsmong.com/api/auth/callback/apple/prod"
+        REDIRECT_URI = "https://bmongsmong.com/callback/apple"
+    elif env == "prod":
+        REDIRECT_URI = "https://docent.zip/callback/apple"
     try:
         # Prepare data for the token request
         data = {
@@ -128,9 +128,7 @@ async def get_user_apple(code: str, env: str):
         # Make the token request
         response = requests.post("https://appleid.apple.com/auth/token", data=data)
         id_token = response.json().get("id_token")
-        print("id_token", id_token)
         unverified_claims = jwt.decode(id_token, options={"verify_signature": False}, audience="looi.docent.zip")
-        print("unverified_claims", unverified_claims)
         user_id = unverified_claims.get('sub')
         email = unverified_claims.get('email')
         return {"user_id": user_id, "email": email}
