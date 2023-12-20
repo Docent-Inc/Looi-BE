@@ -50,14 +50,14 @@ async def create_morning_diary(content: str, user: User, db: Session) -> Morning
 
     # 다이어리 제목, 이미지, 해몽 생성
     gpt_service = GPTService(user, db)
-    diary_name, image_url, resolution = await asyncio.gather(
+    diary_name, image_info, resolution = await asyncio.gather(
         gpt_service.send_gpt_request(2, content),
         gpt_service.send_dalle_request(content),
         gpt_service.send_gpt_request(5, mbti_content)
     )
 
     # 이미지 배경색 추출
-    upper_dominant_color, lower_dominant_color = await image_background_color(image_url)
+    image_url, upper_dominant_color, lower_dominant_color = image_info
 
     # 이미지 background color 문자열로 변환
     upper_lower_color = "[\"" + str(upper_dominant_color) + "\", \"" + str(lower_dominant_color) + "\"]"
@@ -180,13 +180,13 @@ async def list_morning_diary(page: int, user: User, db: Session):
 async def create_night_diary_ai(content: str, user: User, db: Session):
     # 이미지와 다이어리 제목 생성
     gpt_service = GPTService(user, db)
-    image_url, diary_name = await asyncio.gather(
+    image_info, diary_name = await asyncio.gather(
         gpt_service.send_dalle_request(content),
         gpt_service.send_gpt_request(2, content)
     )
 
     # 이미지 배경색 추출
-    upper_dominant_color, lower_dominant_color = await image_background_color(image_url)
+    image_url, upper_dominant_color, lower_dominant_color = image_info
 
     # 이미지 background color 문자열로 변환
     upper_lower_color = "[\"" + str(upper_dominant_color) + "\", \"" + str(lower_dominant_color) + "\"]"
@@ -214,17 +214,17 @@ async def create_night_diary(body: CreateNightDiaryRequest, user: User, db: Sess
     if body.title == "":
         # 이미지와 다이어리 제목 생성
         content = body.content
-        image_url, diary_name = await asyncio.gather(
+        image_info, diary_name = await asyncio.gather(
             gpt_service.send_dalle_request(content),
             gpt_service.send_gpt_request(2, content)
         )
     else:
         diary_name = body.title
         content = body.content
-        image_url = await gpt_service.send_dalle_request(content)
+        image_info = await gpt_service.send_dalle_request(content)
 
     # 이미지 배경색 추출
-    upper_dominant_color, lower_dominant_color = await image_background_color(image_url)
+    image_url, upper_dominant_color, lower_dominant_color = image_info
 
     # 이미지 background color 문자열로 변환
     upper_lower_color = "[\"" + str(upper_dominant_color) + "\", \"" + str(lower_dominant_color) + "\"]"
