@@ -45,7 +45,7 @@ async def login(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=4403)
     return ApiResponse(data={"url": url})
 
-@router.get("/callback/{service}/{env}", response_model=ApiResponse, tags=["Auth"])
+@router.post("/callback/{service}/{env}", response_model=ApiResponse, tags=["Auth"])
 async def callback(
     service: str,
     env: str,
