@@ -49,7 +49,8 @@ async def login(
 async def callback(
     service: str,
     env: str,
-    code: str,
+    code: Optional[str] = None,
+    login_data: Optional[dict] = None,
     db: Session = Depends(get_db),
 ):
     # 콜백을 처리합니다.
@@ -60,7 +61,7 @@ async def callback(
         data = await get_user_line(code, env)
         user, is_sign_up = await user_line(data, db)
     elif service == "apple":
-        data = await get_user_apple(code, env)
+        data = await get_user_apple(login_data, env)
         user, is_sign_up = await user_apple(data, db)
     else:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=4403)

@@ -2,7 +2,7 @@ import asyncio
 import json
 import uuid
 from io import BytesIO
-
+import extcolors
 import openai
 import requests
 from PIL import Image
@@ -12,13 +12,11 @@ import pytz
 from google.cloud import storage
 from google.oauth2 import service_account
 from sqlalchemy.orm import Session
-
 from app.core.config import settings
 from app.core.security import time_now
 from app.db.database import save_db
 from app.db.models import ApiRequestLog, User, Prompt
 SERVICE_ACCOUNT_INFO = json.loads(settings.GOOGLE_APPLICATION_CREDENTIALS_JSON)
-
 openai.api_key = settings.GPT_API_KEY
 
 days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
@@ -147,7 +145,7 @@ prompt7 = [
     {"role": "system", "content": "Provide detailed analysis for 'Mental State'. For items 1, total summary about report and include user nickname. about 400-character" },
     {"role": "system", "content": "For item 2-3, provide some comments about the user's extroverted and introverted activities. about 300-character. main_keyword in 2-3 is phrase or word that you choose."},
     {"role": "system", "content": "For item 7, provide a list 1 detail ratio dictionary for Extroversion, Introversion and for item 8 provide 5 keywords"},
-    {"role": "system", "content": "공손한 말투로 만들어주세요. follow my example json format"},
+    {"role": "system", "content": "공손한 말투로 만들어주세요. follow my example json format. must fill all items."},
     {"role": "system", "content": "ex) if user nickname: 뀨뀨, return = {\"mental_state\":\"뀨뀨님의 최근 꿈과 일기는 복잡한 감정과 생각의 교차점을 보여줍니다. 꿈에서의 경쟁과 화해 시도는 일상 생활에서의 스트레스, 대인 관계의 어려움, 그리고 자신의 업적에 대한 내적인 기준과 기대를 반영하고 있습니다. 이는 뀨뀨님의 열정과 성취에 대한 갈망, 동시에 관계와 업무에서의 불안정성과 불확실성에 대한 고민을 나타냅니다.\", \"positives\": {\"comment\": \"학회 수료와 상 수상은 뀨뀨님의 성취감을 대표하는 중요한 사건입니다. 남자친구와의 즐거운 시간, 동료들과의 식사는 일상 속에서 즐거움과 안정감을 제공합니다. 이러한 순간들은 뀨뀨님의 긍정적인 에너지를 증폭시키며, 성공과 행복을 추구하는 데 동기를 부여합니다. \", \"main_keyword\": \"성취감과 행복\"}, \"negatives\": {\"comment\": \"일상에서 느끼는 지루함과 스트레스, 내적 갈등이 뀨뀨님의 정신적 부담을 가중시키고 있습니다. 특히, 싫어하는 사람과의 관계에서 느끼는 스트레스와 업무에서의 난감함이 부각됩니다. 이러한 부담감은 뀨뀨님의 삶에서 균형을 찾는 데 방해가 될 수 있습니다.\", \"main_keyword\": \"스트레스와 불안정성\"}, \"extroverted_activities\": [\"동료들과의 저녁식사\", \"남자친구와의 데이트\", \"가족, 친구들과의 저녁 약속\"], \"introverted_activities\": [\"독서실에서의 개별 작업\", \"일기 쓰기\", \"학회에서의 성취\"], \"recommendations\": [\"스트레스 관리를 위한 취미 활동 찾기\", \"자기계발 및 경력 계획 세우기\", \"대인 관계에서의 긴장 완화를 위한 커뮤니케이션 기술 향상\", \"규칙적인 수면 스케줄 유지\", \"필요시 전문가의 상담 고려\"], \"statistics\": {\"extrovert\": 60, \"introvert\": 40}, \"keywords\": [\"성취감\", \"행복\", \"스트레스\", \"불안정성\", \"자기 성찰\"]}"},
 ]
 
@@ -247,7 +245,7 @@ class GPTService:
                         detail=4501,
                     )
 
-    async def send_dalle_request(self, messages_prompt: str, retries=3):
+    async def send_dalle_request(self, messages_prompt: str, background=True, retries=3):
         for i in range(retries):
             try:
                 start_time = await time_now()
@@ -282,6 +280,20 @@ class GPTService:
                 img = Image.open(BytesIO(response.content))
                 img = img.resize((512, 512), Image.ANTIALIAS)
 
+                if background:
+                    width, height = img.size
+
+                    # 이미지를 상하로 2등분
+                    upper_half = img.crop((0, 0, width, height // 2))
+                    lower_half = img.crop((0, height // 2, width, height))
+
+                    # 각 부분의 대표색 추출
+                    upper_colors, _ = extcolors.extract_from_image(upper_half)
+                    lower_colors, _ = extcolors.extract_from_image(lower_half)
+
+                    upper_dominant_color = upper_colors[0][0]
+                    lower_dominant_color = lower_colors[0][0]
+
                 unique_id = uuid.uuid4()
                 destination_blob_name = str(unique_id) + ".png"
                 bucket_name = "docent"  # 구글 클라우드 버킷 이름
@@ -299,7 +311,10 @@ class GPTService:
                     blob.make_public()
 
                 # public url 반환
-                return blob.public_url
+                if background:
+                    return [blob.public_url, upper_dominant_color, lower_dominant_color]
+                else:
+                    return blob.public_url
             except Exception as e:
                 print(f"DALL-E API Error{e}")
                 if i < retries - 1:
