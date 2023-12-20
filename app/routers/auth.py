@@ -80,6 +80,7 @@ async def callback(
 async def callback_apple(
     env: str,
     code: str = Form(...),
+    id_token: str = Form(...),
     db: Session = Depends(get_db),
 ):
     data = await get_user_apple(code, env)
