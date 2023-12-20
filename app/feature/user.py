@@ -1,6 +1,5 @@
 import datetime
 
-from deep_translator.exceptions import AuthorizationException
 from sqlalchemy.orm import Session
 from app.core.security import verify_password, get_password_hash, time_now
 from app.schemas.request import UserCreate, UserUpdateRequest, PushUpdateRequest
@@ -12,19 +11,16 @@ from fastapi import HTTPException, status
 from httpx_oauth.errors import GetIdEmailError
 from app.core.config import settings
 import random
-import json
 import jwt
-from cryptography.hazmat.primitives import serialization
-from jwt.algorithms import RSAAlgorithm
 
 CLIENT_ID = settings.KAKAO_API_KEY
 CLIENT_SECRET = settings.KAKAO_CLIENT_SECRET
 REDIRECT_URI = "https://docent.zip/callback"
 REDIRECT_URI_TEST = "http://localhost:3000/callback"
 REDIRECT_URI_DEV = "https://bmongsmong.com/callback"
-KAKAO_AUTH_URL_TEST = f"https://kauth.kakao.com/oauth/authorize?client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI_TEST}/kakao&response_type=code"
-KAKAO_AUTH_URL = f"https://kauth.kakao.com/oauth/authorize?client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI}/kakao&response_type=code"
-KAKAO_AUTH_URL_DEV = f"https://kauth.kakao.com/oauth/authorize?client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI_DEV}/kakao&response_type=code"
+KAKAO_AUTH_URL_TEST = f"https://kauth.kakao.com/oauth/authorize?client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI_TEST}&response_type=code"
+KAKAO_AUTH_URL = f"https://kauth.kakao.com/oauth/authorize?client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI}&response_type=code"
+KAKAO_AUTH_URL_DEV = f"https://kauth.kakao.com/oauth/authorize?client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI_DEV}&response_type=code"
 AUTHORIZE_ENDPOINT = "https://kauth.kakao.com/oauth/authorize"
 ACCESS_TOKEN_ENDPOINT = "https://kauth.kakao.com/oauth/token"
 PROFILE_ENDPOINT_KAKAO = "https://kapi.kakao.com/v2/user/me"
@@ -35,8 +31,8 @@ LINE_SECRET = settings.LINE_SECRET
 PROFILE_ENDPOINT_LINE = "https://api.line.me/v2/profile"
 LINE_AUTH_URL = f"https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id={LINE_CHANNEL_ID}&redirect_uri={REDIRECT_URI}&state={random.randint(1000000000, 9999999999)}&scope=profile%20openid%20email"
 LINE_AUTH_URL_TEST = f"https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id={LINE_CHANNEL_ID}&redirect_uri={REDIRECT_URI_TEST}&state={random.randint(1000000000, 9999999999)}&scope=profile%20openid%20email"
-APPLE_AUTH_URL_DEV = f"https://appleid.apple.com/auth/authorize?client_id=looi.docent.zip&redirect_uri={REDIRECT_URI_DEV}/apple&response_type=code%20id_token&scope=name%20email&response_mode=form_post"
-APPLE_AUTH_URL = f"https://appleid.apple.com/auth/authorize?client_id=looi.docent.zip&redirect_uri={REDIRECT_URI}/apple&response_type=code%20id_token&scope=name%20email&response_mode=form_post"
+APPLE_AUTH_URL_DEV = f"https://appleid.apple.com/auth/authorize?client_id=looi.docent.zip&redirect_uri=https://bmongsmong.com/callback/apple&response_type=code%20id_token&scope=name%20email&response_mode=form_post"
+APPLE_AUTH_URL = f"https://appleid.apple.com/auth/authorize?client_id=looi.docent.zip&redirect_uri=https://docent.zip/callback/apple&response_type=code%20id_token&scope=name%20email&response_mode=form_post"
 
 
 mbti_list = ['istj', 'isfj', 'infj', 'intj', 'istp', 'isfp', 'infp', 'intp', 'estp', 'esfp', 'enfp', 'entp', 'estj', 'esfj', 'enfj', 'entj']
@@ -94,7 +90,7 @@ async def get_user_line(request: str, env: str):
             detail=4010,
         )
 
-async def get_user_apple(request: str, env: str):
+async def get_user_apple(code: str, env: str):
     private_key = settings.APPLE_LOGIN_KEY
     headers = {
         'kid': '9SSBB74MBU'
@@ -117,17 +113,17 @@ async def get_user_apple(request: str, env: str):
 
     global REDIRECT_URI
     if env == "dev":
-        REDIRECT_URI = REDIRECT_URI_DEV
-    elif env == "local":
-        REDIRECT_URI = REDIRECT_URI_TEST
+        REDIRECT_URI = "https://bmongsmong.com/callback/apple"
+    elif env == "prod":
+        REDIRECT_URI = "https://docent.zip/callback/apple"
     try:
         # Prepare data for the token request
         data = {
             "grant_type": "authorization_code",
             "client_id": "looi.docent.zip",
             "client_secret": client_secret,
-            "redirect_uri": REDIRECT_URI + "/apple",
-            "code": request,
+            "redirect_uri": REDIRECT_URI,
+            "code": code,
         }
         # Make the token request
         response = requests.post("https://appleid.apple.com/auth/token", data=data)

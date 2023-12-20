@@ -1,5 +1,5 @@
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Form
 from app.db.database import get_db
 from sqlalchemy.orm import Session
 from app.core.security import decode_access_token, create_token, get_update_user, check_token
@@ -78,6 +78,30 @@ async def callback(
             is_signup=is_sign_up,
         )
     )
+
+@router.post("/callback/apple/{env}", response_model=ApiResponse, tags=["Auth"])
+async def callback_apple(
+    env: str,
+    code: str = Form(...),
+    id_token: str = Form(...),
+    db: Session = Depends(get_db),
+):
+    data = await get_user_apple(code, env)
+    user, is_sign_up = await user_apple(data, db)
+    expires_in, refresh_expires_in, access_token, refresh_token = await create_token(user.email)
+    return ApiResponse(
+        success=True,
+        data=KakaoTokenData(
+            user_name=user.nickname,
+            access_token=access_token,
+            expires_in=expires_in,
+            refresh_token=refresh_token,
+            refresh_expires_in=refresh_expires_in,
+            token_type="Bearer",
+            is_signup=is_sign_up,
+        )
+    )
+
 
 
 @router.post("/refresh", response_model=ApiResponse, tags=["Auth"])

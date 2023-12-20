@@ -57,6 +57,7 @@ def register_exception_handlers(app):
 
     @app.exception_handler(RequestValidationError)
     async def validation_exception_handler(request: Request, exc: RequestValidationError):
+        print(request)
         return JSONResponse(
             content=ApiResponse(
                 success=False,
