@@ -38,12 +38,18 @@ Diary 관련 Response
 class CreateDiaryRequest(BaseModel):
     content: str
 
+class CreateNightDiaryRequest(BaseModel):
+    date: str
+    title: Optional[str] = ""
+    content: str
+
 class UpdateDiaryRequest(BaseModel):
-    diary_name: str
-    diary_content: str
+    diary_name: Optional[str] = ""
+    content: Optional[str] = ""
 
 class MemoRequest(BaseModel):
-    content: str
+    title: Optional[str] = ""
+    content: Optional[str] = ""
 
 class ChatRequest(BaseModel):
     type: Optional[int] = 0
@@ -52,7 +58,7 @@ class ChatRequest(BaseModel):
 class CalenderRequest(BaseModel):
     start_time: str
     end_time: str
-    title: str
+    title: Optional[str] = ""
     content: str
 
 class ListRequest(BaseModel):

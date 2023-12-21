@@ -1,3 +1,5 @@
+import datetime
+
 from sqlalchemy.orm import Session
 from app.core.security import verify_password, get_password_hash, time_now
 from app.schemas.request import UserCreate, UserUpdateRequest, PushUpdateRequest
@@ -9,15 +11,16 @@ from fastapi import HTTPException, status
 from httpx_oauth.errors import GetIdEmailError
 from app.core.config import settings
 import random
+import jwt
 
 CLIENT_ID = settings.KAKAO_API_KEY
 CLIENT_SECRET = settings.KAKAO_CLIENT_SECRET
 REDIRECT_URI = "https://docent.zip/callback"
 REDIRECT_URI_TEST = "http://localhost:3000/callback"
 REDIRECT_URI_DEV = "https://bmongsmong.com/callback"
-KAKAO_AUTH_URL_TEST = f"https://kauth.kakao.com/oauth/authorize?client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI_TEST}&response_type=code"
-KAKAO_AUTH_URL = f"https://kauth.kakao.com/oauth/authorize?client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI}&response_type=code"
-KAKAO_AUTH_URL_DEV = f"https://kauth.kakao.com/oauth/authorize?client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI_DEV}&response_type=code"
+KAKAO_AUTH_URL_TEST = f"https://kauth.kakao.com/oauth/authorize?client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI_TEST}/kakao&response_type=code"
+KAKAO_AUTH_URL = f"https://kauth.kakao.com/oauth/authorize?client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI}/kakao&response_type=code"
+KAKAO_AUTH_URL_DEV = f"https://kauth.kakao.com/oauth/authorize?client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI_DEV}/kakao&response_type=code"
 AUTHORIZE_ENDPOINT = "https://kauth.kakao.com/oauth/authorize"
 ACCESS_TOKEN_ENDPOINT = "https://kauth.kakao.com/oauth/token"
 PROFILE_ENDPOINT_KAKAO = "https://kapi.kakao.com/v2/user/me"
@@ -26,10 +29,10 @@ BASE_PROFILE_SCOPES = ["kakao_account.email"]
 LINE_CHANNEL_ID = settings.LINE_CHANNEL_ID
 LINE_SECRET = settings.LINE_SECRET
 PROFILE_ENDPOINT_LINE = "https://api.line.me/v2/profile"
-REDIRECT_URI_TEST = "http://localhost:3000/line"
 LINE_AUTH_URL = f"https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id={LINE_CHANNEL_ID}&redirect_uri={REDIRECT_URI}&state={random.randint(1000000000, 9999999999)}&scope=profile%20openid%20email"
 LINE_AUTH_URL_TEST = f"https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id={LINE_CHANNEL_ID}&redirect_uri={REDIRECT_URI_TEST}&state={random.randint(1000000000, 9999999999)}&scope=profile%20openid%20email"
-
+APPLE_AUTH_URL_DEV = f"https://appleid.apple.com/auth/authorize?client_id=looi.docent.zip&redirect_uri=https://bmongsmong.com/callback/apple&response_type=code&response_mode=query"
+APPLE_AUTH_URL = f"https://appleid.apple.com/auth/authorize?client_id=looi.docent.zip&redirect_uri=https://docent.zip/callback/apple&response_type=code%20id_token&scope=name%20email&response_mode=form_post"
 
 
 mbti_list = ['istj', 'isfj', 'infj', 'intj', 'istp', 'isfp', 'infp', 'intp', 'estp', 'esfp', 'enfp', 'entp', 'estj', 'esfj', 'enfj', 'entj']
@@ -37,9 +40,9 @@ mbti_list = ['istj', 'isfj', 'infj', 'intj', 'istp', 'isfp', 'infp', 'intp', 'es
 async def get_user_kakao(request: str, env: str):
     global REDIRECT_URI
     if env == "local":
-        REDIRECT_URI = REDIRECT_URI_TEST
+        REDIRECT_URI = REDIRECT_URI_TEST + "/kakao"
     elif env == "dev":
-        REDIRECT_URI = REDIRECT_URI_DEV
+        REDIRECT_URI = REDIRECT_URI_DEV + "/kakao"
     try:
         data = {
             "grant_type": "authorization_code",
@@ -60,6 +63,7 @@ async def get_user_kakao(request: str, env: str):
         )
 
 async def get_user_line(request: str, env: str):
+    global REDIRECT_URI
     if env == "local":
         REDIRECT_URI = REDIRECT_URI_TEST
     elif env == "dev":
@@ -85,6 +89,55 @@ async def get_user_line(request: str, env: str):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=4010,
         )
+
+async def get_user_apple(code: str, env: str):
+    private_key = settings.APPLE_LOGIN_KEY
+    headers = {
+        'kid': '9SSBB74MBU'
+    }
+
+    payload = {
+        'iss': '76KPWSL348',
+        'iat': datetime.datetime.utcnow(),
+        'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1),
+        'aud': 'https://appleid.apple.com',
+        'sub': 'looi.docent.zip',
+    }
+
+    client_secret = jwt.encode(
+        payload,
+        private_key,
+        algorithm='ES256',
+        headers=headers
+    )
+
+    global REDIRECT_URI
+    if env == "dev":
+        REDIRECT_URI = "https://bmongsmong.com/callback/apple"
+    elif env == "prod":
+        REDIRECT_URI = "https://docent.zip/callback/apple"
+    try:
+        # Prepare data for the token request
+        data = {
+            "grant_type": "authorization_code",
+            "client_id": "looi.docent.zip",
+            "client_secret": client_secret,
+            "redirect_uri": REDIRECT_URI,
+            "code": code,
+        }
+        # Make the token request
+        response = requests.post("https://appleid.apple.com/auth/token", data=data)
+        id_token = response.json().get("id_token")
+        unverified_claims = jwt.decode(id_token, options={"verify_signature": False}, audience="looi.docent.zip")
+        user_id = unverified_claims.get('sub')
+        email = unverified_claims.get('email')
+        return {"user_id": user_id, "email": email}
+    except:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=4024,
+        )
+
 
 async def create_user(db: Session, user: UserCreate) -> User:
     hashed_password = get_password_hash(user.password)
@@ -312,6 +365,61 @@ async def user_line(kakao_data: dict, db: Session) -> Optional[User]:
             db.add(user)
             db.commit()
             db.refresh(user)
+        except:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=5000,
+            )
+    if user.mbti == "0":
+        is_sign_up = True
+    return user, is_sign_up
+
+async def user_apple(data: dict, db: Session) -> Optional[User]:
+    try:
+        kakao_id = str(data["user_id"])
+        kakao_email = data["email"]
+        kakao_nickname = kakao_email.split("@")[0]
+    except:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=4024,
+        )
+
+    # 카카오에서 전달받은 사용자 정보로 사용자를 조회합니다.
+    user = await get_user_by_email(db, email=kakao_email)
+    is_sign_up = False
+    # 사용자가 존재하지 않으면 새로운 사용자를 생성합니다.
+    if not user:
+        user = User(
+            email=kakao_email,
+            nickname=kakao_nickname,
+            hashed_password=get_password_hash(kakao_id),
+            gender="0",
+            age_range="0",
+            image_model=1,
+            language_id=1,
+            mbti="0",
+            Oauth_from="apple",
+            create_date=await time_now(),
+        )
+        is_sign_up = True
+        try:
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+            now = await time_now()
+            diary = NightDiary(
+                User_id=user.id,
+                diary_name="나만의 기록 친구 Look-i와의 특별한 첫 만남",
+                content="오늘은 인상깊은 날이다. 기록 친구 Look-i와 만나게 되었다. 앞으로 기록 열심히 해야지~!",
+                image_url="https://storage.googleapis.com/docent/c1c96c92-a8d2-4b18-9465-48be554d8880.png",
+                background_color="[\"(253, 254, 253)\", \"(77, 37, 143)\"]",
+                create_date=now,
+                modify_date=now,
+            )
+            db.add(diary)
+            db.commit()
+            db.refresh(diary)
         except:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

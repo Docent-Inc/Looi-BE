@@ -1,16 +1,19 @@
+from typing import Any
+
 from fastapi import HTTPException, status
 from app.core.security import time_now
 from app.db.database import save_db
-from app.db.models import TextClassification, MorningDiary, NightDiary, Memo, Calender
-from app.feature.aiRequset import send_gpt4_request
-from app.feature.diary import create_morning_diary, create_night_diary, create_memo
+from app.db.models import TextClassification
+from app.feature.aiRequset import GPTService
+from app.feature.diary import create_morning_diary, create_memo_ai, create_night_diary_ai
 from app.feature.generate import generate_schedule
 
 async def classify_text(text_type, text, current_user, db):
     if text_type == 0:
         try:
             # 텍스트 분류
-            number = await send_gpt4_request(1, text[:200], current_user, db)
+            gpt_service = GPTService(current_user, db)
+            number = await gpt_service.send_gpt_request(1, text[:200])
             text_type = int(number.strip())
         except:
             # 텍스트 분류 실패
@@ -29,26 +32,22 @@ async def classify_text(text_type, text, current_user, db):
     save_db(save_chat, db)
 
     # 각 텍스트에 맞는 기능 실행
-    diary_id, content = await generate_diary(text, text_type, current_user, db)
-    return diary_id, content, text_type
+    diary = await generate_diary(text, text_type, current_user, db)
+    return diary.id, diary, text_type
 
-async def generate_diary(text, text_type, current_user, db):
+async def generate_diary(text, text_type, current_user, db) -> Any:
     if text_type == 1:
-        diary_id = await create_morning_diary(text, current_user, db)
-        content = db.query(MorningDiary).filter(MorningDiary.id == diary_id).first()
+        diary = await create_morning_diary(text, current_user, db)
     elif text_type == 2:
-        diary_id = await create_night_diary(text, current_user, db)
-        content = db.query(NightDiary).filter(NightDiary.id == diary_id).first()
+        diary = await create_night_diary_ai(text, current_user, db)
     elif text_type == 3:
-        diary_id = await create_memo(text, current_user, db)
-        content = db.query(Memo).filter(Memo.id == diary_id).first()
+        diary = await create_memo_ai(text, current_user, db)
     elif text_type == 4:
-        diary_id = await generate_schedule(text, current_user, db)
-        content = db.query(Calender).filter(Calender.id == diary_id).first()
+        diary = await generate_schedule(text, current_user, db)
     else:
         # 텍스트 분류 실패
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=4013
         )
-    return diary_id, content
+    return diary

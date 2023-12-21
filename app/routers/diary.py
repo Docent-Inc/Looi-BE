@@ -1,13 +1,15 @@
 from fastapi import APIRouter, Depends
+
+from app.db.models import Memo
 from app.feature.diary import create_night_diary, create_morning_diary, read_morning_diary, read_night_diary, \
     update_morning_diary, delete_morning_diary, update_night_diary, delete_night_diary, create_memo, list_morning_diary, \
     list_night_diary, create_calender, update_calender, read_calender, delete_calender, dairy_list, read_memo, \
-    dairy_list_calender, get_diary_ratio, delete_memo, share_read_morning_diary, share_read_night_diary
+    dairy_list_calender, get_diary_ratio, delete_memo, share_read_morning_diary, share_read_night_diary, update_memo
 from app.db.database import get_db
 from sqlalchemy.orm import Session
 from app.core.security import get_current_user
 from app.schemas.request import CreateDiaryRequest, UpdateDiaryRequest, CalenderRequest, MemoRequest, ListRequest, \
-    CalenderListRequest
+    CalenderListRequest, CreateNightDiaryRequest
 from app.schemas.response import User, ApiResponse, ListResponse
 
 router = APIRouter(prefix="/diary")
@@ -18,9 +20,9 @@ async def morning_create(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> ApiResponse:
-    diary_id = await create_morning_diary(body.content, current_user, db)
+    diary = await create_morning_diary(body.content, current_user, db)
     return ApiResponse(
-        data={"id": diary_id}
+        data={"diary": diary}
     )
 
 @router.get("/morning/read", response_model=ApiResponse, tags=["Diary"])
@@ -41,9 +43,9 @@ async def morning_update(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> ApiResponse:
-    diary_id = await update_morning_diary(diary_id, body, current_user, db)
+    diary = await update_morning_diary(diary_id, body, current_user, db)
     return ApiResponse(
-        data={"id": diary_id}
+        data={"diary": diary}
     )
 
 @router.delete("/morning/delete", response_model=ApiResponse, tags=["Diary"])
@@ -68,13 +70,13 @@ async def morning_list(
 
 @router.post("/night/create", response_model=ApiResponse, tags=["Diary"])
 async def night_create(
-    body: CreateDiaryRequest,
+    body: CreateNightDiaryRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> ApiResponse:
-    diary_id = await create_night_diary(body.content, current_user, db)
+    diary = await create_night_diary(body, current_user, db)
     return ApiResponse(
-        data={"id": diary_id}
+        data={"diary": diary}
     )
 
 @router.get("/night/read", response_model=ApiResponse, tags=["Diary"])
@@ -95,9 +97,9 @@ async def night_update(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> ApiResponse:
-    diary_id = await update_night_diary(diary_id, body, current_user, db)
+    diary = await update_night_diary(diary_id, body, current_user, db)
     return ApiResponse(
-        data={"id": diary_id}
+        data={"diary": diary}
     )
 
 @router.delete("/night/delete", response_model=ApiResponse, tags=["Diary"])
@@ -120,58 +122,36 @@ async def night_list(
         data={"diaries": diaries}
     )
 '''
-memo diary crud
+memo  crud
 '''
 @router.post("/memo/create", response_model=ApiResponse, tags=["Memo"])
-async def memo_create(
-    body: MemoRequest,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+async def post_memo_create(
+    memo: Memo = Depends(create_memo)
 ) -> ApiResponse:
-    memo_id = await create_memo(body.content, current_user, db)
-    return ApiResponse(
-        data={"id": memo_id}
-    )
-
-@router.get("/memo/read", response_model=ApiResponse, tags=["Memo"])
-async def memo_read(
-    memo_id: int,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-) -> ApiResponse:
-    memo = await read_memo(memo_id, current_user, db)
     return ApiResponse(
         data={"memo": memo}
     )
 
-# @router.post("/memo/update", response_model=ApiResponse, tags=["Memo"])
-# async def memo_update(
-#     body: MemoRequest,
-#     memo_id: int,
-#     current_user: User = Depends(get_current_user),
-#     db: Session = Depends(get_db),
-# ) -> ApiResponse:
-#     '''
-#     메모 수정 API, 사용자가 입력한 텍스트를 기반으로 메모를 수정합니다.
-#
-#     :param body: 사용자가 입력한 텍스트
-#     :param memo_id: 수정할 메모의 id
-#     :param current_user: 로그인한 사용자의 정보를 가져오는 의존성 주입
-#     :param db: 데이터베이스 세션을 가져오는 의존성 주입
-#     :return 메모 수정 결과
-#     '''
-#     memo_id = await update_memo(memo_id, body.content, current_user, db)
-#     return ApiResponse(
-#         data={"id": memo_id}
-#     )
+@router.get("/memo/read", response_model=ApiResponse, tags=["Memo"])
+async def get_memo_read(
+    memo: Memo = Depends(read_memo)
+) -> ApiResponse:
+    return ApiResponse(
+        data={"memo": memo}
+    )
+
+@router.post("/memo/update", response_model=ApiResponse, tags=["Memo"])
+async def post_memo_update(
+    memo: Memo = Depends(update_memo)
+) -> ApiResponse:
+    return ApiResponse(
+        data={"memo": memo}
+    )
 
 @router.delete("/memo/delete", response_model=ApiResponse, tags=["Memo"])
-async def memo_delete(
-    memo_id: int,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+async def delete_memo_delete(
+    memo: Memo = Depends(delete_memo)
 ) -> ApiResponse:
-    await delete_memo(memo_id, current_user, db)
     return ApiResponse()
 '''
 calender diary crud
@@ -182,9 +162,9 @@ async def calender_create(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> ApiResponse:
-    calender_id = await create_calender(body, current_user, db)
+    calender = await create_calender(body, current_user, db)
     return ApiResponse(
-        data={"id": calender_id}
+        data={"calender": calender}
     )
 
 @router.get("/calender/read", response_model=ApiResponse, tags=["Calender"])
@@ -198,16 +178,16 @@ async def calender_read(
         data={"calender": calender}
     )
 
-@router.put("/calender/update", response_model=ApiResponse, tags=["Calender"])
+@router.post("/calender/update", response_model=ApiResponse, tags=["Calender"])
 async def calender_update(
     body: CalenderRequest,
     calender_id: int,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> ApiResponse:
-    calender_id = await update_calender(calender_id, body, current_user, db)
+    calender = await update_calender(calender_id, body, current_user, db)
     return ApiResponse(
-        data={"id": calender_id}
+        data={"calender": calender}
     )
 
 @router.delete("/calender/delete", response_model=ApiResponse, tags=["Calender"])

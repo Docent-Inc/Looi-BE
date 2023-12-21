@@ -1,15 +1,22 @@
 import asyncio
 import json
+import uuid
+from io import BytesIO
+import extcolors
 import openai
+import requests
+from PIL import Image
 from fastapi import HTTPException, status
 import datetime
 import pytz
+from google.cloud import storage
+from google.oauth2 import service_account
 from sqlalchemy.orm import Session
-
 from app.core.config import settings
 from app.core.security import time_now
-from app.db.models import ApiRequestLog, User
-
+from app.db.database import save_db
+from app.db.models import ApiRequestLog, User, Prompt
+SERVICE_ACCOUNT_INFO = json.loads(settings.GOOGLE_APPLICATION_CREDENTIALS_JSON)
 openai.api_key = settings.GPT_API_KEY
 
 days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
@@ -53,6 +60,10 @@ prompt2 = [
     {"role": "system", "content": "수상한 강아지의 탈출 대작전"},
     {"role": "user", "content": "집 앞 공원 벤치에 앉아있는데 비둘기 두마리가 나한테 와서 구구구 거림 처음엔 무서워서 피했는데 나중에는 친해져서 쓰다듬어줌 그러다가 비둘기는 다시 자기 갈길 가고 나도 집에 감"},
     {"role": "system", "content": "비둘기와 나의 특별한 우정"},
+    {"role": "user", "content": "오늘은 크리스마스다. 여자친구와 현대백화점에 가서 아웃백을 먹고 영화를 봤다. 오펜하이머를 봤는데 나는 사실 물리학과를 갔어야 될 것 같다. 너무 재미있었다."},
+    {"role": "system", "content": "크리스마스 데이트"},
+    {"role": "user", "content": "학교에서 계속 공부를했다. 너무 힘든 하루였지만 마무리가 깔끔해서 기분좋게 잠에 잘 수 있을 것 같다. 내일은 더 열심히 해야겠다."},
+    {"role": "system", "content": "학교에서 공부하는 나"},
 ]
 
 prompt3 = [
@@ -99,9 +110,9 @@ prompt4 = [
 prompt5 = [
     {"role": "system", "content": "꿈을 요소별로 자세하게, mbti맞춤 해몽 해줘. '이 꿈은'으로 시작해주고, mbti에 대한 언급은 직접적으로 하지 말아줘. max_length=180, json format"},
     {"role": "user", "content": "intp, 어젯밤 나는 처음 꿈을 꾸었다. 누군가 날 안아주는 꿈 포근한 가슴에 얼굴을 묻고 웃었다. 나 그 꿈에서 살수는 없었나"},
-    {"role": "system", "content": "{\"resolution\":\"이 꿈은 당신이 애틋한 정서와 친밀감에 대한 갈망을 나타내고 있을 수 있습니다. 포근한 가슴에 얼굴을 묻고 웃는 상황은 당신이 편안함과 사랑, 보호를 갈망하고 있음을 보여줍니다. 그리고 이것이 행복하고 안정적인 상태를 연상시키기도 합니다. 그러나 꿈에서 일어난 후의 물음은 당신이 현재의 생활 상황에서 이러한 감정을 찾는 데 어려움을 겪고 있음을 나타낼 수 있습니다. 당신이 그 꿈에서 살 수 없었다는 문구는 현실과 이상 사이의 괴리감을 나타낼 수 있으며, 이것은 일반적으로 현재의 생활 상황에 대한 불만족을 나타냅니다. 이 꿈은 당신에게 현재의 생활에서 원하는 감정과 상황을 찾기 위해 무엇을 할 수 있는지 고민해보라는 메시지를 전달하고 있을 수 있습니다.\", \"main_keywords\": [\"편안함\", \"안정적인 상태\"]}"},
+    {"role": "system", "content": "{\"resolution\":\"이 꿈은 당신이 애틋한 정서와 친밀감에 대한 갈망을 나타내고 있을 수 있습니다. 포근한 가슴에 얼굴을 묻고 웃는 상황은 당신이 편안함과 사랑, 보호를 갈망하고 있음을 보여줍니다. 그리고 이것이 행복하고 안정적인 상태를 연상시키기도 합니다. 그러나 꿈에서 일어난 후의 물음은 당신이 현재의 생활 상황에서 이러한 감정을 찾는 데 어려움을 겪고 있음을 나타낼 수 있습니다. 당신이 그 꿈에서 살 수 없었다는 문구는 현실과 이상 사이의 괴리감을 나타낼 수 있으며, 이것은 일반적으로 현재의 생활 상황에 대한 불만족을 나타냅니다. 이 꿈은 당신에게 현재의 생활에서 원하는 감정과 상황을 찾기 위해 무엇을 할 수 있는지 고민해보라는 메시지를 전달하고 있을 수 있습니다.\", \"main_keywords\": [\"사랑\", \"편안함\", \"안정적인 상태\", \"보호\", \"현실과 이상\"]}"},
     {"role": "user", "content": "entj, 난 운전하고 있었고 예람누나가 전화로 자기 도슨트 못하겠다고 얘기하고 있었는데, 옆으로 아이오닉5 한대가 ㅈㄴ빠르게 달려가더니 저 앞에가서 공중으러 날고 내려꽃혀서 터짐. 그뒤로 사람 세명이 바구니같은곳에 실려나오는데 두명은 산거같기는한데 한명이 의식이 없어"},
-    {"role": "system", "content": "{\"resolution\":\"이 꿈은 주변 환경 변화에 따른 불안감이나 스트레스를 나타내는 것일 수 있습니다. 운전 중인 모습은 일상생활에서의 책임감 및 부담감을 상징하며, 이로 인해 발생한 사건들은 예상치 못한 일들로 인한 충격 또는 당황스러움을 표현합니다. 특히 마지막 부분에서 등장인물들이 사망하거나 부상당하는 장면은 실제로 그런 일이 일어날 가능성보다는 그러한 두려움을 반영한다고 볼 수 있습니다. 따라서 이 꿈은 당신이 최근 들어 직면하게 된 문제나 걱정거리 때문에 심리적 압박감을 느끼고 있다는 것을 암시하므로, 잠시 휴식을 취하면서 마음을 가다듬는 시간을 갖는 것이 필요하다는 조언을 담고 있다고 해석될 수 있습니다.\", \"main_keywords\": [\"예상치 못한 일\", \"심리적 압박감\"]}"},
+    {"role": "system", "content": "{\"resolution\":\"이 꿈은 주변 환경 변화에 따른 불안감이나 스트레스를 나타내는 것일 수 있습니다. 운전 중인 모습은 일상생활에서의 책임감 및 부담감을 상징하며, 이로 인해 발생한 사건들은 예상치 못한 일들로 인한 충격 또는 당황스러움을 표현합니다. 특히 마지막 부분에서 등장인물들이 사망하거나 부상당하는 장면은 실제로 그런 일이 일어날 가능성보다는 그러한 두려움을 반영한다고 볼 수 있습니다. 따라서 이 꿈은 당신이 최근 들어 직면하게 된 문제나 걱정거리 때문에 심리적 압박감을 느끼고 있다는 것을 암시하므로, 잠시 휴식을 취하면서 마음을 가다듬는 시간을 갖는 것이 필요하다는 조언을 담고 있다고 해석될 수 있습니다.\", \"main_keywords\": [\"예상치 못한 일\", \"심리적 압박감\", \"휴식\"]}"},
 ]
 
 prompt6 = [
@@ -132,172 +143,185 @@ prompt7 = [
     {"role": "system", "content": "Analyze the user's dreams, diary, and schedule to create a about 4000-character Concrete 'Mental State Report'. Please write korean but each title is Engilsh."},
     {"role": "system", "content": "1. mental_state 2. positives  3. negatives  4. extroverted_activities 5. introverted_activities  6. recommendations 7. statistics 8. keywords"},
     {"role": "system", "content": "Provide detailed analysis for 'Mental State'. For items 1, total summary about report and include user nickname. about 400-character" },
-    {"role": "system", "content": "For item 2-3, provide some comments about the user's extroverted and introverted activities. about 200-character. main_keyword in 2-3 is phrase or word that you choose."},
+    {"role": "system", "content": "For item 2-3, provide some comments about the user's extroverted and introverted activities. about 300-character. main_keyword in 2-3 is phrase or word that you choose."},
     {"role": "system", "content": "For item 7, provide a list 1 detail ratio dictionary for Extroversion, Introversion and for item 8 provide 5 keywords"},
-    {"role": "system", "content": "공손한 말투로 만들어주세요. follow my example json format"},
+    {"role": "system", "content": "공손한 말투로 만들어주세요. follow my example json format. must fill all items."},
     {"role": "system", "content": "ex) if user nickname: 뀨뀨, return = {\"mental_state\":\"뀨뀨님의 최근 꿈과 일기는 복잡한 감정과 생각의 교차점을 보여줍니다. 꿈에서의 경쟁과 화해 시도는 일상 생활에서의 스트레스, 대인 관계의 어려움, 그리고 자신의 업적에 대한 내적인 기준과 기대를 반영하고 있습니다. 이는 뀨뀨님의 열정과 성취에 대한 갈망, 동시에 관계와 업무에서의 불안정성과 불확실성에 대한 고민을 나타냅니다.\", \"positives\": {\"comment\": \"학회 수료와 상 수상은 뀨뀨님의 성취감을 대표하는 중요한 사건입니다. 남자친구와의 즐거운 시간, 동료들과의 식사는 일상 속에서 즐거움과 안정감을 제공합니다. 이러한 순간들은 뀨뀨님의 긍정적인 에너지를 증폭시키며, 성공과 행복을 추구하는 데 동기를 부여합니다. \", \"main_keyword\": \"성취감과 행복\"}, \"negatives\": {\"comment\": \"일상에서 느끼는 지루함과 스트레스, 내적 갈등이 뀨뀨님의 정신적 부담을 가중시키고 있습니다. 특히, 싫어하는 사람과의 관계에서 느끼는 스트레스와 업무에서의 난감함이 부각됩니다. 이러한 부담감은 뀨뀨님의 삶에서 균형을 찾는 데 방해가 될 수 있습니다.\", \"main_keyword\": \"스트레스와 불안정성\"}, \"extroverted_activities\": [\"동료들과의 저녁식사\", \"남자친구와의 데이트\", \"가족, 친구들과의 저녁 약속\"], \"introverted_activities\": [\"독서실에서의 개별 작업\", \"일기 쓰기\", \"학회에서의 성취\"], \"recommendations\": [\"스트레스 관리를 위한 취미 활동 찾기\", \"자기계발 및 경력 계획 세우기\", \"대인 관계에서의 긴장 완화를 위한 커뮤니케이션 기술 향상\", \"규칙적인 수면 스케줄 유지\", \"필요시 전문가의 상담 고려\"], \"statistics\": {\"extrovert\": 60, \"introvert\": 40}, \"keywords\": [\"성취감\", \"행복\", \"스트레스\", \"불안정성\", \"자기 성찰\"]}"},
 ]
 
 prompt8 = [
     {"role": "system", "content": "Analyze the user's memo and create json format of the memo. please write korean and return only json format, fill all the contents."},
-    {"role": "system", "content": "{\"title\": \"메모에 대한 제목 생성\", \"content\":\"사용자 메모\", \"tags\":[\"??\", \"??\"]}"},
+    {"role": "system", "content": "{\"title\": \"메모에 대한 제목 생성\", \"tags\":[\"??\", \"??\"]}"},
     {"role": "user", "content": "곽서준, 01046306320"},
-    {"role": "system", "content": "{\"title\": \"곽서준님의 전화번호\", \"content\":\"01046306320\", \"tags\":[\"곽서준\", \"전화번호\"]}"},
+    {"role": "system", "content": "{\"title\": \"곽서준님의 전화번호\", \"tags\":[\"곽서준\", \"전화번호\"]}"},
     {"role": "user", "content": "컴퓨터 구조 책 다 읽고 정리하기"},
-    {"role": "system", "content": "{\"title\": \"해야될 일\", \"content\":\"컴퓨터 구조 책 다 읽고 정리하기\", \"tags\":[\"컴퓨터 구조\", \"책\", \"정리\"]}"},
+    {"role": "system", "content": "{\"title\": \"해야될 일\", \"tags\":[\"컴퓨터 구조\", \"책\", \"정리\"]}"},
     {"role": "user", "content": "title = 아이유(IU)의 킬링보이스를 라이브로! - 하루 끝, 너의 의미, 스물셋, 밤편지, 팔레트, 가을 아침, 삐삐, Blueming, 에잇, Coin, 라일락 ㅣ 딩고뮤직 - YouTube, content = https://www.youtube.com/watch?v=wDfqXR_5yyQ"},
-    {"role": "system", "content": "{\"title\": \아이유(IU)의 킬링보이스를 라이브로!\", \"content\":\"https://www.youtube.com/watch?v=K4yY5aVarhA\", \"tags\": [\"아이유\", \"킬링보이스\", \"라이브\"]}"},
+    {"role": "system", "content": "{\"title\": \아이유(IU)의 킬링보이스를 라이브로!\", \"tags\": [\"아이유\", \"킬링보이스\", \"라이브\"]}"},
     {"role": "user", "content": "애덤 그랜트 오리지널스"},
-    {"role": "system", "content": "{\"title\": \"읽을 책\", \"content\":\"오리지널스 - Adam Grant\", \"tags\": [\"애덤 그랜트\", \"오리지널스\"]}"},
+    {"role": "system", "content": "{\"title\": \"읽을 책\", \"tags\": [\"애덤 그랜트\", \"오리지널스\"]}"},
 ]
 
-async def api_log(request_type: str, request_token: int, response_token: int, response_time_ms: int, model: str, user_id: int, db: Session):
-    api_request_log = ApiRequestLog(
-        request_type=request_type,
-        request_token=request_token,
-        response_token=response_token,
-        response_time_ms=response_time_ms,
-        model=model,
-        is_success=True,
-        create_date=await time_now(),
-        User_id=user_id
-    )
-    db.add(api_request_log)
-    db.commit()
-    db.refresh(api_request_log)
+prompt9 = [
+    {"role": "system", "content": "create date's title. please write only korean, and return only title. if cant find title, return same content."},
+    {"role": "user", "content": "크리솔 10기 팀원들과 회식"},
+    {"role": "system", "content": "회식"},
+    {"role": "user", "content": "1주년 기념 데이트"},
+    {"role": "system", "content": "데이트"},
+    {"role": "user", "content": "이대 엄주용 졸업 연주회"},
+    {"role": "system", "content": "연주회"},
+    {"role": "user", "content": "학생 연구센터에서 빌린 자료 반납"},
+    {"role": "system", "content": "자료 반납"},
+    {"role": "user", "content": "컴퓨터 구조 책 다 읽고 정리하기"},
+    {"role": "system", "content": "책 내용 정리하기"},
+    {"role": "user", "content": "테스트"},
+    {"role": "system", "content": "테스트"},
+    {"role": "user", "content": "하루단백바 치즈베리맛 또는 솔직단백 쿠키앤크림맛"},
+    {"role": "system", "content": "식단"},
+]
 
-async def send_gpt_request(prompt_num: int , messages_prompt: str, current_user: User, db: Session, retries=3):
-    prompt_dict = {2: "제목", 3: "이미지 프롬프트", 4: "일정", 5: "오늘의 운세", 6: "메모"}
-    if prompt_num == 2:
-        prompt = prompt2.copy()
-    elif prompt_num == 3:
-        prompt = prompt3.copy()
-    elif prompt_num == 4:
-        messages_prompt = f"local time: {datetime.datetime.now(pytz.timezone('Asia/Seoul'))} {days[datetime.datetime.now(pytz.timezone('Asia/Seoul')).weekday()]}, {messages_prompt}"
-        prompt = prompt6.copy()
-    elif prompt_num == 5:
-        prompt = prompt4.copy()
-    elif prompt_num == 6:
-        prompt = prompt8.copy()
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=4000,
+class GPTService:
+    def __init__(self, user: User, db: Session):
+        self.user = user
+        self.db = db
+
+    async def api_log(self, request_type: str, request_token: int, response_token: int, response_time_ms: int, model: str, user_id: int, db: Session):
+        api_request_log = ApiRequestLog(
+            request_type=request_type,
+            request_token=request_token,
+            response_token=response_token,
+            response_time_ms=response_time_ms,
+            model=model,
+            is_success=True,
+            create_date=await time_now(),
+            User_id=user_id
         )
-    prompt.append({"role": "user", "content": messages_prompt})
-    for i in range(retries):
-        try:
-            start_time = await time_now()
-            model = "gpt-3.5-turbo-1106" if prompt_num in [4, 6] else "gpt-3.5-turbo"
-            response_format = {"type": "json_object"} if prompt_num in [4, 6] else None
-            chat = await asyncio.to_thread(
-                openai.ChatCompletion.create,
-                model=model,
-                messages=prompt,
-                response_format=response_format
-            )
-            end_time = await time_now()
-            await api_log(
-                user_id=current_user.id,
-                request_type=prompt_dict[prompt_num],
-                request_token=chat.usage.prompt_tokens,
-                response_token=chat.usage.completion_tokens,
-                response_time_ms=int((end_time - start_time).total_seconds() * 1000),
-                model=chat.model,
-                db=db
-            )
-            if prompt_num in [4, 6]:
-                return json.loads(chat.choices[0].message.content)
-            else:
+        save_db(api_request_log, db)
+
+    async def send_gpt_request(self, prompt_num: int, messages_prompt: str, retries=3):
+        prompt_dict = {
+            1: (prompt1, "텍스트 분류", "gpt-4-1106-preview", None),
+            2: (prompt2, "제목", "gpt-3.5-turbo", None),
+            3: (prompt3, "이미지 프롬프트", "gpt-3.5-turbo", None),
+            4: (prompt4, "오늘의 운세", "gpt-3.5-turbo", None),
+            5: (prompt5, "해몽", "gpt-4-1106-preview", None),
+            6: (prompt6, "일정", "gpt-3.5-turbo-1106", {"type": "json_object"}),
+            7: (prompt7, "한 주 돌아보기", "gpt-4-1106-preview", {"type": "json_object"}),
+            8: (prompt8, "메모", "gpt-3.5-turbo-1106", {"type": "json_object"}),
+            9: (prompt9, "일정 제목", "gpt-3.5-turbo", None),
+        }
+        if prompt_num == 1 or prompt_num == 6:
+            messages_prompt = f"{datetime.datetime.now(pytz.timezone('Asia/Seoul'))}, {messages_prompt}"
+        prompt = prompt_dict[prompt_num][0].copy()
+        prompt.append({"role": "user", "content": messages_prompt})
+        for i in range(retries):
+            try:
+                start_time = await time_now()
+                chat = await asyncio.to_thread(
+                    openai.ChatCompletion.create,
+                    model=prompt_dict[prompt_num][2],
+                    messages=prompt,
+                    response_format=prompt_dict[prompt_num][3]
+                )
+                end_time = await time_now()
+                await self.api_log(
+                    user_id=self.user.id,
+                    request_type=prompt_dict[prompt_num][1],
+                    request_token=chat.usage.prompt_tokens,
+                    response_token=chat.usage.completion_tokens,
+                    response_time_ms=int((end_time - start_time).total_seconds() * 1000),
+                    model=chat.model,
+                    db=self.db
+                )
                 return chat.choices[0].message.content
-        except Exception as e:
-            print(f"GPT API Error {e}")
-            if i < retries - 1:
-                print(f"Retrying {i + 1} of {retries}...")
-            else:
-                print("Failed to get response after maximum retries")
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=4501,
-                )
-async def send_gpt4_request(prompt_num: int, messages_prompt: str, current_user: User, db: Session, retries=3):
-    prompt_dict = {1: "텍스트 분류", 2: "해몽", 3: "한 주 돌아보기"}
-    if prompt_num == 1:
-        prompt = prompt1.copy()
-        messages_prompt = f"{datetime.datetime.now(pytz.timezone('Asia/Seoul'))}, {messages_prompt}"
-    elif prompt_num == 2:
-        prompt = prompt5.copy()
-    elif prompt_num == 3:
-        prompt = prompt7.copy()
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=4000,
-        )
-    prompt.append({"role": "user", "content": messages_prompt})
+            except Exception as e:
+                print(f"GPT API Error {e}")
+                if i < retries - 1:
+                    print(f"Retrying {i + 1} of {retries}...")
+                else:
+                    print("Failed to get response after maximum retries")
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail=4501,
+                    )
 
-    for i in range(retries):
-        try:
-            start_time = await time_now()
-            chat = await asyncio.to_thread(
-                openai.ChatCompletion.create,
-                model="gpt-4-1106-preview",
-                messages=prompt,
-                response_format={"type": "json_object"} if prompt_num in [2, 3] else None
-            )
-            end_time = await time_now()
-            await api_log(
-                user_id=current_user.id,
-                request_type=prompt_dict[prompt_num],
-                request_token=chat.usage.prompt_tokens,
-                response_token=chat.usage.completion_tokens,
-                response_time_ms=int((end_time - start_time).total_seconds() * 1000),
-                model=chat.model,
-                db=db
-            )
-            content = chat.choices[0].message.content
-            return content
-        except Exception as e:
-            print(f"GPT API Error {e}")
-            if i < retries - 1:
-                print(f"Retrying {i + 1} of {retries}...")
-            else:
-                print("Failed to get response after maximum retries")
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=4501,
+    async def send_dalle_request(self, messages_prompt: str, background=True, retries=3):
+        for i in range(retries):
+            try:
+                start_time = await time_now()
+                response = await asyncio.to_thread(
+                    openai.Image.create,
+                    model="dall-e-3",
+                    prompt=f"{messages_prompt[:255]}",
+                    n=1,
+                    size="1024x1024",
+                    response_format="url"
+                )
+                end_time = await time_now()
+                await self.api_log(
+                    user_id=self.user.id,
+                    request_type="이미지 생성",
+                    request_token=0,
+                    response_token=0,
+                    response_time_ms=int((end_time - start_time).total_seconds() * 1000),
+                    model="DaLLE-3",
+                    db=self.db
                 )
 
-async def send_dalle3_request(messages_prompt: str, user: User, db: Session, retries=3):
-    for i in range(retries):
-        try:
-            start_time = await time_now()
-            response = await asyncio.to_thread(
-                openai.Image.create,
-                model="dall-e-3",
-                prompt=f"{messages_prompt[:255]}",
-                n=1,
-                size="1024x1024",
-                response_format="url"
-            )
-            end_time = await time_now()
-            await api_log(
-                user_id=user.id,
-                request_type="이미지 생성",
-                request_token=0,
-                response_token=0,
-                response_time_ms=int((end_time - start_time).total_seconds() * 1000),
-                model="DaLLE-3",
-                db=db
-            )
-            return response['data'][0]['revised_prompt'], response['data'][0]['url']
-        except Exception as e:
-            print(f"DALL-E API Error{e}")
-            if i < retries - 1:
-                print(f"Retrying {i + 1} of {retries}...")
-            else:
-                print("Failed to get response after maximum retries")
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=4505,
+                # 이미지 생성 프롬프트 저장
+                save_promt = Prompt(
+                    text=messages_prompt[:255],
+                    prompt=response['data'][0]['revised_prompt'],
                 )
+                save_db(save_promt, self.db)
+
+                # 클라우드 버킷에 이미지 저장
+                response = await asyncio.to_thread(requests.get, response['data'][0]['url'])
+                img = Image.open(BytesIO(response.content))
+                img = img.resize((512, 512), Image.ANTIALIAS)
+
+                if background:
+                    width, height = img.size
+
+                    # 이미지를 상하로 2등분
+                    upper_half = img.crop((0, 0, width, height // 2))
+                    lower_half = img.crop((0, height // 2, width, height))
+
+                    # 각 부분의 대표색 추출
+                    upper_colors, _ = extcolors.extract_from_image(upper_half)
+                    lower_colors, _ = extcolors.extract_from_image(lower_half)
+
+                    upper_dominant_color = upper_colors[0][0]
+                    lower_dominant_color = lower_colors[0][0]
+
+                unique_id = uuid.uuid4()
+                destination_blob_name = str(unique_id) + ".png"
+                bucket_name = "docent"  # 구글 클라우드 버킷 이름
+                credentials = service_account.Credentials.from_service_account_info(SERVICE_ACCOUNT_INFO)
+                client = storage.Client(credentials=credentials, project=SERVICE_ACCOUNT_INFO['project_id'])
+
+                buffer = BytesIO()
+                img.save(buffer, format="PNG")
+
+                with BytesIO(buffer.getvalue()) as image_file:
+                    image_file.seek(0)
+                    bucket = client.get_bucket(bucket_name)
+                    blob = bucket.blob(destination_blob_name)
+                    blob.upload_from_file(image_file)
+                    blob.make_public()
+
+                # public url 반환
+                if background:
+                    return [blob.public_url, upper_dominant_color, lower_dominant_color]
+                else:
+                    return blob.public_url
+            except Exception as e:
+                print(f"DALL-E API Error{e}")
+                if i < retries - 1:
+                    print(f"Retrying {i + 1} of {retries}...")
+                else:
+                    print("Failed to get response after maximum retries")
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail=4505,
+                    )
