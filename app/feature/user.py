@@ -391,6 +391,8 @@ async def user_apple(data: dict, db: Session) -> Optional[User]:
     user = await get_user_by_email(db, email=kakao_email)
     is_sign_up = False
     # 사용자가 존재하지 않으면 새로운 사용자를 생성합니다.
+    print(f"email : {kakao_email}")
+    print(f"nickname : {kakao_nickname}")
     if not user:
         user = User(
             email=kakao_email,
