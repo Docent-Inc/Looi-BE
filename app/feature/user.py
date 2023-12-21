@@ -32,7 +32,7 @@ PROFILE_ENDPOINT_LINE = "https://api.line.me/v2/profile"
 LINE_AUTH_URL = f"https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id={LINE_CHANNEL_ID}&redirect_uri={REDIRECT_URI}&state={random.randint(1000000000, 9999999999)}&scope=profile%20openid%20email"
 LINE_AUTH_URL_TEST = f"https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id={LINE_CHANNEL_ID}&redirect_uri={REDIRECT_URI_TEST}&state={random.randint(1000000000, 9999999999)}&scope=profile%20openid%20email"
 APPLE_AUTH_URL_DEV = f"https://appleid.apple.com/auth/authorize?client_id=looi.docent.zip&redirect_uri=https://bmongsmong.com/callback/apple&response_type=code&response_mode=query"
-APPLE_AUTH_URL = f"https://appleid.apple.com/auth/authorize?client_id=looi.docent.zip&redirect_uri=https://docent.zip/callback/apple&response_type=code%20id_token&scope=name%20email&response_mode=form_post"
+APPLE_AUTH_URL = f"https://appleid.apple.com/auth/authorize?client_id=looi.docent.zip&redirect_uri=https://docent.zip/callback/apple&response_type=code%20id_token&scope=name%20email&response_mode=query"
 
 
 mbti_list = ['istj', 'isfj', 'infj', 'intj', 'istp', 'isfp', 'infp', 'intp', 'estp', 'esfp', 'enfp', 'entp', 'estj', 'esfj', 'enfj', 'entj']
