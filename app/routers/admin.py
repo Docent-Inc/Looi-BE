@@ -1,7 +1,7 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends
 from app.schemas.response import ApiResponse
-from app.service.Admin import AdminService
+from app.service.admin import AdminService
 
 router = APIRouter(prefix="/admin")
 
