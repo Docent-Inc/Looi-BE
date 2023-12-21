@@ -4,18 +4,19 @@ from sqlalchemy import desc, literal, func, or_, and_
 from sqlalchemy import null
 from dateutil.relativedelta import relativedelta
 from aiohttp import ClientSession
-from fastapi import HTTPException
+from fastapi import HTTPException, Depends, Body, Path
 from bs4 import BeautifulSoup
 from sqlalchemy.orm import Session
 from sqlalchemy import union_all
 from starlette import status
-from app.core.security import time_now
-from app.db.database import save_db
+from app.core.security import time_now, get_current_user, check_length
+from app.db.database import save_db, get_db
 from app.db.models import NightDiary, MorningDiary, Memo, Calender
-from app.feature.aiRequset import send_gpt_request
-from app.feature.generate import generate_image, generate_diary_name, generate_resolution_gpt
+from app.feature.aiRequset import GPTService
+from app.feature.generate import image_background_color
 import datetime
-from app.schemas.request import UpdateDiaryRequest, CalenderRequest, ListRequest, CalenderListRequest
+from app.schemas.request import UpdateDiaryRequest, CalenderRequest, ListRequest, CalenderListRequest, MemoRequest, \
+    CreateNightDiaryRequest
 from app.schemas.response import User
 
 async def add_one_month(original_date):
@@ -42,28 +43,35 @@ async def transform_memo(memo):
         'is_deleted': memo['is_deleted']
     }
 
-async def create_morning_diary(content: str, user: User, db: Session) -> int:
+async def create_morning_diary(content: str, user: User, db: Session) -> MorningDiary:
 
     # 사용자의 mbti와 content를 합친 문자열 생성
     mbti_content = content if user.mbti is None else user.mbti + ", " + content
 
     # 다이어리 제목, 이미지, 해몽 생성
+    gpt_service = GPTService(user, db)
     diary_name, image_info, resolution = await asyncio.gather(
-        generate_diary_name(content, user, db),
-        generate_image(user.image_model, content, user, db),
-        generate_resolution_gpt(mbti_content, user, db)
+        gpt_service.send_gpt_request(2, content),
+        gpt_service.send_dalle_request(content),
+        gpt_service.send_gpt_request(5, mbti_content)
     )
 
+    # 이미지 배경색 추출
+    image_url, upper_dominant_color, lower_dominant_color = image_info
+
     # 이미지 background color 문자열로 변환
-    upper_lower_color = "[\"" + str(image_info[1]) + "\", \"" + str(image_info[2]) + "\"]"
+    upper_lower_color = "[\"" + str(upper_dominant_color) + "\", \"" + str(lower_dominant_color) + "\"]"
 
     # db에 저장
+    await check_length(diary_name, 255, 4023)
+    await check_length(content, 1000, 4221)
     now = await time_now()
+    resolution = json.loads(resolution)
     try:
         diary = MorningDiary(
             content=content,
             User_id=user.id,
-            image_url=image_info[0],
+            image_url=image_url,
             background_color=upper_lower_color,
             diary_name=diary_name,
             resolution=resolution['resolution'],
@@ -72,14 +80,15 @@ async def create_morning_diary(content: str, user: User, db: Session) -> int:
             modify_date=now,
         )
         diary = save_db(diary, db)
-    except:
+    except Exception as e:
+        print(e)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=4021,
         )
 
-    # 다이어리 id 반환
-    return diary.id
+    # 다이어리 반환
+    return diary
 
 async def read_morning_diary(diary_id: int, user:User, db: Session) -> MorningDiary:
 
@@ -131,14 +140,18 @@ async def update_morning_diary(diary_id: int, content: UpdateDiaryRequest, user:
             detail=4011,
         )
 
-    # 다이어리 수정
-    diary.diary_name = content.diary_name
-    diary.content = content.diary_content
+    if content.diary_name != "":
+        await check_length(content.diary_name, 255, 4023)
+        diary.diary_name = content.diary_name
+    if content.content != "":
+        await check_length(content.content, 1000, 4221)
+        diary.content = content.content
+
     diary.modify_date = await time_now()
     diary = save_db(diary, db)
 
-    # 다이어리 id 반환
-    return diary.id
+    # 다이어리 반환
+    return diary
 
 async def delete_morning_diary(diary_id: int, user: User, db: Session):
 
@@ -164,23 +177,28 @@ async def list_morning_diary(page: int, user: User, db: Session):
     # 다이어리 목록 반환
     return diaries
 
-async def create_night_diary(content: str, user: User, db: Session):
-
+async def create_night_diary_ai(content: str, user: User, db: Session):
     # 이미지와 다이어리 제목 생성
-    L, diary_name = await asyncio.gather(
-        generate_image(user.image_model, content, user, db),
-        generate_diary_name(content, user, db)
+    gpt_service = GPTService(user, db)
+    image_info, diary_name = await asyncio.gather(
+        gpt_service.send_dalle_request(content),
+        gpt_service.send_gpt_request(2, content)
     )
 
+    # 이미지 배경색 추출
+    image_url, upper_dominant_color, lower_dominant_color = image_info
+
     # 이미지 background color 문자열로 변환
-    upper_lower_color = "[\"" + str(L[1]) + "\", \"" + str(L[2]) + "\"]"
-    now = await time_now()
+    upper_lower_color = "[\"" + str(upper_dominant_color) + "\", \"" + str(lower_dominant_color) + "\"]"
 
     # 저녁 일기 db에 저장
+    await check_length(diary_name, 255, 4023)
+    await check_length(content, 1000, 4221)
+    now = await time_now()
     diary = NightDiary(
         content=content,
         User_id=user.id,
-        image_url=L[0],
+        image_url=image_url,
         background_color=upper_lower_color,
         diary_name=diary_name,
         create_date=now,
@@ -188,8 +206,46 @@ async def create_night_diary(content: str, user: User, db: Session):
     )
     diary = save_db(diary, db)
 
-    # 다이어리 id 반환
-    return diary.id
+    # 다이어리 반환
+    return diary
+
+async def create_night_diary(body: CreateNightDiaryRequest, user: User, db: Session):
+    gpt_service = GPTService(user, db)
+    if body.title == "":
+        # 이미지와 다이어리 제목 생성
+        content = body.content
+        image_info, diary_name = await asyncio.gather(
+            gpt_service.send_dalle_request(content),
+            gpt_service.send_gpt_request(2, content)
+        )
+    else:
+        diary_name = body.title
+        content = body.content
+        image_info = await gpt_service.send_dalle_request(content)
+
+    # 이미지 배경색 추출
+    image_url, upper_dominant_color, lower_dominant_color = image_info
+
+    # 이미지 background color 문자열로 변환
+    upper_lower_color = "[\"" + str(upper_dominant_color) + "\", \"" + str(lower_dominant_color) + "\"]"
+
+    # 저녁 일기 db에 저장
+    await check_length(diary_name, 255, 4023)
+    await check_length(content, 1000, 4221)
+    now = await time_now()
+    diary = NightDiary(
+        content=content,
+        User_id=user.id,
+        image_url=image_url,
+        background_color=upper_lower_color,
+        diary_name=diary_name,
+        create_date=body.date,
+        modify_date=now,
+    )
+    diary = save_db(diary, db)
+
+    # 다이어리 반환
+    return diary
 
 async def read_night_diary(diary_id: int, user:User, db: Session) -> NightDiary:
 
@@ -242,14 +298,17 @@ async def update_night_diary(diary_id: int, content: UpdateDiaryRequest, user: U
             detail=4012,
         )
 
-    # 다이어리 수정
-    diary.diary_name = content.diary_name
-    diary.content = content.diary_content
+    if content.diary_name != "":
+        await check_length(content.diary_name, 255, 4023)
+        diary.diary_name = content.diary_name
+    if content.content != "":
+        await check_length(content.content, 1000, 4221)
+        diary.content = content.content
     diary.modify_date = await time_now()
     diary = save_db(diary, db)
 
-    # 다이어리 id 반환
-    return diary.id
+    # 다이어리 반환
+    return diary
 
 async def delete_night_diary(diary_id: int, user: User, db: Session) -> int:
 
@@ -274,12 +333,48 @@ async def list_night_diary(page: int, user: User, db: Session):
 
     # 다이어리 목록 반환
     return diaries
-async def create_memo(content: str, user: User, db: Session) -> int:
+async def fetch_content_from_url(session: ClientSession, url: str) -> str:
+    # url로부터 html content를 가져옴
+    async with session.get(url) as response:
+        return await response.text()
+async def create_memo_ai(content: str, user: User, db: Session) -> int:
+    # url이면 title을 가져옴
+    if content.startswith('http://') or content.startswith('https://'):
+        async with ClientSession() as session:
+            html_content = await fetch_content_from_url(session, content)
+            soup = BeautifulSoup(html_content, 'html.parser')
+            title = soup.title.string if soup.title else "No title"
+            if title == "No title":
+                content = f"title = URL 주소, content = {content}"
+            else:
+                content = f"title = {title}, content = {content}"
 
-    async def fetch_content_from_url(session: ClientSession, url: str) -> str:
-        # url로부터 html content를 가져옴
-        async with session.get(url) as response:
-            return await response.text()
+    # gpt-3.5 요청
+    gpt_service = GPTService(user, db)
+    data = await gpt_service.send_gpt_request(8, content)
+    data = json.loads(data)
+
+    # 메모 생성
+    now = await time_now()
+    memo = Memo(
+        title=data['title'],
+        content=content,
+        User_id=user.id,
+        tags=json.dumps(data['tags'], ensure_ascii=False),
+        create_date=now,
+        modify_date=now,
+    )
+    memo = save_db(memo, db)
+
+    # 메모 id 반환
+    return memo
+
+async def create_memo(
+    body: MemoRequest = Body(...),
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> Memo:
+    content = body.content
 
     # url이면 title을 가져옴
     if content.startswith('http://') or content.startswith('https://'):
@@ -293,13 +388,22 @@ async def create_memo(content: str, user: User, db: Session) -> int:
                 content = f"title = {title}, content = {content}"
 
     # gpt-3.5 요청
-    data = await send_gpt_request(6, content, user, db)
+    gpt_service = GPTService(user, db)
+    data = await gpt_service.send_gpt_request(8, content)
+
+    # 제목이 없다면 자동 생성
+    if body.title == "":
+        body.title = data['title']
+
+    # 제목, 내용 길이 체크
+    await check_length(text=body.title, max_length=255, error_code=4023)
+    await check_length(text=body.content, max_length=1000, error_code=4221)
 
     # 메모 생성
     now = await time_now()
     memo = Memo(
-        title=data['title'],
-        content=data['content'],
+        title=body.title,
+        content=content,
         User_id=user.id,
         tags=json.dumps(data['tags'], ensure_ascii=False),
         create_date=now,
@@ -307,10 +411,15 @@ async def create_memo(content: str, user: User, db: Session) -> int:
     )
     memo = save_db(memo, db)
 
-    # 메모 id 반환
-    return memo.id
+    # 메모 반환
+    return memo
 
-async def read_memo(memo_id: int, user: User, db: Session) -> Memo:
+
+async def read_memo(
+    memo_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+) -> Memo:
 
     # 메모 조회
     memo = db.query(Memo).filter(Memo.id == memo_id, Memo.User_id == user.id, Memo.is_deleted == False).first()
@@ -325,7 +434,43 @@ async def read_memo(memo_id: int, user: User, db: Session) -> Memo:
     # 메모 반환
     return memo
 
-async def delete_memo(memo_id: int, user: User, db: Session) -> int:
+async def update_memo(
+    memo_id: int,
+    body: MemoRequest = Body(...),
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+) -> Memo:
+
+    # 메모 조회
+    memo = db.query(Memo).filter(Memo.id == memo_id, Memo.User_id == user.id, Memo.is_deleted == False).first()
+
+    # 메모가 없을 경우 예외 처리
+    if not memo:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=4016,
+        )
+
+    # 제목, 내용 길이 체크
+    await check_length(text=body.title, max_length=255, error_code=4023)
+    await check_length(text=body.content, max_length=1000, error_code=4221)
+
+    # 메모 수정
+    if body.title != "":
+        memo.title = body.title
+    elif memo.title != "":
+        memo.content = body.content
+    memo.modify_date = await time_now()
+    memo = save_db(memo, db)
+
+    # 메모 반환
+    return memo
+
+async def delete_memo(
+    memo_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+) -> None:
 
     # 메모 조회
     memo = db.query(Memo).filter(Memo.id == memo_id, Memo.User_id == user.id, Memo.is_deleted == False).first()
@@ -340,22 +485,35 @@ async def delete_memo(memo_id: int, user: User, db: Session) -> int:
     # 메모 삭제
     memo.is_deleted = True
     save_db(memo, db)
-async def create_calender(body: CalenderRequest, user: User, db: Session) -> int:
+
+
+async def create_calender(body: CalenderRequest, user: User, db: Session) -> Calender:
+    if body.start_time >= body.end_time:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=4022,
+        )
+    if body.title == "":
+        gpt_service = GPTService(user, db)
+        body.title = await gpt_service.send_gpt_request(9, body.content)
 
     # 캘린더 생성
+    await check_length(text=body.title, max_length=255, error_code=4023)
+    await check_length(text=body.content, max_length=255, error_code=4023)
+    now = await time_now()
     calender = Calender(
         User_id=user.id,
         start_time=body.start_time,
         end_time=body.end_time,
         title=body.title,
         content=body.content,
+        create_date=now,
     )
-
     # 캘린더 저장
     calender = save_db(calender, db)
 
-    # 캘린더 id 반환
-    return calender.id
+    # 캘린더 반환
+    return calender
 
 async def read_calender(calender_id: int, user: User, db: Session) -> Calender:
 
@@ -391,7 +549,7 @@ async def update_calender(calender_id: int, body: CalenderRequest, user: User, d
     calender.content = body.content
     calender = save_db(calender, db)
 
-    return calender.id
+    return calender
 
 async def delete_calender(calender_id: int, user: User, db: Session):
 
@@ -414,8 +572,12 @@ async def dairy_list(list_request: ListRequest, current_user: User, db: Session)
     # diary_type에 따라 쿼리 변경
     page = list_request.page
     diary_type = list_request.diary_type
-    limit = 8
-    offset = (page - 1) * limit
+    if page == 1:
+        limit = 7
+        offset = 0
+    else:
+        limit = 8
+        offset = 7 + (page - 2) * limit
 
     # morning diary columns
     morning_diary_columns = [
