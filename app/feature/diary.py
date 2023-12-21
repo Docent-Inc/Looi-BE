@@ -459,7 +459,7 @@ async def update_memo(
     if body.title != "":
         memo.title = body.title
     elif memo.title != "":
-        memo.title = body.content
+        memo.content = body.content
     memo.modify_date = await time_now()
     memo = save_db(memo, db)
 
