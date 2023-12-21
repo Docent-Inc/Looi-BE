@@ -7,7 +7,7 @@ from app.routers import auth, report, diary, today, admin, chat, memo, dream, ca
 from app.core.middleware import TimingMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.service.Admin import AdminService
+from app.service.admin import AdminService
 from app.service.report import ReportService
 
 app = FastAPI(title="Look API",
