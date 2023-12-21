@@ -61,6 +61,10 @@ class AbstractReportService(ABC):
     async def list(self, page: int) -> list:
         pass
 
+    @abstractmethod
+    async def generate(self) -> object:
+        pass
+
 class AbstractAuthService(ABC):
     @abstractmethod
     async def login(self, service: str, env: str) -> str:
@@ -105,4 +109,21 @@ class AbstractTodayService(ABC):
 
     @abstractmethod
     async def weather(self, x: float, y: float) -> dict:
+        pass
+
+class AbstractAdminService(ABC):
+    @abstractmethod
+    async def user_list(self) -> list:
+        pass
+
+    @abstractmethod
+    async def dashboard(self) -> list:
+        pass
+
+    @abstractmethod
+    async def user_text(self) -> list:
+        pass
+
+    @abstractmethod
+    async def slack_bot(self) -> dict:
         pass
