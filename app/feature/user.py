@@ -135,7 +135,7 @@ async def get_user_apple(code: str, env: str):
         unverified_claims = jwt.decode(id_token, options={"verify_signature": False}, audience="looi.docent.zip")
         print(unverified_claims)
         user_id = unverified_claims.get('sub')
-        email = user_id[:4] + "@privaterelay.appleid.com"
+        email = str(user_id[:6]) + "@privaterelay.appleid.com"
         return {"user_id": user_id, "email": email}
     except:
         raise HTTPException(
