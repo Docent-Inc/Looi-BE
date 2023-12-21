@@ -1,16 +1,14 @@
-import aiocron
-import pytz
-
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
 from app.core.handler import register_exception_handlers
 from fastapi import FastAPI
-
-
-from app.feature.slackBot import scheduled_task
+from app.db.database import get_db, get_redis_client
 from app.routers import auth, report, diary, today, admin, chat, memo, dream, calendar, statistics
 from app.core.middleware import TimingMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.service.report import generate
+from app.service.Admin import AdminService
+from app.service.report import ReportService
 
 app = FastAPI(title="Look API",
               version="0.2.0",
@@ -41,8 +39,27 @@ app.add_middleware(
 )
 
 if settings.SERVER_TYPE == "local":
-    cron_task = aiocron.crontab('0 19 * * 0', func=generate, start=False, tz=pytz.timezone('Asia/Seoul'))
-    cron_task.start()
+    scheduler = AsyncIOScheduler()
+    @app.on_event("startup")
+    async def start_scheduler():
+        report_service = ReportService(db=next(get_db()), redis=await get_redis_client())
+        scheduler.add_job(
+            report_service.generate,
+            trigger=CronTrigger(day_of_week='sun', hour=17, minute=0),
+            timezone="Asia/Seoul"
+        )
 
-    cron_task = aiocron.crontab('59 23 * * *', func=scheduled_task, start=False, tz=pytz.timezone('Asia/Seoul'))
-    cron_task.start()
+        # AdminService 작업 스케줄링
+        admin_service = AdminService(db=next(get_db()), redis=await get_redis_client())
+        scheduler.add_job(
+            admin_service.slack_bot,
+            trigger=CronTrigger(minute=59, second=55),
+            timezone="Asia/Seoul"
+        )
+
+        # 스케줄러 시작 (한 번만 호출)
+        scheduler.start()
+
+    @app.on_event("shutdown")
+    async def shutdown_report_scheduler():
+        scheduler.shutdown()
