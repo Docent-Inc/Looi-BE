@@ -456,8 +456,10 @@ async def update_memo(
     await check_length(text=body.content, max_length=1000, error_code=4221)
 
     # 메모 수정
-    memo.title = body.title
-    memo.content = body.content
+    if body.title != "":
+        memo.title = body.title
+    elif memo.title != "":
+        memo.title = body.content
     memo.modify_date = await time_now()
     memo = save_db(memo, db)
 

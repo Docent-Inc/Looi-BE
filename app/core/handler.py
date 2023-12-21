@@ -34,14 +34,14 @@ def register_exception_handlers(app):
             db = SessionLocal()
             try:
                 error = ErrorLog(error_code=exc.detail, error_message=CUSTOM_EXCEPTIONS[exc.detail], create_date=await time_now())
-                # db.add(error)
-                # db.commit()
-                # db.refresh(error)
-                # client = AsyncWebClient(token=settings.SLACK_BOT_TOKEN)
-                # await client.chat_postMessage(
-                #     channel="C064ZCNDVU1",
-                #     text=f"Error Code: {exc.detail}\nError Message: {CUSTOM_EXCEPTIONS[exc.detail]}"
-                # )
+                db.add(error)
+                db.commit()
+                db.refresh(error)
+                client = AsyncWebClient(token=settings.SLACK_BOT_TOKEN)
+                await client.chat_postMessage(
+                    channel="C064ZCNDVU1",
+                    text=f"Error Code: {exc.detail}\nError Message: {CUSTOM_EXCEPTIONS[exc.detail]}"
+                )
             except:
                 db.rollback()
             finally:
@@ -57,7 +57,6 @@ def register_exception_handlers(app):
 
     @app.exception_handler(RequestValidationError)
     async def validation_exception_handler(request: Request, exc: RequestValidationError):
-        print(request)
         return JSONResponse(
             content=ApiResponse(
                 success=False,

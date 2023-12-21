@@ -49,7 +49,7 @@ class UpdateDiaryRequest(BaseModel):
 
 class MemoRequest(BaseModel):
     title: Optional[str] = ""
-    content: str
+    content: Optional[str] = ""
 
 class ChatRequest(BaseModel):
     type: Optional[int] = 0
