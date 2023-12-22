@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.core.Oauth import get_user_kakao, get_user_apple, check_user, get_user_line
 from app.core.config import settings
-from app.core.security import create_token, check_token, time_now, user_to_json
+from app.core.security import create_token, check_token, time_now
 from app.db.database import get_db, save_db, get_redis_client
 from app.db.models import User
 from app.schemas.request import UserUpdateRequest, PushUpdateRequest
@@ -95,7 +95,7 @@ class AuthService(AbstractAuthService):
             user.birth = auth_data.birth
             user.gender = auth_data.gender
             user.is_sign_up = False
-        await self.redis.set(f"user:{user.email}", await user_to_json(user), ex=7200)
+        await self.redis.delete(f"user:{user.email}")
         save_db(user, self.db)
 
     async def update_push(self, auth_data: PushUpdateRequest, user: User) -> None:
@@ -105,7 +105,7 @@ class AuthService(AbstractAuthService):
             user.push_night = auth_data.value
         elif auth_data.type == "report":
             user.push_report = auth_data.value
-        await self.redis.set(f"user:{user.email}", await user_to_json(user), ex=7200)
+        await self.redis.delete(f"user:{user.email}")
         save_db(user, self.db)
     async def delete(self, user: User) -> None:
         user.is_deleted = True
