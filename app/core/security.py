@@ -1,5 +1,8 @@
+import json
 from datetime import datetime, timedelta
 from typing import Any, Union
+
+import aioredis
 import pytz
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -7,7 +10,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from fastapi.security.api_key import APIKeyHeader
-from app.db.database import get_db, save_db
+from app.db.database import get_db, save_db, get_redis_client
 from app.db.models import User
 from typing import Optional
 from app.core.config import settings
@@ -22,6 +25,33 @@ ALGORITHM = settings.ALGORITHM
 ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+async def user_to_json(user):
+    return json.dumps(
+        {
+            "id": user.id,
+            "nickname": user.nickname,
+            "email": user.email,
+            "hashed_password": user.hashed_password,
+            "gender": user.gender,
+            "age_range": user.age_range,
+            "mbti": user.mbti,
+            "is_deleted": user.is_deleted,
+            "is_admin": user.is_admin,
+            "is_sign_up": user.is_sign_up,
+            "subscription_status": user.subscription_status,
+            "image_model": user.image_model,
+            "language_id": user.language_id,
+            "Oauth_from": user.Oauth_from,
+            "birth": f"{user.birth}",
+            "push_token": user.push_token,
+            "push_morning": user.push_morning,
+            "push_night": user.push_night,
+            "push_report": user.push_report,
+            "create_date": f"{user.create_date}",
+            "last_active_date": f"{user.last_active_date}",
+            "deleted_date": f"{user.deleted_date}",
+        }
+    )
 
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
@@ -69,6 +99,62 @@ async def check_token(token_refresh: TokenRefresh, db: Session) -> User:
 
 async def get_current_user(
     api_key: str = Depends(api_key_header_auth), # api_key_header_auth를 통해 api_key를 받아온다.
+    redis: aioredis.Redis = Depends(get_redis_client),
+    db: Session = Depends(get_db),
+) -> User:
+
+    # api_key가 없으면
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail=4220,
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    # 테스트 토큰이 아니면
+    if settings.TEST_TOKEN != "test":
+        api_key = settings.TEST_TOKEN
+    try:
+        # 토큰을 복호화
+        token = api_key.replace("Bearer ", "")
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+
+        # 토큰에 email이 없으면
+        if email is None:
+            raise credentials_exception
+    except:
+        raise credentials_exception
+
+    user_info = await redis.get(f"user:{email}")
+    if user_info:
+        return User(**json.loads(user_info))
+
+    # db에서 email로 유저를 찾는다.
+    user = await get_user_by_email(db, email=email)
+
+    # 유저가 없거나 삭제된 유저면
+    if user is None or user.is_deleted == True:
+        raise credentials_exception
+
+    # 유저가 로그인이 완료되지 않은 유저라면
+    if user.mbti == "0":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=4998,
+        )
+
+    # 유저 정보를 redis에 저장
+    await redis.set(f"user:{email}", await user_to_json(user), ex=3600)  # redis에 유저 정보를 저장
+
+    # 유저의 마지막 로그인 시간을 현재시간으로 변경
+    user.last_active_date = await time_now()
+    user = save_db(user, db)
+
+    # 유저 정보 반환
+    return user
+
+async def get_user(
+    api_key: str = Depends(api_key_header_auth), # api_key_header_auth를 통해 api_key를 받아온다.
     db: Session = Depends(get_db),
 ) -> User:
 
@@ -113,31 +199,6 @@ async def get_current_user(
     user = save_db(user, db)
 
     # 유저 정보 반환
-    return user
-
-async def get_update_user(
-    api_key: str = Depends(api_key_header_auth), # api_key_header_auth를 통해 api_key를 받아온다.
-    db: Session = Depends(get_db),
-) -> User:
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail=4220,
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    if settings.TEST_TOKEN != "test":
-        api_key = settings.TEST_TOKEN
-    try:
-        token = api_key.replace("Bearer ", "")
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email: str = payload.get("sub")
-        if email is None:
-            raise credentials_exception
-    except:
-        raise credentials_exception
-
-    user = await get_user_by_email(db, email=email)
-    if user is None or user.is_deleted == True:
-        raise credentials_exception
     return user
 
 async def get_current_user_is_admin(
