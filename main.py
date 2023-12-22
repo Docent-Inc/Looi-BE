@@ -38,7 +38,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-if settings.SERVER_TYPE == "local":
+if settings.SERVER_TYPE == "prod":
     scheduler = AsyncIOScheduler()
     @app.on_event("startup")
     async def start_scheduler():
@@ -53,7 +53,7 @@ if settings.SERVER_TYPE == "local":
         admin_service = AdminService(db=next(get_db()), redis=await get_redis_client())
         scheduler.add_job(
             admin_service.slack_bot,
-            trigger=CronTrigger(minute=59, second=55),
+            trigger=CronTrigger(minute=4, second=55),
             timezone="Asia/Seoul"
         )
 

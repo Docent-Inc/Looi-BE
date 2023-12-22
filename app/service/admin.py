@@ -1,3 +1,4 @@
+import warnings
 from datetime import timedelta
 from decimal import Decimal
 
@@ -15,7 +16,7 @@ from app.db.models import User, Dashboard, TextClassification, ApiRequestLog, Mo
     Report, ErrorLog
 from app.service.abstract import AbstractAdminService
 
-
+warnings.filterwarnings("ignore", category=UserWarning, module="slack_sdk")
 class AdminService(AbstractAdminService):
     def __init__(self, user: User = Depends(get_current_user_is_admin), db: Session = Depends(get_db),
                  redis: aioredis.Redis = Depends(get_redis_client)):

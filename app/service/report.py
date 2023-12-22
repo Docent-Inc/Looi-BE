@@ -7,7 +7,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 import json
 from app.core.security import time_now
-from app.db.database import get_SessionLocal, get_redis_client, save_db
+from app.db.database import get_redis_client, save_db
 from app.db.models import Report, MorningDiary, NightDiary, Calendar
 from app.db.models import User
 from app.core.aiRequset import GPTService

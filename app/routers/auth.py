@@ -2,7 +2,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 from app.schemas.response import ApiResponse
 from app.schemas.request import TokenRefresh, UserUpdateRequest, PushUpdateRequest
-from app.core.security import get_current_user
+from app.core.security import get_current_user, get_update_user
 from app.service.auth import AuthService
 
 router = APIRouter(prefix="/auth")
@@ -49,7 +49,7 @@ async def get_auth_info(
 @router.patch("/update", response_model=ApiResponse, tags=["Auth"])
 async def patch_auth_update(
     auth_data: UserUpdateRequest,
-    current_user: Annotated[get_current_user, Depends()],
+    current_user: Annotated[get_update_user, Depends()],
     auth_service: Annotated[AuthService, Depends()]
 ):
     await auth_service.update(auth_data, current_user)
@@ -58,7 +58,7 @@ async def patch_auth_update(
 @router.patch("/update/push", response_model=ApiResponse, tags=["Auth"])
 async def patch_auth_update_push(
     auth_data: PushUpdateRequest,
-    current_user: Annotated[get_current_user, Depends()],
+    current_user: Annotated[get_update_user, Depends()],
     auth_service: Annotated[AuthService, Depends()]
 ):
     await auth_service.update_push(auth_data, current_user)
@@ -66,7 +66,7 @@ async def patch_auth_update_push(
 
 @router.delete("/delete", response_model=ApiResponse, tags=["Auth"])
 async def delete_auth_delete(
-    current_user: Annotated[get_current_user, Depends()],
+    current_user: Annotated[get_update_user, Depends()],
     auth_service: Annotated[AuthService, Depends()]
 ):
     await auth_service.delete(current_user)
