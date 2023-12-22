@@ -1,7 +1,8 @@
 import datetime
 
 from sqlalchemy.orm import Session
-from app.core.security import verify_password, get_password_hash, time_now
+from app.core.security import verify_password, get_password_hash, time_now, user_to_json
+from app.db.database import get_redis_client
 from app.schemas.request import UserCreate, UserUpdateRequest, PushUpdateRequest
 from typing import Optional
 from app.core.security import get_user_by_email, get_user_by_nickname
@@ -190,6 +191,10 @@ async def changeNickName(requset_nickName: str, current_user: User, db: Session)
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=5000,  # 에러 메시지를 반환합니다.
         )
+    redis = await get_redis_client()
+    await redis.set(f"user:{current_user.email}", await user_to_json(current_user), ex=3600)  # redis에 유저 정보를 저장
+
+
 
 
 def changePassword(request_password: str, new_password: str, current_user: User, db: Session):
@@ -230,6 +235,8 @@ async def changeMbti(mbti: str, user: User, db: Session):
         db.add(user)
         db.commit()
         db.refresh(user)
+        redis = await get_redis_client()
+        await redis.set(f"user:{user.email}", await user_to_json(user), ex=3600)  # redis에 유저 정보를 저장
     except:
         db.rollback()
         raise HTTPException(
@@ -246,6 +253,8 @@ async def updatePush(request: PushUpdateRequest, current_user: User, db: Session
         current_user.push_report = request.value
     db.add(current_user)
     db.commit()
+    redis = await get_redis_client()
+    await redis.set(f"user:{current_user.email}", await user_to_json(current_user), ex=3600)  # redis에 유저 정보를 저장
 
 async def deleteUser(current_user: User, db: Session):
     # 사용자의 삭제 상태를 변경합니다.
@@ -443,6 +452,9 @@ async def updateUser(request: UserUpdateRequest, current_user: User, db: Session
         db.add(current_user)
         db.commit()
         db.refresh(current_user)
+        # 유저 정보를 redis에 저장
+        redis = await get_redis_client()
+        await redis.set(f"user:{current_user.email}", await user_to_json(current_user), ex=3600)  # redis에 유저 정보를 저장
     except:
         db.rollback()
         raise HTTPException(

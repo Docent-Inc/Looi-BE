@@ -2,7 +2,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Form
 from app.db.database import get_db
 from sqlalchemy.orm import Session
-from app.core.security import decode_access_token, create_token, get_update_user, check_token
+from app.core.security import decode_access_token, create_token, check_token, get_user
 from app.schemas.response import TokenData, ApiResponse, KakaoTokenData
 from app.schemas.request import TokenRefresh, UserUpdateRequest, PushUpdateRequest
 from app.feature.user import get_user_by_email, changeNickName, \
@@ -108,7 +108,7 @@ async def get_info(
 @router.post("/update", response_model=ApiResponse, tags=["Auth"])
 async def update_user(
     request: UserUpdateRequest,
-    current_user: User = Depends(get_update_user),
+    current_user: User = Depends(get_user),
     db: Session = Depends(get_db),
 ):
     await updateUser(request, current_user, db)
@@ -118,7 +118,7 @@ async def update_user(
 @router.post("/update/nickname", response_model=ApiResponse, tags=["Auth"])
 async def change_nickname(
     nickname_change_request: NicknameChangeRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_user),
     db: Session = Depends(get_db),
 ):
     await changeNickName(nickname_change_request.nickname, current_user, db)
@@ -127,7 +127,7 @@ async def change_nickname(
 @router.post("/update/mbti", response_model=ApiResponse, tags=["Auth"])
 async def change_mbti(
     body: MbtiChangeRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_user),
     db: Session = Depends(get_db),
 ):
     await changeMbti(body.mbti, current_user, db)
@@ -136,7 +136,7 @@ async def change_mbti(
 @router.post("/update/push", response_model=ApiResponse, tags=["Auth"])
 async def update_push(
     request: PushUpdateRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_user),
     db: Session = Depends(get_db),
 ):
     await updatePush(request, current_user, db)
@@ -144,7 +144,7 @@ async def update_push(
 
 @router.delete("/delete", response_model=ApiResponse, tags=["Auth"])
 async def delete_user(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_user),
     db: Session = Depends(get_db),
 ):
     await deleteUser(current_user, db)

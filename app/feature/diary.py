@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import union_all
 from starlette import status
 from app.core.security import time_now, get_current_user, check_length
-from app.db.database import save_db, get_db
+from app.db.database import save_db, get_db, get_redis_client
 from app.db.models import NightDiary, MorningDiary, Memo, Calender
 from app.feature.aiRequset import GPTService
 from app.feature.generate import image_background_color
@@ -168,6 +168,20 @@ async def delete_morning_diary(diary_id: int, user: User, db: Session):
     # 다이어리 삭제
     diary.is_deleted = True
     save_db(diary, db)
+
+    redis = await get_redis_client()
+    now = await time_now()
+    redis_key = f"history:{user.id}:{now.day}"
+    datas = json.loads(await redis.get(redis_key))
+    is_exist = False
+    for data in datas["MorningDiary"]:
+        if data["id"] == diary.id:
+            is_exist = True
+    for data in datas["MorningDiary"]:
+        if data["id"] == diary.id:
+            is_exist = True
+    if is_exist:
+        await redis.delete(redis_key)
 async def list_morning_diary(page: int, user: User, db: Session):
 
     # 다이어리 목록 조회
@@ -324,6 +338,20 @@ async def delete_night_diary(diary_id: int, user: User, db: Session) -> int:
     # 다이어리 삭제
     diary.is_deleted = True
     save_db(diary, db)
+
+    redis = await get_redis_client()
+    now = await time_now()
+    redis_key = f"history:{user.id}:{now.day}"
+    datas = json.loads(await redis.get(redis_key))
+    is_exist = False
+    for data in datas["NightDiary"]:
+        if data["id"] == diary.id:
+            is_exist = True
+    for data in datas["NightDiary"]:
+        if data["id"] == diary.id:
+            is_exist = True
+    if is_exist:
+        await redis.delete(redis_key)
 
 async def list_night_diary(page: int, user: User, db: Session):
 

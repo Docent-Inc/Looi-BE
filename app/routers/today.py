@@ -130,9 +130,9 @@ async def get_record(
     db: Session = Depends(get_db),
     redis: aioredis.Redis = Depends(get_redis_client),
 ) -> ApiResponse:
+    import datetime
     now = await time_now()
-    today_str = now.strftime('%Y-%m-%d')
-    redis_key = f"history:{today_str}:user_{current_user.id}"
+    redis_key = f"history:{current_user.id}:{now.day}"
 
     cached_data_json = await redis.get(redis_key)
 
@@ -157,14 +157,24 @@ async def get_record(
         NightDiary.User_id == current_user.id
     ).order_by(func.random()).limit(count_night).all()
 
+    def diary_to_dict(diary):
+        # 날짜-시간 필드를 문자열로 변환
+        diary_dict = diary.as_dict()
+        if diary_dict.get("create_date"):
+            diary_dict["create_date"] = diary_dict["create_date"].strftime("%Y-%m-%d %H:%M:%S")
+        if diary_dict.get("modify_date"):
+            diary_dict["modify_date"] = diary_dict["modify_date"].strftime("%Y-%m-%d %H:%M:%S")
+        return diary_dict
+
     data = {
-        "MorningDiary": [{"diary_type": 1, **diary.as_dict()} for diary in random_morning_diaries],
-        "NightDiary": [{"diary_type": 2, **diary.as_dict()} for diary in random_night_diaries]
+        "MorningDiary": [{"diary_type": 1, **diary_to_dict(diary)} for diary in random_morning_diaries],
+        "NightDiary": [{"diary_type": 2, **diary_to_dict(diary)} for diary in random_night_diaries]
     }
-    end_of_today = now.replace(hour=23, minute=59, second=59, microsecond=999999)
-    ttl = int((end_of_today - now).total_seconds()) + 1  # 하루의 끝까지의 시간을 초로 계산
-    data_json = json.dumps(data, default=default_converter)
-    await redis.setex(redis_key, ttl, data_json)
+
+    midnight = now.replace(hour=0, minute=0, second=0, microsecond=0) + datetime.timedelta(days=1)
+    seconds_until_midnight = (midnight - now).total_seconds()
+    if 2 < len(data["MorningDiary"]) + len(data["NightDiary"]):
+        await redis.set(f"history:{current_user.id}:{now.day}", json.dumps(data), ex=int(seconds_until_midnight))
 
     return ApiResponse(data=data)
 
