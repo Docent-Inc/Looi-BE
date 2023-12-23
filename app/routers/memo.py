@@ -49,7 +49,6 @@ async def get_memo_list(
     page: int,
     memo_service: Annotated[MemoService, Depends()],
 ) -> ApiResponse:
-    memos = await memo_service.list(page)
     return ApiResponse(
-        data={"memos": memos}
+        data=await memo_service.list(page)
     )

@@ -51,7 +51,6 @@ async def get_dream_list(
     page: int,
     dream_service: Annotated[DreamService, Depends()]
 ) -> ApiResponse:
-    diaries = await dream_service.list(page)
     return ApiResponse(
-        data={"diaries": diaries}
+        data=await dream_service.list(page)
     )

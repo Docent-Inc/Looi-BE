@@ -50,8 +50,7 @@ async def get_diary_list(
     page: int,
     diary_service: Annotated[DiaryService, Depends()],
 ) -> ApiResponse:
-    diaries = await diary_service.list(page)
     return ApiResponse(
-        data={"diaries": diaries}
+        data=await diary_service.list(page)
     )
 

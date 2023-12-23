@@ -123,7 +123,7 @@ class DiaryService(AbstractDiaryService):
                 is_exist = True
         if is_exist:
             await redis.delete(redis_key)
-    async def list(self, page: int) -> list:
+    async def list(self, page: int) -> dict:
 
         # 다이어리 조회
         diaries = self.db.query(NightDiary).filter(NightDiary.User_id == self.user.id, NightDiary.is_deleted == False).order_by(NightDiary.create_date.desc()).limit(10).offset((page - 1) * 10).all()
@@ -137,8 +137,5 @@ class DiaryService(AbstractDiaryService):
             diary_dict["diary_type"] = 2
             diaries_dict_list.append(diary_dict)
 
-        # 총 개수와 페이지당 개수 정보 추가
-        diaries_dict_list.append({"count": 10, "total_count": total_count})
-
-        # 변환된 꿈 리스트 반환
-        return diaries_dict_list
+        # 다이어리 반환
+        return {"list": diaries_dict_list, "count": 10, "total_count": total_count}
