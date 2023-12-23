@@ -74,7 +74,11 @@ async def create_morning_diary(content: str, user: User, db: Session) -> Morning
     await check_length(diary_name, 255, 4023)
     await check_length(content, 1000, 4221)
     now = await time_now()
-    resolution = json.loads(resolution)
+    try:
+        resolution = json.loads(resolution)
+        print(resolution)
+    except Exception as e:
+        print(e)
     try:
         diary = MorningDiary(
             content=content,
