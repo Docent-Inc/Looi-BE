@@ -110,7 +110,7 @@ class MemoService(AbstractDiaryService):
         memo.is_deleted = True
         save_db(memo, self.db)
 
-    async def list(self, page: int) -> list:
+    async def list(self, page: int) -> dict:
         # 메모 리스트 조회
         memos = self.db.query(Memo).filter(Memo.User_id == self.user.id, Memo.is_deleted == False).order_by(Memo.create_date.desc()).limit(10).offset((page - 1) * 10).all()
         total_count = self.db.query(Memo).filter(Memo.User_id == self.user.id, Memo.is_deleted == False).count()
@@ -123,8 +123,5 @@ class MemoService(AbstractDiaryService):
             memo_dict["diary_type"] = 3
             memos_dict_list.append(memo_dict)
 
-        # 총 개수와 페이지당 개수 정보 추가
-        memos_dict_list.append({"count": 10, "total_count": total_count})
-
-        # 변환된 메모 리스트 반환
-        return memos_dict_list
+        # 메모 리스트 반환
+        return {"list": memos_dict_list, "count": 10, "total_count": total_count}

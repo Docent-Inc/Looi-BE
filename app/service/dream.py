@@ -124,7 +124,7 @@ class DreamService(AbstractDiaryService):
         diary.is_deleted = True
         save_db(diary, self.db)
 
-    async def list(self, page: int) -> list:
+    async def list(self, page: int) -> dict:
 
         # 다이어리 조회
         dreams = self.db.query(MorningDiary).filter(MorningDiary.User_id == self.user.id, MorningDiary.is_deleted == False).order_by(MorningDiary.create_date.desc()).limit(10).offset((page - 1) * 10).all()
@@ -138,8 +138,5 @@ class DreamService(AbstractDiaryService):
             dream_dict["diary_type"] = 1
             dreams_dict_list.append(dream_dict)
 
-        # 총 개수와 페이지당 개수 정보 추가
-        dreams_dict_list.append({"count": 10, "total_count": total_count})
-
-        # 변환된 꿈 리스트 반환
-        return dreams_dict_list
+        # 다이어리 반환
+        return {"list": dreams_dict_list, "count": 10, "total_count": total_count}
