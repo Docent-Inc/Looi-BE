@@ -48,12 +48,11 @@ async def delete_calender_delete(
 @router.get("/list", response_model=ApiResponse, tags=["Calendar"])
 async def get_calendar_post(
     calendar_service: Annotated[CalendarService, Depends()],
-    page: int,
     year: int,
     month: int,
     day: Optional[int] = 0,
 ) -> ApiResponse:
-    calendars = await calendar_service.list(page, year, month, day)
+    calendars = await calendar_service.list(year, month, day)
     return ApiResponse(
         data={"calendars": calendars}
     )

@@ -147,7 +147,7 @@ class CalendarService(AbstractDiaryService):
         calender.is_deleted = True
         save_db(calender, self.db)
 
-    async def list(self, page: int, year: int, month: int, day: int) -> list:
+    async def list(self, year: int, month: int, day: int) -> list:
 
         # day가 0일 경우 월간 캘린더 조회
         if day == 0:
