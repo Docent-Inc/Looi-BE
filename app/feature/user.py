@@ -39,23 +39,24 @@ APPLE_AUTH_URL = f"https://appleid.apple.com/auth/authorize?client_id=looi.docen
 mbti_list = ['istj', 'isfj', 'infj', 'intj', 'istp', 'isfp', 'infp', 'intp', 'estp', 'esfp', 'enfp', 'entp', 'estj', 'esfj', 'enfj', 'entj']
 
 async def get_user_kakao(request: str, env: str):
-    global REDIRECT_URI
-    if env == "local":
-        REDIRECT_URI = REDIRECT_URI_TEST + "/kakao"
-    elif env == "dev":
-        REDIRECT_URI = REDIRECT_URI_DEV + "/kakao"
-    elif env == "prod":
-        REDIRECT_URI = REDIRECT_URI + "/kakao"
 
-    print(REDIRECT_URI)
+    if env == "local":
+        REDIRECT_URL = REDIRECT_URI_TEST + "/kakao"
+    elif env == "dev":
+        REDIRECT_URL = REDIRECT_URI_DEV + "/kakao"
+    elif env == "prod":
+        REDIRECT_URL = REDIRECT_URI + "/kakao"
+
+    print(REDIRECT_URL)
     try:
         data = {
             "grant_type": "authorization_code",
             "client_id": CLIENT_ID,
-            "redirect_uri": REDIRECT_URI,
+            "redirect_uri": REDIRECT_URL,
             "code": request,
         }
         response = requests.post(ACCESS_TOKEN_ENDPOINT, data=data)
+        print(response.json())
         token = response.json().get("access_token")
         print(token)
         headers = {"Authorization": f"Bearer {token}"}
