@@ -187,12 +187,7 @@ async def get_user(
     if user is None or user.is_deleted == True:
         raise credentials_exception
 
-    # 유저가 로그인이 완료되지 않은 유저라면
-    if user.mbti == "0":
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=4998,
-        )
+
 
     # 유저의 마지막 로그인 시간을 현재시간으로 변경
     user.last_active_date = await time_now()
