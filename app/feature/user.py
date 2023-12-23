@@ -41,11 +41,11 @@ mbti_list = ['istj', 'isfj', 'infj', 'intj', 'istp', 'isfp', 'infp', 'intp', 'es
 async def get_user_kakao(request: str, env: str):
     global REDIRECT_URI
     if env == "local":
-        REDIRECT_URI = REDIRECT_URI_TEST + "/kakao"
+        REDIRECT_URI = REDIRECT_URI_TEST + "/kakao/local"
     elif env == "dev":
-        REDIRECT_URI = REDIRECT_URI_DEV + "/kakao"
+        REDIRECT_URI = REDIRECT_URI_DEV + "/kakao/dev"
     elif env == "prod":
-        REDIRECT_URI = REDIRECT_URI + "/kakao"
+        REDIRECT_URI = REDIRECT_URI + "/kakao/prod"
     try:
         data = {
             "grant_type": "authorization_code",
