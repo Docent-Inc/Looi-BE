@@ -63,6 +63,7 @@ async def create_morning_diary(content: str, user: User, db: Session) -> Morning
         gpt_service.send_gpt_request(5, mbti_content)
     )
 
+
     # 이미지 배경색 추출
     image_url, upper_dominant_color, lower_dominant_color = image_info
 
