@@ -129,8 +129,7 @@ async def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
 
-    # 테스트 토큰이 아니면
-    if settings.TEST_TOKEN != "test":
+    if settings.SERVER_TYPE == "local":
         api_key = settings.TEST_TOKEN
     try:
         # 토큰을 복호화
