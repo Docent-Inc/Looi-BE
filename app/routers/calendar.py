@@ -52,7 +52,6 @@ async def get_calendar_post(
     month: int,
     day: Optional[int] = 0,
 ) -> ApiResponse:
-    calendars = await calendar_service.list(year, month, day)
     return ApiResponse(
-        data={"calendars": calendars}
+        data=await calendar_service.list(year, month, day)
     )
