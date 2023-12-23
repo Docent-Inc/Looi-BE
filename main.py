@@ -3,7 +3,7 @@ from apscheduler.triggers.cron import CronTrigger
 from app.core.handler import register_exception_handlers
 from fastapi import FastAPI
 from app.db.database import get_db, get_redis_client
-from app.routers import auth, report, diary, today, admin, chat, memo, dream, calendar, statistics
+from app.routers import auth, report, diary, today, admin, chat, memo, dream, calendar, statistics, share
 from app.core.middleware import TimingMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
@@ -25,6 +25,7 @@ app.include_router(dream.router)
 app.include_router(diary.router)
 app.include_router(memo.router)
 app.include_router(calendar.router)
+app.include_router(share.router)
 app.include_router(report.router)
 app.include_router(admin.router)
 register_exception_handlers(app)
