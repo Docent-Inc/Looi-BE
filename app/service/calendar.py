@@ -10,7 +10,7 @@ from app.core.security import get_current_user, check_length, time_now
 from app.db.database import get_db, save_db
 from app.db.models import User, Calendar
 from app.core.aiRequset import GPTService
-from app.schemas.request import CreateCalendarRequest, UpdateCalendarRequest, ListCalendarRequest
+from app.schemas.request import CreateCalendarRequest, UpdateCalendarRequest
 from app.service.abstract import AbstractDiaryService
 
 
