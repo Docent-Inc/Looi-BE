@@ -1,153 +1,75 @@
-from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Request, Form
-from app.db.database import get_db
-from sqlalchemy.orm import Session
-from app.core.security import decode_access_token, create_token, check_token, get_user
-from app.schemas.response import TokenData, ApiResponse, KakaoTokenData
+from typing import Annotated
+from fastapi import APIRouter, Depends
+from app.schemas.response import ApiResponse
 from app.schemas.request import TokenRefresh, UserUpdateRequest, PushUpdateRequest
-from app.feature.user import get_user_by_email, changeNickName, \
-    deleteUser, user_kakao, changeMbti, updateUser, updatePush, user_line, get_user_kakao, KAKAO_AUTH_URL_TEST, \
-    KAKAO_AUTH_URL_DEV, KAKAO_AUTH_URL, LINE_AUTH_URL_TEST, LINE_AUTH_URL, get_user_line, APPLE_AUTH_URL_DEV, \
-    APPLE_AUTH_URL, get_user_apple, user_apple
-from app.schemas.request import NicknameChangeRequest, \
-    MbtiChangeRequest
-from app.core.security import get_current_user
-from app.schemas.response import User
+from app.core.security import get_current_user, get_update_user
+from app.service.auth import AuthService
+
 router = APIRouter(prefix="/auth")
 
 @router.get("/login/{service}/{env}", response_model=ApiResponse, tags=["Auth"])
-async def login(
+async def get_auth_login(
     service: str,
     env: str,
+    auth_service: Annotated[AuthService, Depends()]
 ):
-    if service == "kakao":
-        if env == "local":
-            url = KAKAO_AUTH_URL_TEST
-        elif env == "dev":
-            url = KAKAO_AUTH_URL_DEV
-        elif env == "prod":
-            url = KAKAO_AUTH_URL
-    elif service == "line":
-        if env == "local":
-            url = LINE_AUTH_URL_TEST
-        # elif env == "dev":
-        #     url = LINE_AUTH_URL_DEV
-        elif env == "prod":
-            url = LINE_AUTH_URL
-    elif service == "apple":
-        if env == "local":
-            url = APPLE_AUTH_URL_DEV
-        elif env == "dev":
-            url = APPLE_AUTH_URL_DEV
-        elif env == "prod":
-            url = APPLE_AUTH_URL
-    else:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=4403)
-    return ApiResponse(data={"url": url})
+    return ApiResponse(
+        data={"url": await auth_service.login(service, env)}
+    )
 
 @router.get("/callback/{service}/{env}", response_model=ApiResponse, tags=["Auth"])
-async def callback(
+async def get_auth_callback(
     service: str,
     env: str,
     code: str,
-    db: Session = Depends(get_db),
+    auth_service: Annotated[AuthService, Depends()]
 ):
-    # 콜백을 처리합니다.
-    if service == "kakao":
-        data = await get_user_kakao(code, env)
-        user, is_sign_up = await user_kakao(data, db)
-    elif service == "line":
-        data = await get_user_line(code, env)
-        user, is_sign_up = await user_line(data, db)
-    elif service == "apple":
-        data = await get_user_apple(code, env)
-        user, is_sign_up = await user_apple(data, db)
-    else:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=4403)
-
-    expires_in, refresh_expires_in, access_token, refresh_token = await create_token(user.email)
     return ApiResponse(
-        success=True,
-        data=KakaoTokenData(
-            user_name=user.nickname,
-            access_token=access_token,
-            expires_in=expires_in,
-            refresh_token=refresh_token,
-            refresh_expires_in=refresh_expires_in,
-            token_type="Bearer",
-            is_signup=is_sign_up,
-        )
+        data=await auth_service.callback(service, env, code)
     )
 
-
-
 @router.post("/refresh", response_model=ApiResponse, tags=["Auth"])
-async def refresh_token(
+async def get_auth_refresh(
     token_refresh: TokenRefresh,
-    db: Session = Depends(get_db),
+    auth_service: Annotated[AuthService, Depends()]
 ):
-    user = await check_token(token_refresh, db)
-    expires_in, refresh_expires_in, access_token, refresh_token = await create_token(user.email)
     return ApiResponse(
-        data=TokenData(
-            access_token=access_token,
-            expires_in=expires_in,
-            refresh_token=refresh_token,
-            refresh_expires_in=refresh_expires_in,
-            token_type="bearer",
-        )
+        data=await auth_service.refresh(token_refresh.refresh_token)
     )
 
 @router.get("/info", response_model=ApiResponse, tags=["Auth"])
-async def get_info(
-    current_user: User = Depends(get_current_user),
+async def get_auth_info(
+    current_user: Annotated[get_current_user, Depends()],
+    auth_service: Annotated[AuthService, Depends()]
 ):
-    current_user.hashed_password = None
-    return ApiResponse(data=current_user)
+    return ApiResponse(
+        data=await auth_service.info(current_user)
+    )
 
-@router.post("/update", response_model=ApiResponse, tags=["Auth"])
-async def update_user(
-    request: UserUpdateRequest,
-    current_user: User = Depends(get_user),
-    db: Session = Depends(get_db),
+@router.patch("/update", response_model=ApiResponse, tags=["Auth"])
+async def patch_auth_update(
+    auth_data: UserUpdateRequest,
+    current_user: Annotated[get_update_user, Depends()],
+    auth_service: Annotated[AuthService, Depends()]
 ):
-    await updateUser(request, current_user, db)
+    await auth_service.update(auth_data, current_user)
     return ApiResponse()
 
-
-@router.post("/update/nickname", response_model=ApiResponse, tags=["Auth"])
-async def change_nickname(
-    nickname_change_request: NicknameChangeRequest,
-    current_user: User = Depends(get_user),
-    db: Session = Depends(get_db),
+@router.patch("/update/push", response_model=ApiResponse, tags=["Auth"])
+async def patch_auth_update_push(
+    auth_data: PushUpdateRequest,
+    current_user: Annotated[get_update_user, Depends()],
+    auth_service: Annotated[AuthService, Depends()]
 ):
-    await changeNickName(nickname_change_request.nickname, current_user, db)
-    return ApiResponse()
-
-@router.post("/update/mbti", response_model=ApiResponse, tags=["Auth"])
-async def change_mbti(
-    body: MbtiChangeRequest,
-    current_user: User = Depends(get_user),
-    db: Session = Depends(get_db),
-):
-    await changeMbti(body.mbti, current_user, db)
-    return ApiResponse()
-
-@router.post("/update/push", response_model=ApiResponse, tags=["Auth"])
-async def update_push(
-    request: PushUpdateRequest,
-    current_user: User = Depends(get_user),
-    db: Session = Depends(get_db),
-):
-    await updatePush(request, current_user, db)
+    await auth_service.update_push(auth_data, current_user)
     return ApiResponse()
 
 @router.delete("/delete", response_model=ApiResponse, tags=["Auth"])
-async def delete_user(
-    current_user: User = Depends(get_user),
-    db: Session = Depends(get_db),
+async def delete_auth_delete(
+    current_user: Annotated[get_update_user, Depends()],
+    auth_service: Annotated[AuthService, Depends()]
 ):
-    await deleteUser(current_user, db)
+    await auth_service.delete(current_user)
     return ApiResponse()
 
 

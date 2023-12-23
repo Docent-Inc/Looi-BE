@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 from app.core.config import settings
 from app.core.security import time_now
 from app.core.status_code import CUSTOM_EXCEPTIONS
-from app.db.database import get_SessionLocal
+from app.db.database import get_SessionLocal, get_db, save_db
 from app.db.models import ErrorLog
 from app.schemas.response import ApiResponse
 from fastapi.exceptions import RequestValidationError
@@ -30,22 +30,17 @@ def register_exception_handlers(app):
         elif exc.detail == 4221:
             pass
         else:
-            SessionLocal = get_SessionLocal()
-            db = SessionLocal()
-            try:
+            if settings.SERVER_TYPE == "prod":
+                db = next(get_db())
                 error = ErrorLog(error_code=exc.detail, error_message=CUSTOM_EXCEPTIONS[exc.detail], create_date=await time_now())
-                db.add(error)
-                db.commit()
-                db.refresh(error)
+                save_db(error, db)
                 client = AsyncWebClient(token=settings.SLACK_BOT_TOKEN)
                 await client.chat_postMessage(
                     channel="C064ZCNDVU1",
                     text=f"Error Code: {exc.detail}\nError Message: {CUSTOM_EXCEPTIONS[exc.detail]}"
                 )
-            except:
-                db.rollback()
-            finally:
-                db.close()
+            else:
+                pass
         return JSONResponse(
             content=ApiResponse(
                 success=False,
@@ -57,6 +52,7 @@ def register_exception_handlers(app):
 
     @app.exception_handler(RequestValidationError)
     async def validation_exception_handler(request: Request, exc: RequestValidationError):
+        print(request)
         return JSONResponse(
             content=ApiResponse(
                 success=False,

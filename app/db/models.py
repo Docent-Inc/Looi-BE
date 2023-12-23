@@ -88,8 +88,8 @@ class Memo(Base):
     def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
-class Calender(Base):
-    __tablename__ = "Calender"
+class Calendar(Base):
+    __tablename__ = "Calendar"
 
     id = Column(Integer, primary_key=True)
     User = relationship('User', backref='calenders')
