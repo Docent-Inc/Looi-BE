@@ -141,6 +141,8 @@ prompt6 = [
     {"role": "system", "content": "{\"start_time\": \"2023-11-29 09:00:00\", \"end_time\": \"2023-12-01 22:00:00\", \"title\": \"여행\", \"description\": \"일본\"}"},
     {"role": "user", "content": "local time: 2023-11-27 10:07:01 Monday, 12시에 일정 등록해줘"},
     {"role": "system", "content": "{\"start_time\": \"2023-11-27 12:00:00\", \"end_time\": \"2023-11-27 13:00:00\", \"title\": \"일정\", \"description\": \"일정\"}"},
+    {"role": "user", "content": "local time: 2023-12-24 01:05:01 Sunday, 다음주 목요일 아침 8시반에 자동차 정기점검"},
+    {"role": "system", "content": "{\"start_time\": \"2023-12-28 08:30:00\", \"end_time\": \"2023-12-28 09:30:00\", \"title\": \"자동차 정기점검\", \"description\": \"자동차 정기점검\"}"},
 ]
 
 prompt7 = [
