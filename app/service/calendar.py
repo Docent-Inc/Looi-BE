@@ -131,21 +131,21 @@ class CalendarService(AbstractDiaryService):
 
         return calender
 
-    async def delete(self, calender_id: int) -> None:
+    async def delete(self, calendar_id: int) -> None:
 
         # 캘린더 조회
-        calender = self.db.query(Calendar).filter(Calendar.id == calender_id, Calendar.User_id == self.user.id, Calender.is_deleted == False).first()
+        calendar = self.db.query(Calendar).filter(Calendar.id == calendar_id, Calendar.User_id == self.user.id, Calendar.is_deleted == False).first()
 
         # 캘린더가 없을 경우 예외 처리
-        if not calender:
+        if not calendar:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=4015,
             )
 
         # 캘린더 삭제
-        calender.is_deleted = True
-        save_db(calender, self.db)
+        calendar.is_deleted = True
+        save_db(calendar, self.db)
 
     async def list(self, year: int, month: int, day: int) -> list:
 
