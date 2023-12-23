@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Optional
 from fastapi import APIRouter, Depends
 from app.schemas.request import CreateCalendarRequest, ListCalendarRequest, UpdateCalendarRequest
 from app.schemas.response import ApiResponse
@@ -45,13 +45,15 @@ async def delete_calender_delete(
     await calendar_service.delete(calendar_id)
     return ApiResponse()
 
-@router.post("/list", response_model=ApiResponse, tags=["Calendar"])
+@router.get("/list", response_model=ApiResponse, tags=["Calendar"])
 async def get_calendar_post(
-    page: int,
-    calendar_data: ListCalendarRequest,
     calendar_service: Annotated[CalendarService, Depends()],
+    page: int,
+    year: int,
+    month: int,
+    day: Optional[int] = 0,
 ) -> ApiResponse:
-    calendars = await calendar_service.list(page, calendar_data)
+    calendars = await calendar_service.list(page, year, month, day)
     return ApiResponse(
         data={"calendars": calendars}
     )
