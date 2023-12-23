@@ -94,7 +94,7 @@ class ReportService(AbstractReportService):
         paginated_titles = titles[offset:offset + limit]
 
         # 기간 계산 로직을 추가합니다.
-        periods = [self.calculate_period(report.create_date) for report in generated_reports]
+        periods = [await self.calculate_period(report.create_date) for report in generated_reports]
 
         # 리포트 정보와 함께 제목과 기간을 포함하여 반환합니다.
         return {
