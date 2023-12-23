@@ -1,5 +1,7 @@
 import asyncio
 import json
+import random
+
 from sqlalchemy import desc, literal, func, or_, and_
 from sqlalchemy import null
 from dateutil.relativedelta import relativedelta
@@ -46,13 +48,18 @@ async def transform_memo(memo):
 async def create_morning_diary(content: str, user: User, db: Session) -> MorningDiary:
 
     # 사용자의 mbti와 content를 합친 문자열 생성
-    mbti_content = content if user.mbti is None else user.mbti + ", " + content
+    mbti_list = ['istj', 'isfj', 'infj', 'intj', 'istp', 'isfp', 'infp', 'intp', 'estp', 'esfp', 'enfp', 'entp', 'estj',
+                 'esfj', 'enfj', 'entj']
+    if user.id == 1:
+        mbti_content = (random.choice(mbti_list)).upper() + ", " + content
+    else:
+        mbti_content = content if user.mbti is None else user.mbti + ", " + content
 
     # 다이어리 제목, 이미지, 해몽 생성
     gpt_service = GPTService(user, db)
     diary_name, image_info, resolution = await asyncio.gather(
         gpt_service.send_gpt_request(2, content),
-        gpt_service.send_dalle_request(content),
+        gpt_service.send_dalle_request(f"꿈의 한 장면을 그려줘(no text): {content}"),
         gpt_service.send_gpt_request(5, mbti_content)
     )
 
@@ -198,7 +205,7 @@ async def create_night_diary_ai(content: str, user: User, db: Session):
     # 이미지와 다이어리 제목 생성
     gpt_service = GPTService(user, db)
     image_info, diary_name = await asyncio.gather(
-        gpt_service.send_dalle_request(content),
+        gpt_service.send_dalle_request(f"일기의 한 장면을 그려줘(no text): {content}"),
         gpt_service.send_gpt_request(2, content)
     )
 
@@ -232,13 +239,13 @@ async def create_night_diary(body: CreateNightDiaryRequest, user: User, db: Sess
         # 이미지와 다이어리 제목 생성
         content = body.content
         image_info, diary_name = await asyncio.gather(
-            gpt_service.send_dalle_request(content),
+            gpt_service.send_dalle_request(f"일기의 한 장면을 그려줘(no text): {content}"),
             gpt_service.send_gpt_request(2, content)
         )
     else:
         diary_name = body.title
         content = body.content
-        image_info = await gpt_service.send_dalle_request(content)
+        image_info = await gpt_service.send_dalle_request(f"일기의 한 장면을 그려줘(no text): {content}")
 
     # 이미지 배경색 추출
     image_url, upper_dominant_color, lower_dominant_color = image_info
