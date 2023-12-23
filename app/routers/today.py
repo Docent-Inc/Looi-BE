@@ -25,7 +25,7 @@ async def get_today_luck(
     today_service: Annotated[TodayService, Depends()],
 ) -> ApiResponse:
     return ApiResponse(
-        data={"luck": await today_service.luck()}
+        data=await today_service.luck()
     )
 
 @router.get("/weather", tags=["Today"])
