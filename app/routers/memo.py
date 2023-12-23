@@ -39,9 +39,10 @@ async def post_memo_update(
 
 @router.delete("/delete", response_model=ApiResponse, tags=["Memo"])
 async def delete_memo_delete(
+    memo_id: int,
     memo_service: Annotated[MemoService, Depends()],
 ) -> ApiResponse:
-    await memo_service.delete()
+    await memo_service.delete(memo_id)
     return ApiResponse()
 
 @router.get("/list", response_model=ApiResponse, tags=["Memo"])
