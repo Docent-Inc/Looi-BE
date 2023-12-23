@@ -172,7 +172,10 @@ async def delete_morning_diary(diary_id: int, user: User, db: Session):
     redis = await get_redis_client()
     now = await time_now()
     redis_key = f"history:{user.id}:{now.day}"
-    datas = json.loads(await redis.get(redis_key))
+    data = await redis.get(redis_key)
+    if data is None:
+        return
+    datas = json.loads(data)
     is_exist = False
     for data in datas["MorningDiary"]:
         if data["id"] == diary.id:
@@ -342,7 +345,10 @@ async def delete_night_diary(diary_id: int, user: User, db: Session) -> int:
     redis = await get_redis_client()
     now = await time_now()
     redis_key = f"history:{user.id}:{now.day}"
-    datas = json.loads(await redis.get(redis_key))
+    data = await redis.get(redis_key)
+    if data is None:
+        return
+    datas = json.loads(data)
     is_exist = False
     for data in datas["NightDiary"]:
         if data["id"] == diary.id:
