@@ -15,7 +15,6 @@ from app.db.models import User
 from typing import Optional
 from app.core.config import settings
 from app.schemas.request import TokenRefresh
-
 access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
 refresh_token_expires = timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
 API_KEY_NAME = "Authorization"
@@ -53,11 +52,31 @@ async def user_to_json(user):
         }
     )
 
+
+async def user_to_json(user):
+    return json.dumps(
+        {
+            "id": user.id,
+            "nickname": user.nickname,
+            "email": user.email,
+            "gender": user.gender,
+            "age_range": user.age_range,
+            "mbti": user.mbti,
+            "is_deleted": user.is_deleted,
+            "is_admin": user.is_admin,
+            "is_sign_up": user.is_sign_up,
+            "subscription_status": user.subscription_status,
+            "Oauth_from": user.Oauth_from,
+            "birth": f"{user.birth}",
+            "push_token": user.push_token,
+            "push_morning": user.push_morning,
+            "push_night": user.push_night,
+            "push_report": user.push_report,
+        }
+    )
+
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
 
 async def create_access_token(data: dict, expires_delta: timedelta = None) -> str:
     to_encode = data.copy()
@@ -98,6 +117,7 @@ async def check_token(token_refresh: TokenRefresh, db: Session) -> User:
     return user
 
 async def get_current_user(
+    redis: aioredis.Redis = Depends(get_redis_client),
     api_key: str = Depends(api_key_header_auth), # api_key_header_auth를 통해 api_key를 받아온다.
     redis: aioredis.Redis = Depends(get_redis_client),
     db: Session = Depends(get_db),
@@ -166,7 +186,7 @@ async def get_user(
     )
 
     # 테스트 토큰이 아니면
-    if settings.TEST_TOKEN != "test":
+    if settings.SERVER_TYPE == "local":
         api_key = settings.TEST_TOKEN
     try:
         # 토큰을 복호화
@@ -179,6 +199,63 @@ async def get_user(
             raise credentials_exception
     except:
         raise credentials_exception
+
+    # redis에서 정보를 찾는다.
+    user_info = await redis.get(f"user:{email}")
+    if user_info:
+        return User(**json.loads(user_info))
+
+    # db에서 email로 유저를 찾는다.
+    user = await get_user_by_email(db, email=email)
+
+    # 유저가 없거나 삭제된 유저면
+    if user is None or user.is_deleted == True:
+        raise credentials_exception
+
+    # 유저가 로그인이 완료되지 않은 유저라면
+    if user.mbti == "0":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=4998,
+        )
+
+    # 유저 정보를 redis에 저장
+    await redis.set(f"user:{email}", await user_to_json(user), ex=7200) # redis에 유저 정보를 저장
+
+    # 유저의 마지막 로그인 시간을 현재시간으로 변경
+    user.last_active_date = await time_now()
+    user = save_db(user, db)
+
+    # 유저 정보 반환
+    return user
+
+async def get_update_user(
+    api_key: str = Depends(api_key_header_auth), # api_key_header_auth를 통해 api_key를 받아온다.
+    db: Session = Depends(get_db),
+) -> User:
+
+    # api_key가 없으면
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail=4220,
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    # 테스트 토큰이 아니면
+    if settings.SERVER_TYPE == "local":
+        api_key = settings.TEST_TOKEN
+    try:
+        # 토큰을 복호화
+        token = api_key.replace("Bearer ", "")
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+
+        # 토큰에 email이 없으면
+        if email is None:
+            raise credentials_exception
+    except:
+        raise credentials_exception
+
 
     # db에서 email로 유저를 찾는다.
     user = await get_user_by_email(db, email=email)
@@ -222,9 +299,6 @@ async def create_refresh_token(data: dict, expires_delta: timedelta = None) -> s
     return encoded_jwt, expire
 async def get_user_by_email(db: Session, email: str) -> Optional[User]:
     return db.query(User).filter(User.email == email, User.is_deleted == False).first()
-
-async def get_user_by_nickname(db: Session, nickname: str) -> Optional[User]:
-    return db.query(User).filter(User.nickname == nickname, User.is_deleted == False).first()
 
 async def create_token(email):
     access_token, expires_in = await create_access_token(  # 액세스 토큰을 생성합니다.

@@ -19,6 +19,7 @@ Base.metadata.create_all(bind=engine)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 def get_SessionLocal():
     return SessionLocal
+
 async def get_redis_client():
     return aioredis.from_url(f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}/{settings.REDIS_DB}", encoding="utf-8", decode_responses=True)
 
@@ -40,8 +41,3 @@ def save_db(data, db):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=5000,
         )
-async def try_to_acquire_lock(redis_client, lock_key, lock_timeout=60):
-    return await redis_client.set(lock_key, "locked", ex=lock_timeout, nx=True)
-
-async def release_lock(redis_client, lock_key):
-    await redis_client.delete(lock_key)
