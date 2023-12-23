@@ -17,7 +17,7 @@ async def post_diary_create(
     )
 
 @router.get("/read", response_model=ApiResponse, tags=["Diary"])
-async def night_read(
+async def get_diary_read(
     diary_id: int,
     diary_service: Annotated[DiaryService, Depends()],
 ) -> ApiResponse:
@@ -27,7 +27,7 @@ async def night_read(
     )
 
 @router.patch("/update", response_model=ApiResponse, tags=["Diary"])
-async def night_update(
+async def patch_diary_update(
     diary_id: int,
     diary_data: UpdateDiaryRequest,
     diary_service: Annotated[DiaryService, Depends()],
@@ -38,7 +38,7 @@ async def night_update(
     )
 
 @router.delete("/delete", response_model=ApiResponse, tags=["Diary"])
-async def night_delete(
+async def delete_diary_delete(
     diary_id: int,
     diary_service: Annotated[DiaryService, Depends()],
 ) -> ApiResponse:
@@ -46,7 +46,7 @@ async def night_delete(
     return ApiResponse()
 
 @router.get("/list", response_model=ApiResponse, tags=["Diary"])
-async def night_list(
+async def get_diary_list(
     page: int,
     diary_service: Annotated[DiaryService, Depends()],
 ) -> ApiResponse:

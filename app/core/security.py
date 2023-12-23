@@ -119,7 +119,6 @@ async def check_token(token_refresh: TokenRefresh, db: Session) -> User:
 async def get_current_user(
     redis: aioredis.Redis = Depends(get_redis_client),
     api_key: str = Depends(api_key_header_auth), # api_key_header_auth를 통해 api_key를 받아온다.
-    redis: aioredis.Redis = Depends(get_redis_client),
     db: Session = Depends(get_db),
 ) -> User:
 
