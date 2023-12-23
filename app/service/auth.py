@@ -75,26 +75,16 @@ class AuthService(AbstractAuthService):
         return user
 
     async def update(self, auth_data: UserUpdateRequest, user: User) -> None:
-        if user.is_sign_up == False:
-            if auth_data.nickname != "":
-                if self.db.query(User).filter(User.nickname == auth_data.nickname).first():
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail=4008,
-                    )
-                user.nickname = auth_data.nickname
-            if auth_data.mbti != "":
-                user.mbti = auth_data.mbti
-            if auth_data.gender != "":
-                user.gender = auth_data.gender
-            if auth_data.birth != "":
-                user.birth = auth_data.birth
-        elif user.is_sign_up == True:
+        if auth_data.nickname != "":
             user.nickname = auth_data.nickname
+        if auth_data.mbti != "":
             user.mbti = auth_data.mbti
-            user.birth = auth_data.birth
+        if auth_data.gender != "":
             user.gender = auth_data.gender
-            user.is_sign_up = False
+        if auth_data.birth != "":
+            user.birth = auth_data.birth
+
+        user.is_sign_up = False
         await self.redis.delete(f"user:{user.email}")
         save_db(user, self.db)
 
