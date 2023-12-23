@@ -1,11 +1,9 @@
 import asyncio
 import json
-
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
-
 from app.core.security import get_current_user, check_length, time_now
-from app.db.database import get_db, save_db
+from app.db.database import get_db, save_db, get_redis_client
 from app.db.models import User, MorningDiary
 from app.core.aiRequset import GPTService
 from app.schemas.request import CreateDreamRequest, UpdateDreamRequest
@@ -109,6 +107,7 @@ class DreamService(AbstractDiaryService):
         return diary
 
     async def delete(self, dream_id: int) -> None:
+        redis = await get_redis_client()
 
         # 다이어리 조회
         diary = self.db.query(MorningDiary).filter(MorningDiary.id == dream_id, MorningDiary.User_id == self.user.id, MorningDiary.is_deleted == False).first()
@@ -123,6 +122,21 @@ class DreamService(AbstractDiaryService):
         # 다이어리 삭제
         diary.is_deleted = True
         save_db(diary, self.db)
+
+        now = await time_now()
+        redis_key = f"history:{self.user.id}:{now.day}"
+        cached_data = await redis.get(redis_key)
+        if cached_data:
+            datas = json.loads(cached_data)
+            is_exist = False
+            for data in datas["MorningDiary"]:
+                if data == diary.id:
+                    is_exist = True
+            for data in datas["MorningDiary"]:
+                if data == diary.id:
+                    is_exist = True
+            if is_exist:
+                await redis.delete(redis_key)
 
     async def list(self, page: int) -> dict:
 
