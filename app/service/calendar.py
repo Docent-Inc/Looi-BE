@@ -176,4 +176,4 @@ class CalendarService(AbstractDiaryService):
                 )
             ).order_by(Calendar.start_time).all()
 
-        return calendars
+        return {"list": calendars}
