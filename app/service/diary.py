@@ -113,16 +113,18 @@ class DiaryService(AbstractDiaryService):
 
         now = await time_now()
         redis_key = f"history:{self.user.id}:{now.day}"
-        datas = json.loads(await redis.get(redis_key))
-        is_exist = False
-        for data in datas["NightDiary"]:
-            if data["id"] == diary.id:
-                is_exist = True
-        for data in datas["NightDiary"]:
-            if data["id"] == diary.id:
-                is_exist = True
-        if is_exist:
-            await redis.delete(redis_key)
+        cached_data = await redis.get(redis_key)
+        if cached_data:
+            datas = json.loads(cached_data)
+            is_exist = False
+            for data in datas["NightDiary"]:
+                if data == diary.id:
+                    is_exist = True
+            for data in datas["NightDiary"]:
+                if data == diary.id:
+                    is_exist = True
+            if is_exist:
+                await redis.delete(redis_key)
     async def list(self, page: int) -> dict:
 
         # 다이어리 조회
