@@ -84,9 +84,9 @@ class DiaryService(AbstractDiaryService):
                 detail=4012,
             )
 
-        if diary_data.diary_name != "":
-            await check_length(diary_data.diary_name, 255, 4023)
-            diary.diary_name = diary_data.diary_name
+        if diary_data.title != "":
+            await check_length(diary_data.title, 255, 4023)
+            diary.diary_name = diary_data.title
         if diary_data.content != "":
             await check_length(diary_data.content, 1000, 4221)
             diary.content = diary_data.content
