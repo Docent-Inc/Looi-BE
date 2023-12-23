@@ -173,6 +173,7 @@ async def get_current_user(
     return user
 
 async def get_user(
+    redis: aioredis.Redis = Depends(get_redis_client),
     api_key: str = Depends(api_key_header_auth), # api_key_header_auth를 통해 api_key를 받아온다.
     db: Session = Depends(get_db),
 ) -> User:
@@ -210,13 +211,6 @@ async def get_user(
     # 유저가 없거나 삭제된 유저면
     if user is None or user.is_deleted == True:
         raise credentials_exception
-
-    # 유저가 로그인이 완료되지 않은 유저라면
-    if user.mbti == "0":
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=4998,
-        )
 
     # 유저 정보를 redis에 저장
     await redis.set(f"user:{email}", await user_to_json(user), ex=7200) # redis에 유저 정보를 저장
