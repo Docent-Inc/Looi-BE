@@ -54,3 +54,4 @@ async def get_diary_list(
     return ApiResponse(
         data={"diaries": diaries}
     )
+
