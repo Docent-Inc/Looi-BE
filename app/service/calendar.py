@@ -147,16 +147,14 @@ class CalendarService(AbstractDiaryService):
         calender.is_deleted = True
         save_db(calender, self.db)
 
-    async def list(self, page: int, calender_data: ListCalendarRequest) -> list:
+    async def list(self, page: int, year: int, month: int, day: int) -> list:
 
         # day가 0일 경우 월간 캘린더 조회
-        if calender_data.day == 0:
-            year = calender_data.year
-            month = calender_data.month
+        if day == 0:
             start_of_month = datetime.datetime(year, month, 1)
             end_of_month = start_of_month + relativedelta(months=1)
 
-            calenders = self.db.query(Calendar).filter(
+            calendars = self.db.query(Calendar).filter(
                 Calendar.User_id == self.user.id,
                 Calendar.is_deleted == False,
                 or_(
@@ -166,9 +164,6 @@ class CalendarService(AbstractDiaryService):
             ).order_by(Calendar.start_time).all()
         # day가 0이 아닐 경우 일간 캘린더 조회
         else:
-            year = calender_data.year
-            month = calender_data.month
-            day = calender_data.day
             start_of_day = datetime.datetime(year, month, day)
             end_of_day = start_of_day + datetime.timedelta(days=1)
             calendars = self.db.query(Calendar).filter(
