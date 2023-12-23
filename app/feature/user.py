@@ -41,11 +41,13 @@ mbti_list = ['istj', 'isfj', 'infj', 'intj', 'istp', 'isfp', 'infp', 'intp', 'es
 async def get_user_kakao(request: str, env: str):
     global REDIRECT_URI
     if env == "local":
-        REDIRECT_URI = REDIRECT_URI_TEST + "/kakao/local"
+        REDIRECT_URI = REDIRECT_URI_TEST + "/kakao"
     elif env == "dev":
-        REDIRECT_URI = REDIRECT_URI_DEV + "/kakao/dev"
+        REDIRECT_URI = REDIRECT_URI_DEV + "/kakao"
     elif env == "prod":
-        REDIRECT_URI = REDIRECT_URI + "/kakao/prod"
+        REDIRECT_URI = REDIRECT_URI + "/kakao"
+
+    print(REDIRECT_URI)
     try:
         data = {
             "grant_type": "authorization_code",
@@ -55,11 +57,13 @@ async def get_user_kakao(request: str, env: str):
         }
         response = requests.post(ACCESS_TOKEN_ENDPOINT, data=data)
         token = response.json().get("access_token")
-
+        print(token)
         headers = {"Authorization": f"Bearer {token}"}
         user_info = requests.get(PROFILE_ENDPOINT_KAKAO, headers=headers).json()
+        print(user_info)
         return user_info
-    except GetIdEmailError:
+    except Exception as e:
+        print(e)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=4010,
