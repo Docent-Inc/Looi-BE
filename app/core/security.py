@@ -95,8 +95,8 @@ async def decode_access_token(token: str) -> Union[str, Any]:
     except JWTError:
         return None
 
-async def check_token(token_refresh: TokenRefresh, db: Session) -> User:
-    payload = await decode_access_token(token_refresh.refresh_token)
+async def check_token(token_refresh: str, db: Session) -> User:
+    payload = await decode_access_token(token_refresh)
     if payload is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
