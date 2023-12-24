@@ -87,7 +87,7 @@ class TodayService(AbstractTodayService):
             }
             midnight = now.replace(hour=0, minute=0, second=0, microsecond=0) + datetime.timedelta(days=1)
             seconds_until_midnight = (midnight - now).total_seconds()
-            await self.redis.set(redis_key, json.dumps(diary_ids), ex=int(seconds_until_midnight))
+            await self.redis.set(redis_key, json.dumps(diary_ids, ensure_ascii=False), ex=int(seconds_until_midnight))
 
         def diary_to_dict(diary):
             diary_dict = diary.as_dict()

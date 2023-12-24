@@ -20,9 +20,10 @@ async def post_dream_create(
 @router.get("/read", response_model=ApiResponse, tags=["Dream"])
 async def get_dream_read(
     dream_id: int,
+    background_tasks: BackgroundTasks,
     dream_service: Annotated[DreamService, Depends()]
 ) -> ApiResponse:
-    diary = await dream_service.read(dream_id)
+    diary = await dream_service.read(dream_id, background_tasks)
     return ApiResponse(
         data={"diary": diary}
     )

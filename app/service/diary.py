@@ -1,8 +1,9 @@
 import asyncio
 import json
-from fastapi import Depends, HTTPException, status
+import aioredis
+from fastapi import Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
-from app.core.security import get_current_user, check_length, time_now
+from app.core.security import get_current_user, check_length, time_now, datetime_serializer, diary_serializer
 from app.db.database import get_db, save_db, get_redis_client
 from app.db.models import User, NightDiary
 from app.core.aiRequset import GPTService
@@ -11,9 +12,10 @@ from app.service.abstract import AbstractDiaryService
 
 
 class DiaryService(AbstractDiaryService):
-    def __init__(self, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    def __init__(self, user: User = Depends(get_current_user), db: Session = Depends(get_db), redis: aioredis.Redis = Depends(get_redis_client)):
         self.user = user
         self.db = db
+        self.redis = redis
 
     async def create(self, diary_data: CreateDiaryRequest) -> NightDiary:
 
@@ -51,10 +53,27 @@ class DiaryService(AbstractDiaryService):
         )
         diary = save_db(diary, self.db)
 
+        # list cache 삭제
+        keys = await self.redis.keys(f"diary:list:{self.user.id}:page:*")
+        for key in keys:
+            await self.redis.delete(key)
+
         # 다이어리 반환
         return diary
 
-    async def read(self, diary_id: int) -> NightDiary:
+    async def read(self, diary_id: int, background_tasks: BackgroundTasks) -> NightDiary:
+
+        async def count_view(diary_id: int) -> None:
+            diary = self.db.query(NightDiary).filter(NightDiary.id == diary_id, NightDiary.User_id == self.user.id, NightDiary.is_deleted == False).first()
+            diary.view_count += 1
+            save_db(diary, self.db)
+
+        # 캐싱된 데이터가 있는지 확인
+        redis_key = f"diary:{self.user.id}:{diary_id}"
+        redis_data = await self.redis.get(redis_key)
+        if redis_data:
+            background_tasks.add_task(count_view, diary_id)
+            return json.loads(redis_data)
 
         # 다이어리 조회
         diary = self.db.query(NightDiary).filter(NightDiary.id == diary_id, NightDiary.User_id == self.user.id, NightDiary.is_deleted == False).first()
@@ -66,9 +85,8 @@ class DiaryService(AbstractDiaryService):
                 detail=4012,
             )
 
-        # 조회수 증가
-        diary.view_count += 1
-        diary = save_db(diary, self.db)
+        # 데이터 캐싱
+        await self.redis.set(redis_key, json.dumps(diary, default=diary_serializer, ensure_ascii=False), ex=1800)
 
         # 다이어리 반환
         return diary
@@ -93,6 +111,15 @@ class DiaryService(AbstractDiaryService):
         diary.modify_date = await time_now()
         diary = save_db(diary, self.db)
 
+        # list cache 삭제
+        keys = await self.redis.keys(f"diary:list:{self.user.id}:page:*")
+        for key in keys:
+            await self.redis.delete(key)
+
+        # diary cache 삭제
+        redis_key = f"diary:{self.user.id}:{diary_id}"
+        await self.redis.delete(redis_key)
+
         # 다이어리 반환
         return diary
 
@@ -111,6 +138,7 @@ class DiaryService(AbstractDiaryService):
         diary.is_deleted = True
         diary = save_db(diary, self.db)
 
+        # history cache 삭제
         now = await time_now()
         redis_key = f"history:{self.user.id}:{now.day}"
         cached_data = await redis.get(redis_key)
@@ -125,11 +153,51 @@ class DiaryService(AbstractDiaryService):
                     is_exist = True
             if is_exist:
                 await redis.delete(redis_key)
-    async def list(self, page: int) -> dict:
 
-        # 다이어리 조회
-        diaries = self.db.query(NightDiary).filter(NightDiary.User_id == self.user.id, NightDiary.is_deleted == False).order_by(NightDiary.create_date.desc()).limit(10).offset((page - 1) * 10).all()
-        total_count = self.db.query(NightDiary).filter(NightDiary.User_id == self.user.id, NightDiary.is_deleted == False).count()
+        # list cache 삭제
+        keys = await self.redis.keys(f"diary:list:{self.user.id}:page:*")
+        for key in keys:
+            await self.redis.delete(key)
+
+        # diary cache 삭제
+        await redis.delete(f"diary:{self.user.id}:{diary.id}")
+
+    async def list(self, page: int, background_tasks: BackgroundTasks) -> dict:
+
+        async def cache_next_page(page: int, total_count: int) -> None:
+            limit, offset = (7, 0) if page == 1 else (8, 7 + (page - 2) * 8)
+            diaries = self.db.query(NightDiary).filter(NightDiary.User_id == self.user.id,
+                                                        NightDiary.is_deleted == False).order_by(
+                NightDiary.create_date.desc()).limit(limit).offset(offset).all()
+            diaries_dict_list = []
+            for diary in diaries:
+                diary_dict = diary.__dict__.copy()
+                diary_dict.pop('_sa_instance_state', None)
+                diary_dict["diary_type"] = 2
+                diaries_dict_list.append(diary_dict)
+            redis_key = f"diary:list:{self.user.id}:page:{page}"
+            await self.redis.set(redis_key,
+                            json.dumps({"list": diaries_dict_list, "count": limit, "total_count": total_count},
+                                       default=str, ensure_ascii=False), ex=1800)
+
+        # 캐싱된 데이터가 있는지 확인
+        redis_key = f"diary:list:{self.user.id}:page:{page}"
+        cached_data = await self.redis.get(redis_key)
+
+        # 캐싱된 데이터가 있을 경우 캐싱된 데이터 반환 + 다음 페이지 캐싱
+        if cached_data:
+            json_data = json.loads(cached_data)
+            background_tasks.add_task(cache_next_page, page + 1, json_data["total_count"])
+            return json_data
+
+        # 캐싱된 데이터가 없을 경우 데이터베이스에서 조회
+        limit, offset = (7, 0) if page == 1 else (8, 7 + (page - 2) * 8)
+        diaries = self.db.query(NightDiary).filter(NightDiary.User_id == self.user.id,
+                                                    NightDiary.is_deleted == False).order_by(
+            NightDiary.create_date.desc()).limit(limit).offset(offset).all()
+
+        total_count = self.db.query(NightDiary).filter(NightDiary.User_id == self.user.id,
+                                                         NightDiary.is_deleted == False).count()
 
         # 각 꿈 객체를 사전 형태로 변환하고 새로운 키-값 쌍 추가
         diaries_dict_list = []
@@ -139,5 +207,10 @@ class DiaryService(AbstractDiaryService):
             diary_dict["diary_type"] = 2
             diaries_dict_list.append(diary_dict)
 
+        # 다음 페이지 캐싱
+        background_tasks.add_task(cache_next_page, page + 1, total_count)
+        await self.redis.set(redis_key, json.dumps({"list": diaries_dict_list, "count": limit, "total_count": total_count},
+                                              default=str, ensure_ascii=False), ex=1800)
+
         # 다이어리 반환
-        return {"list": diaries_dict_list, "count": 10, "total_count": total_count}
+        return {"list": diaries_dict_list, "count": limit, "total_count": total_count}
