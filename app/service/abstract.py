@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from abc import ABC, abstractmethod
-
+from fastapi import BackgroundTasks
 from app.db.models import User
 
 
@@ -22,7 +22,7 @@ class AbstractDiaryService(ABC):
         pass
 
     @abstractmethod
-    async def list(self, page: int) -> list:
+    async def list(self, page: int, background_tasks: BackgroundTasks) -> list:
         pass
 
 class AbstractShareService(ABC):

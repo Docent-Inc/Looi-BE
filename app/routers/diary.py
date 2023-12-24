@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, BackgroundTasks
 from app.schemas.request import CreateDiaryRequest, UpdateDiaryRequest
 from app.schemas.response import ApiResponse
 from app.service.diary import DiaryService
@@ -19,9 +19,10 @@ async def post_diary_create(
 @router.get("/read", response_model=ApiResponse, tags=["Diary"])
 async def get_diary_read(
     diary_id: int,
+    background_tasks: BackgroundTasks,
     diary_service: Annotated[DiaryService, Depends()],
 ) -> ApiResponse:
-    diary = await diary_service.read(diary_id)
+    diary = await diary_service.read(diary_id, background_tasks)
     return ApiResponse(
         data={"diary": diary}
     )
@@ -48,9 +49,9 @@ async def delete_diary_delete(
 @router.get("/list", response_model=ApiResponse, tags=["Diary"])
 async def get_diary_list(
     page: int,
+    background_tasks: BackgroundTasks,
     diary_service: Annotated[DiaryService, Depends()],
 ) -> ApiResponse:
     return ApiResponse(
-        data=await diary_service.list(page)
+        data=await diary_service.list(page, background_tasks)
     )
-

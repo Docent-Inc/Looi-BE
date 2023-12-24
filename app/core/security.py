@@ -309,3 +309,20 @@ async def check_length(text: str, max_length: int, error_code: int) -> None:
 
 async def time_now():
     return datetime.now(pytz.timezone('Asia/Seoul'))
+
+def datetime_serializer(o):
+    if isinstance(o, datetime):
+        return o.isoformat()
+    raise TypeError("Object of type '%s' is not JSON serializable" % type(o).__name__)
+
+def diary_serializer(diary):
+    # 모델의 __dict__ 속성을 사용하여 딕셔너리로 변환
+    diary_dict = diary.__dict__.copy()
+    diary_dict.pop('_sa_instance_state', None)
+
+    # datetime 객체 처리
+    for key, value in diary_dict.items():
+        if isinstance(value, datetime):
+            diary_dict[key] = value.isoformat()
+
+    return diary_dict

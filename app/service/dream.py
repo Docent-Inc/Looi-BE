@@ -1,10 +1,9 @@
 import asyncio
 import json
-from datetime import datetime
-
+import aioredis
 from fastapi import Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
-from app.core.security import get_current_user, check_length, time_now
+from app.core.security import get_current_user, check_length, time_now, diary_serializer
 from app.db.database import get_db, save_db, get_redis_client
 from app.db.models import User, MorningDiary
 from app.core.aiRequset import GPTService
@@ -13,9 +12,10 @@ from app.service.abstract import AbstractDiaryService
 
 
 class DreamService(AbstractDiaryService):
-    def __init__(self, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    def __init__(self, user: User = Depends(get_current_user), db: Session = Depends(get_db), redis: aioredis.Redis = Depends(get_redis_client)):
         self.user = user
         self.db = db
+        self.redis = redis
 
     async def create(self, dream_data: CreateDreamRequest) -> MorningDiary:
 
@@ -59,24 +59,39 @@ class DreamService(AbstractDiaryService):
                 detail=4021,
             )
 
+        # list cache 삭제
+        keys = await self.redis.keys(f"dream:list:{self.user.id}:page:*")
+        for key in keys:
+            await self.redis.delete(key)
+
         # 다이어리 반환
         return diary
 
-    async def read(self, diary_id: int) -> MorningDiary:
+    async def read(self, dream_id: int, background_tasks: BackgroundTasks) -> MorningDiary:
+        async def count_view(dream_id: int) -> None:
+            diary = self.db.query(MorningDiary).filter(MorningDiary.id == dream_id, MorningDiary.User_id == self.user.id, MorningDiary.is_deleted == False).first()
+            diary.view_count += 1
+            save_db(diary, self.db)
 
-        # 다이어리 조회
-        diary = self.db.query(MorningDiary).filter(MorningDiary.id == diary_id, MorningDiary.User_id == self.user.id, MorningDiary.is_deleted == False).first()
+        # 캐시된 데이터가 있는지 확인
+        redis_key = f"dream:{self.user.id}:{dream_id}"
+        cached_data = await self.redis.get(redis_key)
+        if cached_data:
+            background_tasks.add_task(count_view, dream_id)
+            return json.loads(cached_data)
 
-        # 다이어리가 없을 경우 예외 처리
+        # 꿈 조회
+        diary = self.db.query(MorningDiary).filter(MorningDiary.id == dream_id, MorningDiary.User_id == self.user.id, MorningDiary.is_deleted == False).first()
+
+        # 꿈이 없을 경우 예외 처리
         if not diary:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=4011,
             )
 
-        # 조회수 증가
-        diary.view_count += 1
-        diary = save_db(diary, self.db)
+        # 데이터 캐싱
+        await self.redis.set(redis_key, json.dumps(diary, default=diary_serializer, ensure_ascii=False), ex=1800)
 
         # 다이어리 반환
         return diary
@@ -106,16 +121,14 @@ class DreamService(AbstractDiaryService):
         diary = save_db(diary, self.db)
 
         # list cache 삭제
-        redis = await get_redis_client()
-        keys = await redis.keys(f"dream:list:{self.user.id}:page:*")
+        keys = await self.redis.keys(f"dream:list:{self.user.id}:page:*")
         for key in keys:
-            await redis.delete(key)
+            await self.redis.delete(key)
 
         # 다이어리 반환
         return diary
 
     async def delete(self, dream_id: int) -> None:
-        redis = await get_redis_client()
 
         # 다이어리 조회
         diary = self.db.query(MorningDiary).filter(MorningDiary.id == dream_id, MorningDiary.User_id == self.user.id, MorningDiary.is_deleted == False).first()
@@ -134,7 +147,7 @@ class DreamService(AbstractDiaryService):
         # history cache 삭제
         now = await time_now()
         redis_key = f"history:{self.user.id}:{now.day}"
-        cached_data = await redis.get(redis_key)
+        cached_data = await self.redis.get(redis_key)
         if cached_data:
             datas = json.loads(cached_data)
             is_exist = False
@@ -145,12 +158,12 @@ class DreamService(AbstractDiaryService):
                 if data == diary.id:
                     is_exist = True
             if is_exist:
-                await redis.delete(redis_key)
+                await self.redis.delete(redis_key)
 
         # list cache 삭제
-        keys = await redis.keys(f"dream:list:{self.user.id}:page:*")
+        keys = await self.redis.keys(f"dream:list:{self.user.id}:page:*")
         for key in keys:
-            await redis.delete(key)
+            await self.redis.delete(key)
 
     async def list(self, page: int, background_tasks: BackgroundTasks) -> dict:
 
@@ -165,19 +178,12 @@ class DreamService(AbstractDiaryService):
                 dream_dict.pop('_sa_instance_state', None)
                 dream_dict["diary_type"] = 1
                 dreams_dict_list.append(dream_dict)
-            redis = await get_redis_client()
             redis_key = f"dream:list:{self.user.id}:page:{page}"
-            await redis.set(redis_key, json.dumps({"list": dreams_dict_list, "count": limit, "total_count": total_count}, default=datetime_serializer), ex=1800)
-
-        def datetime_serializer(o):
-            if isinstance(o, datetime):
-                return o.isoformat()
-            raise TypeError("Object of type '%s' is not JSON serializable" % type(o).__name__)
+            await self.redis.set(redis_key, json.dumps({"list": dreams_dict_list, "count": limit, "total_count": total_count}, default=str, ensure_ascii=False), ex=1800)
 
         # 캐싱된 데이터가 있는지 확인
-        redis = await get_redis_client()
         redis_key = f"dream:list:{self.user.id}:page:{page}"
-        cached_data = await redis.get(redis_key)
+        cached_data = await self.redis.get(redis_key)
 
 
         # 캐싱된 데이터가 있을 경우 캐싱된 데이터 반환 + 다음 페이지 캐싱
@@ -204,7 +210,7 @@ class DreamService(AbstractDiaryService):
 
         # 다음 페이지 캐싱
         background_tasks.add_task(cache_next_page, page + 1, total_count)
-        await redis.set(redis_key, json.dumps({"list": dreams_dict_list, "count": limit, "total_count": total_count}, default=datetime_serializer), ex=1800)
+        await self.redis.set(redis_key, json.dumps({"list": dreams_dict_list, "count": limit, "total_count": total_count}, default=str, ensure_ascii=False), ex=1800)
 
         # 다이어리 반환
         return {"list": dreams_dict_list, "count": limit, "total_count": total_count}
