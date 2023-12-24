@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, BackgroundTasks
 from app.schemas.request import CreateDreamRequest, UpdateDreamRequest
 from app.schemas.response import ApiResponse
 from app.service.dream import DreamService
@@ -49,8 +49,9 @@ async def delete_dream_delete(
 @router.get("/list", response_model=ApiResponse, tags=["Dream"])
 async def get_dream_list(
     page: int,
+    background_tasks: BackgroundTasks,
     dream_service: Annotated[DreamService, Depends()]
 ) -> ApiResponse:
     return ApiResponse(
-        data=await dream_service.list(page)
+        data=await dream_service.list(page, background_tasks)
     )
