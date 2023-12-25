@@ -12,24 +12,13 @@ class ApiResponse(BaseModel):
 Auth 관련 Response
 '''
 class TokenData(BaseModel):
+    is_signup: bool
+    user_name: str
     access_token: str
     expires_in: int
     refresh_token: str
     refresh_expires_in: int
     token_type: str
-
-class KakaoTokenData(TokenData):
-    is_signup: bool
-    user_name: str
-
-class User(BaseModel):
-    id: int
-    nickname: str
-    email: str
-    mbti: str
-
-    class Config:
-        orm_mode = True
 
 class ChatResponse(BaseModel):
     calls_left: int

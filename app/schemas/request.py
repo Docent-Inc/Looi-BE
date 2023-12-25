@@ -22,53 +22,66 @@ class TokenRefresh(BaseModel):
     refresh_token: str
 
 class UserUpdateRequest(BaseModel):
-    nickname: str
-    mbti: str
-    gender: str
-    birth: str
+    nickname: Optional[str] = ""
+    mbti: Optional[str] = ""
+    gender: Optional[str] = ""
+    birth: Optional[str] = ""
 
 class PushUpdateRequest(BaseModel):
     type: str
     value: bool
 
+'''
+Diary 관련 Request
+'''
 
-'''
-Diary 관련 Response
-'''
-class CreateDiaryRequest(BaseModel):
+class CreateDreamRequest(BaseModel):
     content: str
 
-class CreateNightDiaryRequest(BaseModel):
-    date: str
-    title: Optional[str] = ""
-    content: str
-
-class UpdateDiaryRequest(BaseModel):
+class UpdateDreamRequest(BaseModel):
     diary_name: Optional[str] = ""
     content: Optional[str] = ""
 
-class MemoRequest(BaseModel):
+class CreateDiaryRequest(BaseModel):
+    date: Optional[str] = ""
+    title: Optional[str] = ""
+    content: str
+class UpdateDiaryRequest(BaseModel):
+    date: Optional[str] = ""
     title: Optional[str] = ""
     content: Optional[str] = ""
+
+class CreateMemoRequest(BaseModel):
+    title: Optional[str] = ""
+    content: str
+
+class UpdateMemoRequest(BaseModel):
+    title: Optional[str] = ""
+    content: Optional[str] = ""
+
+class CreateCalendarRequest(BaseModel):
+    start_time: Optional[str] = ""
+    end_time: Optional[str] = ""
+    title: Optional[str] = ""
+    content: str
+
+class UpdateCalendarRequest(BaseModel):
+    start_time: Optional[str] = ""
+    end_time: Optional[str] = ""
+    title: Optional[str] = ""
+    content: Optional[str] = ""
+
+class ListCalendarRequest(BaseModel):
+    year: int
+    month: int
+    day: Optional[int] = 0
+
+
+
 
 class ChatRequest(BaseModel):
     type: Optional[int] = 0
     content: str
-
-class CalenderRequest(BaseModel):
-    start_time: str
-    end_time: str
-    title: Optional[str] = ""
-    content: str
-
-class ListRequest(BaseModel):
-    page: int
-    diary_type: int
-
-class CalenderListRequest(BaseModel):
-    year: int
-    month: int
-    day: Optional[int] = None
 
 class WelcomeRequest(BaseModel):
     text: str
