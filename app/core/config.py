@@ -35,7 +35,8 @@ class Settings(BaseSettings):
     LINE_REDIRECT_URI_PROD: str
     APPLE_REDIRECT_URI_DEV: str
     APPLE_REDIRECT_URI_PROD: str
-
+    NAVER_CLOUD_ACCESS_KEY_ID: str
+    NAVER_CLOUD_SECRET_KEY: str
 
     class Config:
         env_file = ".env"
