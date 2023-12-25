@@ -81,7 +81,7 @@ class CalendarService(AbstractDiaryService):
     async def read(self, calender_id: int) -> Calendar:
 
         # 캘린더 조회
-        calender = self.db.query(Calendar).filter(Calendar.id == calender_id, Calendar.User_id == self.user.id, Calender.is_deleted == False).first()
+        calender = self.db.query(Calendar).filter(Calendar.id == calender_id, Calendar.User_id == self.user.id, Calendar.is_deleted == False).first()
 
         # 캘린더가 없을 경우 예외 처리
         if not calender:
