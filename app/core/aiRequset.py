@@ -343,7 +343,7 @@ class GPTService:
 
                 # 유니크한 파일 이름 생성
                 unique_id = uuid.uuid4()
-                destination_blob_name = f"{self.user.id}-{unique_id}.png"
+                destination_blob_name = f"{self.user.id}/{unique_id}.png"
                 bucket_name = "looi"  # 네이버 클라우드 버킷 이름
 
                 # 이미지를 BytesIO 객체로 변환
