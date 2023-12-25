@@ -100,9 +100,8 @@ class ChatService(AbstractChatService):
 
         # 랜덤으로 하나 선택
         random_chat = random.choice(data)
-        random_chat = random_chat.text.replace("{}", self.user.nickname)
 
-        return random_chat
+        return {"text": random_chat.text.replace("{}", self.user.nickname)}
 
     async def helper(self, text_type: int) -> object:
         # type에 맞는 채팅 도움말 가져오기
