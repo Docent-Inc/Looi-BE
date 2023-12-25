@@ -30,3 +30,4 @@ fastapi-admin==1.0.4
 slack_sdk==3.23.0
 cryptography==41.0.5
 apscheduler==3.10.1
+boto3==1.26.160

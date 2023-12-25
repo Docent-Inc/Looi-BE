@@ -16,6 +16,43 @@ from app.core.config import settings
 from app.core.security import time_now
 from app.db.database import save_db
 from app.db.models import ApiRequestLog, User, Prompt
+import boto3
+
+service_name = 's3'
+endpoint_url = 'https://kr.object.ncloudstorage.com'
+region_name = 'kr-standard'
+access_key = settings.NAVER_CLOUD_ACCESS_KEY_ID
+secret_key = settings.NAVER_CLOUD_SECRET_KEY
+# boto3 클라이언트 생성
+s3_client = boto3.client(
+    service_name,
+    endpoint_url=endpoint_url,
+    region_name=region_name,
+    aws_access_key_id=access_key,
+    aws_secret_access_key=secret_key
+)
+async def upload_image_to_naver_cloud(img):
+    # 유니크한 파일 이름 생성
+    unique_id = uuid.uuid4()
+    destination_blob_name = str(unique_id) + ".png"
+    bucket_name = "looi"  # 네이버 클라우드 버킷 이름
+
+    # 이미지를 BytesIO 객체로 변환
+    buffer = BytesIO()
+    img.save(buffer, format="PNG")
+    buffer.seek(0)
+
+    # 이미지 업로드
+    s3_client.put_object(
+        Bucket=bucket_name,
+        Key=destination_blob_name,
+        Body=buffer,
+        ACL='public-read'  # public 접근 가능하도록 설정
+    )
+
+    # public URL 반환
+    return f"{endpoint_url}/{bucket_name}/{destination_blob_name}"
+
 SERVICE_ACCOUNT_INFO = json.loads(settings.GOOGLE_APPLICATION_CREDENTIALS_JSON)
 openai.api_key = settings.GPT_API_KEY
 
@@ -304,27 +341,32 @@ class GPTService:
                     upper_dominant_color = upper_colors[0][0]
                     lower_dominant_color = lower_colors[0][0]
 
+                # 유니크한 파일 이름 생성
                 unique_id = uuid.uuid4()
-                destination_blob_name = str(unique_id) + ".png"
-                bucket_name = "docent"  # 구글 클라우드 버킷 이름
-                credentials = service_account.Credentials.from_service_account_info(SERVICE_ACCOUNT_INFO)
-                client = storage.Client(credentials=credentials, project=SERVICE_ACCOUNT_INFO['project_id'])
+                destination_blob_name = f"{self.user.id}-{unique_id}.png"
+                bucket_name = "looi"  # 네이버 클라우드 버킷 이름
 
+                # 이미지를 BytesIO 객체로 변환
                 buffer = BytesIO()
                 img.save(buffer, format="PNG")
+                buffer.seek(0)
 
-                with BytesIO(buffer.getvalue()) as image_file:
-                    image_file.seek(0)
-                    bucket = client.get_bucket(bucket_name)
-                    blob = bucket.blob(destination_blob_name)
-                    blob.upload_from_file(image_file)
-                    blob.make_public()
+                # 이미지 업로드
+                s3_client.put_object(
+                    Bucket=bucket_name,
+                    Key=destination_blob_name,
+                    Body=buffer,
+                    ACL='public-read'  # public 접근 가능하도록 설정
+                )
+
+                # public URL 반환
+                public_url = f"{endpoint_url}/{bucket_name}/{destination_blob_name}"
 
                 # public url 반환
                 if background:
-                    return [blob.public_url, upper_dominant_color, lower_dominant_color]
+                    return [public_url, upper_dominant_color, lower_dominant_color]
                 else:
-                    return blob.public_url
+                    return public_url
             except Exception as e:
                 print(f"DALL-E API Error{e}")
                 if i < retries - 1:
