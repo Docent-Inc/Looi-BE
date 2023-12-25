@@ -45,7 +45,7 @@ class AuthService(AbstractAuthService):
             data = await get_user_line(code, env)
         elif service == "apple":
             data = await get_user_apple(code, env)
-        user, is_sign_up = await check_user(data, self.db)
+        user, is_sign_up = await check_user(data, service, self.db)
         expires_in, refresh_expires_in, access_token, refresh_token = await create_token(user.email)
         return TokenData(
                 user_name=user.nickname,

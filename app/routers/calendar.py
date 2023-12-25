@@ -1,6 +1,6 @@
 from typing import Annotated, Optional
 from fastapi import APIRouter, Depends
-from app.schemas.request import CreateCalendarRequest, ListCalendarRequest, UpdateCalendarRequest
+from app.schemas.request import CreateCalendarRequest, UpdateCalendarRequest
 from app.schemas.response import ApiResponse
 from app.service.calendar import CalendarService
 

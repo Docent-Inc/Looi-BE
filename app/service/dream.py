@@ -60,9 +60,13 @@ class DreamService(AbstractDiaryService):
             )
 
         # list cache 삭제
-        keys = await self.redis.keys(f"dream:list:{self.user.id}:page:*")
+        keys = await self.redis.keys(f"dream:list:{self.user.id}:*")
         for key in keys:
             await self.redis.delete(key)
+
+        # 새로운 cache 생성
+        redis_key = f"diary:{self.user.id}:{diary.id}"
+        await self.redis.set(redis_key, json.dumps(diary, default=diary_serializer, ensure_ascii=False), ex=1800)
 
         # 다이어리 반환
         return diary
@@ -121,7 +125,7 @@ class DreamService(AbstractDiaryService):
         diary = save_db(diary, self.db)
 
         # list cache 삭제
-        keys = await self.redis.keys(f"dream:list:{self.user.id}:page:*")
+        keys = await self.redis.keys(f"dream:list:{self.user.id}:*")
         for key in keys:
             await self.redis.delete(key)
 
@@ -161,7 +165,7 @@ class DreamService(AbstractDiaryService):
                 await self.redis.delete(redis_key)
 
         # list cache 삭제
-        keys = await self.redis.keys(f"dream:list:{self.user.id}:page:*")
+        keys = await self.redis.keys(f"dream:list:{self.user.id}:*")
         for key in keys:
             await self.redis.delete(key)
 
@@ -178,11 +182,11 @@ class DreamService(AbstractDiaryService):
                 dream_dict.pop('_sa_instance_state', None)
                 dream_dict["diary_type"] = 1
                 dreams_dict_list.append(dream_dict)
-            redis_key = f"dream:list:{self.user.id}:page:{page}"
+            redis_key = f"dream:list:{self.user.id}:{page}"
             await self.redis.set(redis_key, json.dumps({"list": dreams_dict_list, "count": limit, "total_count": total_count}, default=str, ensure_ascii=False), ex=1800)
 
         # 캐싱된 데이터가 있는지 확인
-        redis_key = f"dream:list:{self.user.id}:page:{page}"
+        redis_key = f"dream:list:{self.user.id}:{page}"
         cached_data = await self.redis.get(redis_key)
 
 

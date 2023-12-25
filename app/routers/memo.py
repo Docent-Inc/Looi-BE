@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, BackgroundTasks
 from app.schemas.request import CreateMemoRequest, UpdateMemoRequest
 from app.schemas.response import ApiResponse
 from app.service.memo import MemoService
@@ -48,8 +48,9 @@ async def delete_memo_delete(
 @router.get("/list", response_model=ApiResponse, tags=["Memo"])
 async def get_memo_list(
     page: int,
+    background_tasks: BackgroundTasks,
     memo_service: Annotated[MemoService, Depends()],
 ) -> ApiResponse:
     return ApiResponse(
-        data=await memo_service.list(page)
+        data=await memo_service.list(page, background_tasks)
     )
