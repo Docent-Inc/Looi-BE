@@ -10,6 +10,10 @@ class AbstractDiaryService(ABC):
         pass
 
     @abstractmethod
+    async def generate(self, id: int) -> object:
+        pass
+
+    @abstractmethod
     async def read(self, id: int) -> object:
         pass
 

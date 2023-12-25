@@ -43,7 +43,7 @@ class MorningDiary(Base):
     create_date = Column(DateTime, nullable=False)
     modify_date = Column(DateTime, nullable=False)
     is_deleted = Column(Boolean, default=False, index=True)
-    is_completed = Column(Boolean, default=False, index=True)
+    is_generated = Column(Boolean, default=False, index=True)
     main_keyword = Column(String(50), nullable=True)
     view_count = Column(Integer, default=1, nullable=True)
     share_count = Column(Integer, default=0, nullable=True)
@@ -65,6 +65,7 @@ class NightDiary(Base):
     create_date = Column(DateTime, nullable=False)
     modify_date = Column(DateTime, nullable=False)
     is_deleted = Column(Boolean, default=False, index=True)
+    is_generated = Column(Boolean, default=False, index=True)
     view_count = Column(Integer, default=1, nullable=True)
     share_count = Column(Integer, default=0, nullable=True)
 
@@ -82,6 +83,7 @@ class Memo(Base):
     content = Column(String(1000), nullable=False)
     create_date = Column(DateTime, nullable=False)
     modify_date = Column(DateTime, nullable=False)
+    is_generated = Column(Boolean, default=False, index=True)
     is_deleted = Column(Boolean, default=False, index=True)
     tags = Column(String(100), nullable=True)
 
@@ -97,6 +99,7 @@ class Calendar(Base):
     start_time = Column(DateTime, nullable=False)
     end_time = Column(DateTime, nullable=False)
     title = Column(String(255), nullable=False)
+    is_generated = Column(Boolean, default=False, index=True)
     content = Column(String(255), nullable=False)
     is_deleted = Column(Boolean, default=False, index=True)
     create_date = Column(DateTime, nullable=False)
