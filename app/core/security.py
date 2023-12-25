@@ -183,7 +183,7 @@ async def get_update_user(
 
     # 유저의 마지막 로그인 시간을 현재시간으로 변경
     user.last_active_date = await time_now()
-    user = save_db(db, user)
+    user = save_db(user, db)
 
     # 유저 정보 반환
     return user
