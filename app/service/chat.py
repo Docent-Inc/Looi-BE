@@ -66,16 +66,16 @@ class ChatService(AbstractChatService):
 
         # type별 작업
         if chat_data.type == 1:
-            dream_service = DreamService(self.user, self.db)
+            dream_service = DreamService(self.user, self.db, self.redis)
             diary = await dream_service.create(CreateDreamRequest(content=chat_data.content))
         elif chat_data.type == 2:
-            diary_service = DiaryService(self.user, self.db)
+            diary_service = DiaryService(self.user, self.db, self.redis)
             diary = await diary_service.create(CreateDiaryRequest(content=chat_data.content))
         elif chat_data.type == 3:
-            memo_service = MemoService(self.user, self.db)
+            memo_service = MemoService(self.user, self.db, self.redis)
             diary = await memo_service.create(CreateMemoRequest(content=chat_data.content))
         elif chat_data.type == 4:
-            calendar_service = CalendarService(self.user, self.db)
+            calendar_service = CalendarService(self.user, self.db, self.redis)
             diary = await calendar_service.create(CreateCalendarRequest(content=chat_data.content))
         else:
             # 텍스트 분류 실패
