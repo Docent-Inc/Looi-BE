@@ -279,4 +279,5 @@ class ReportService(AbstractReportService):
                     print(f"{user.nickname} 유저 리포트 생성 완료")
                     print(f"progress: {generate_user_list.index(user) + 1}/{total_count}")
             finally:
+                self.db.close()
                 await self.redis.delete(lock_key)
