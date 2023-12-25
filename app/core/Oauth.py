@@ -121,7 +121,7 @@ async def get_user_apple(code: str, env: str) -> dict:
             detail=4024,
         )
 
-async def check_user(data: dict, db: Session):
+async def check_user(data: dict, service: str, db: Session):
     try:
         user_id = str(data["user_id"])
         user_email = data["email"]
@@ -144,8 +144,9 @@ async def check_user(data: dict, db: Session):
             image_model=1,
             language_id=1,
             mbti="0",
-            Oauth_from="apple",
+            Oauth_from=service,
             create_date=now,
+            last_active_date=now,
         )
         is_sign_up = True
         user = save_db(user, db)

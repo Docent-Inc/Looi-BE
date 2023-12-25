@@ -1,13 +1,14 @@
 import datetime
 import json
 
+import aioredis
 from dateutil.relativedelta import relativedelta
 from fastapi import Depends, HTTPException, status
 from sqlalchemy import or_, and_
 from sqlalchemy.orm import Session
 
 from app.core.security import get_current_user, check_length, time_now
-from app.db.database import get_db, save_db
+from app.db.database import get_db, save_db, get_redis_client
 from app.db.models import User, Calendar
 from app.core.aiRequset import GPTService
 from app.schemas.request import CreateCalendarRequest, UpdateCalendarRequest
@@ -15,9 +16,11 @@ from app.service.abstract import AbstractDiaryService
 
 
 class CalendarService(AbstractDiaryService):
-    def __init__(self, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    def __init__(self, user: User = Depends(get_current_user), db: Session = Depends(get_db),
+                 redis: aioredis.Redis = Depends(get_redis_client)):
         self.user = user
         self.db = db
+        self.redis = redis
 
     async def create(self, calender_data: CreateCalendarRequest) -> Calendar:
 
@@ -66,6 +69,11 @@ class CalendarService(AbstractDiaryService):
             create_date=now,
         )
         calender = save_db(calender, self.db)
+
+        # list cache 삭제
+        keys = await self.redis.keys(f"calendar:list:{self.user.id}:*")
+        for key in keys:
+            await self.redis.delete(key)
 
         # 캘린더 반환
         return calender
@@ -129,6 +137,11 @@ class CalendarService(AbstractDiaryService):
 
         calender = save_db(calender, self.db)
 
+        # list cache 삭제
+        keys = await self.redis.keys(f"calendar:list:{self.user.id}:*")
+        for key in keys:
+            await self.redis.delete(key)
+
         return calender
 
     async def delete(self, calendar_id: int) -> None:
@@ -147,10 +160,35 @@ class CalendarService(AbstractDiaryService):
         calendar.is_deleted = True
         save_db(calendar, self.db)
 
+        # list cache 삭제
+        keys = await self.redis.keys(f"calendar:list:{self.user.id}:*")
+        for key in keys:
+            await self.redis.delete(key)
+
     async def list(self, year: int, month: int, day: int) -> list:
+
+        # 잘못된 날짜 입력시 예외처리
+        if month < 1 or month > 12:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=4301,
+            )
+        if day < 0 or day > 31:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=4301,
+            )
 
         # day가 0일 경우 월간 캘린더 조회
         if day == 0:
+
+            # redis에서 캐싱된 캘린더 조회
+            redis_key = f"calendar:list:{self.user.id}:{year}:{month}"
+            redis_data = await self.redis.get(redis_key)
+            if redis_data:
+                return json.loads(redis_data)
+
+            # 캐싱된 캘린더가 없을 경우 db에서 조회
             start_of_month = datetime.datetime(year, month, 1)
             end_of_month = start_of_month + relativedelta(months=1)
 
@@ -164,6 +202,12 @@ class CalendarService(AbstractDiaryService):
             ).order_by(Calendar.start_time).all()
         # day가 0이 아닐 경우 일간 캘린더 조회
         else:
+
+            # redis에서 캐싱된 캘린더 조회
+            redis_key = f"calendar:list:{self.user.id}:{year}:{month}:{day}"
+            redis_data = await self.redis.get(redis_key)
+            if redis_data:
+                return json.loads(redis_data)
             start_of_day = datetime.datetime(year, month, day)
             end_of_day = start_of_day + datetime.timedelta(days=1)
             calendars = self.db.query(Calendar).filter(
@@ -176,4 +220,13 @@ class CalendarService(AbstractDiaryService):
                 )
             ).order_by(Calendar.start_time).all()
 
-        return {"list": calendars}
+        calenders_dict_list = []
+        for calendar in calendars:
+            calendar_dict = calendar.__dict__.copy()
+            calendar_dict.pop('_sa_instance_state', None)
+            calenders_dict_list.append(calendar_dict)
+
+        # redis에 캐싱
+        await self.redis.set(redis_key, json.dumps({"list": calenders_dict_list}, default=str, ensure_ascii=False), ex=1800)
+
+        return {"list": calenders_dict_list}
