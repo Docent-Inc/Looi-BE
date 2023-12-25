@@ -18,29 +18,7 @@ class MemoService(AbstractDiaryService):
         self.db = db
         self.redis = redis
 
-    async def create(self, memo_data: CreateMemoRequest) -> Memo:
-
-        # url이면 title을 가져옴
-        gpt_service = GPTService(self.user, self.db)
-        if memo_data.content.startswith('http://') or memo_data.content.startswith('https://'):
-            async with ClientSession() as session:
-                async with session.get(memo_data.content) as response:
-                    html_content = await response.text()
-                soup = BeautifulSoup(html_content, 'html.parser')
-                title = soup.title.string if soup.title else "No title"
-            if title == "No title":
-                content = f"title = URL 주소, content = {memo_data.content}"
-            else:
-                content = f"title = {title}, content = {memo_data.content}"
-            data = await gpt_service.send_gpt_request(8, content)
-
-        else:
-            data = await gpt_service.send_gpt_request(8, memo_data.content)
-
-        # 제목이 없다면 자동 생성
-        data = json.loads(data)
-        if memo_data.title == "":
-            memo_data.title = data['title']
+    async def create(self, memo_data: CreateMemoRequest) -> dict:
 
         # 제목, 내용 길이 체크
         await check_length(text=memo_data.title, max_length=255, error_code=4023)
@@ -49,10 +27,10 @@ class MemoService(AbstractDiaryService):
         # 메모 생성
         now = await time_now()
         memo = Memo(
-            title=memo_data.title,
+            title="",
             content=memo_data.content,
             User_id=self.user.id,
-            tags=json.dumps(data['tags'], ensure_ascii=False),
+            tags="",
             create_date=now,
             modify_date=now,
         )
@@ -64,17 +42,63 @@ class MemoService(AbstractDiaryService):
             await self.redis.delete(key)
 
         # 메모 반환
-        return memo
+        return {"memo": memo}
+
+    async def generate(self, memo_id: int) -> dict:
+
+        # 메모 조회
+        memo = self.db.query(Memo).filter(Memo.id == memo_id, Memo.is_deleted == False).first()
+        if not memo:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=4400)
+
+        if memo.is_deleted == True:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=4405)
+
+        # url이면 title을 가져옴
+        gpt_service = GPTService(self.user, self.db)
+        if memo.content.startswith('http://') or memo.content.startswith('https://'):
+            async with ClientSession() as session:
+                async with session.get(memo.content) as response:
+                    html_content = await response.text()
+                soup = BeautifulSoup(html_content, 'html.parser')
+                title = soup.title.string if soup.title else "No title"
+            if title == "No title":
+                content = f"title = URL 주소, content = {memo.content}"
+            else:
+                content = f"title = {title}, content = {memo.content}"
+            data = await gpt_service.send_gpt_request(8, content)
+
+        else:
+            data = await gpt_service.send_gpt_request(8, memo.content)
+
+        # 제목이 없다면 자동 생성
+        data = json.loads(data)
+        if memo.title == "":
+            memo.title = data['title']
+
+        # 제목, 내용 길이 체크
+        await check_length(text=memo.title, max_length=255, error_code=4023)
+        await check_length(text=memo.content, max_length=1000, error_code=4221)
+
+        # 저장
+        memo.tags = json.dumps(data['tags'], ensure_ascii=False)
+        memo.modify_date = await time_now()
+        memo = save_db(memo, self.db)
+
+        # list cache 삭제
+        keys = await self.redis.keys(f"memo:list:{self.user.id}:*")
+        for key in keys:
+            await self.redis.delete(key)
+
+        # 메모 반환
+        return {"memo": memo}
 
     async def read(self, memo_id: int) -> Memo:
         memo = self.db.query(Memo).filter(Memo.id == memo_id, Memo.User_id == self.user.id, Memo.is_deleted == False).first()
 
         # 메모가 없을 경우 예외 처리
         if not memo:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=4016,
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=4400)
 
         # 메모 반환
         return memo

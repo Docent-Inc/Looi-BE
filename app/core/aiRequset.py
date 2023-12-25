@@ -200,11 +200,13 @@ prompt8 = [
     {"role": "user", "content": "컴퓨터 구조 책 다 읽고 정리하기"},
     {"role": "system", "content": "{\"title\": \"해야될 일\", \"tags\":[\"컴퓨터 구조\", \"책\", \"정리\"]}"},
     {"role": "user", "content": "title = 아이유(IU)의 킬링보이스를 라이브로! - 하루 끝, 너의 의미, 스물셋, 밤편지, 팔레트, 가을 아침, 삐삐, Blueming, 에잇, Coin, 라일락 ㅣ 딩고뮤직 - YouTube, content = https://www.youtube.com/watch?v=wDfqXR_5yyQ"},
-    {"role": "system", "content": "{\"title\": \아이유(IU)의 킬링보이스를 라이브로!\", \"tags\": [\"아이유\", \"킬링보이스\", \"라이브\"]}"},
+    {"role": "system", "content": "{\"title\": \아이유(IU)의 킬링보이스를 라이브로!\", \"tags\": [\"아이유\", \"킬링보이스\", \"라이브\", \"딩고 뮤직\", \"유튜브 링크\"]}"},
     {"role": "user", "content": "애덤 그랜트 오리지널스"},
     {"role": "system", "content": "{\"title\": \"읽을 책\", \"tags\": [\"애덤 그랜트\", \"오리지널스\"]}"},
     {"role": "user", "content": "안녕"},
     {"role": "system", "content": "{\"title\": \"안녕\", \"tags\": [\"안녕\"]}"},
+    {"role": "user", "content": "《기브앤테이크》\n느낌이 아닌 생각에 감정이입하라~\n정에 이끌린 감정이입 ※호구로 전락\n"},
+    {"role": "system", "content": "{\"title\": \"《기브앤테이크》\", \"tags\": [\"감정이입\", \"생각\", \"감정\", \"호구\"]}"},
 ]
 
 prompt9 = [
