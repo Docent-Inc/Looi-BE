@@ -74,7 +74,7 @@ async def check_token(token_refresh: str, db: Session) -> User:
             detail=4004,
         )
     email: str = payload.get("sub")
-    user = await get_user_by_email(db, email=email)
+    user = db.query(User).filter(User.email == email, User.is_deleted == False).first()
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -87,10 +87,11 @@ async def check_token(token_refresh: str, db: Session) -> User:
         )
     return user
 
-async def update_user_last_active_date(db: Session, email: str):
-    user = await get_user_by_email(db, email=email)
-    user.last_active_date = datetime.now()
-    save_db(user, db)
+def update_user_last_active_date(db: Session, email: str):
+    user = db.query(User).filter(User.email == email, User.is_deleted == False).first()
+    if user:
+        user.last_active_date = datetime.now(pytz.timezone("Asia/Seoul"))
+        save_db(user, db)
 
 async def get_current_user(
     background_tasks: BackgroundTasks,
@@ -126,11 +127,15 @@ async def get_current_user(
         return User(**json.loads(user_info))
 
     # db에서 email로 유저를 찾는다.
-    user = await get_user_by_email(db, email=email)
+    user = db.query(User).filter(User.email == email, User.is_deleted == False).first()
+    db.close()
+    if user:
+        background_tasks.add_task(update_user_last_active_date, db=db, email=email)
 
     # 유저가 없거나 삭제된 유저면
     if user is None or user.is_deleted == True:
         raise credentials_exception
+
 
     # 유저가 로그인이 완료되지 않은 유저라면
     if user.mbti == "0":
@@ -141,7 +146,6 @@ async def get_current_user(
 
     # 유저 정보를 redis에 저장
     await redis.set(f"user:{email}", await user_to_json(user), ex=3600)  # redis에 유저 정보를 저장
-    background_tasks.add_task(update_user_last_active_date, db, email)  # 유저의 last_active_date를 업데이트
 
     # 유저 정보 반환
     return user
@@ -175,7 +179,7 @@ async def get_update_user(
 
 
     # db에서 email로 유저를 찾는다.
-    user = await get_user_by_email(db, email=email)
+    user = db.query(User).filter(User.email == email, User.is_deleted == False).first()
 
     # 유저가 없거나 삭제된 유저면
     if user is None or user.is_deleted == True:
@@ -207,8 +211,6 @@ async def create_refresh_token(data: dict, expires_delta: timedelta = None) -> s
     to_encode.update({"exp": expire, "type": "refresh"}) # 토큰에 만료시간과 type을 추가
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM) # 토큰을 생성
     return encoded_jwt, expire
-async def get_user_by_email(db: Session, email: str) -> Optional[User]:
-    return db.query(User).filter(User.email == email, User.is_deleted == False).first()
 
 async def create_token(email):
     access_token, expires_in = await create_access_token(  # 액세스 토큰을 생성합니다.
