@@ -24,7 +24,7 @@ class DiaryService(AbstractDiaryService):
             # 이미지와 다이어리 제목 생성
             content = diary_data.content
             image_info, diary_name = await asyncio.gather(
-                gpt_service.send_dalle_request(content),
+                gpt_service.send_dalle_request("오늘의 일기(no text):" + content),
                 gpt_service.send_gpt_request(2, content)
             )
         else:

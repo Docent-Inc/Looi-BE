@@ -1,5 +1,7 @@
 import asyncio
 import json
+import random
+
 import aioredis
 from fastapi import Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
@@ -21,13 +23,18 @@ class DreamService(AbstractDiaryService):
 
         # 사용자의 mbti와 content를 합친 문자열 생성
         content = dream_data.content
-        mbti_content = content if self.user.mbti is None else self.user.mbti + ", " + content
+        if self.user.id == 1:
+            mbti_list = ["ENTJ", "INTJ", "ENTP", "INTP", "ENFJ", "INFJ", "ENFP", "INFP", "ESTJ", "ISTJ", "ESTP", "ISTP", "ESFJ", "ISFJ", "ESFP", "ISFP"]
+            random_mbti = random.choice(mbti_list)
+            mbti_content = f"{random_mbti}, {content}"
+        else:
+            mbti_content = content if self.user.mbti is None else self.user.mbti + ", " + content
 
         # 다이어리 제목, 이미지, 해몽 생성
         gpt_service = GPTService(self.user, self.db)
         diary_name, image_info, resolution = await asyncio.gather(
             gpt_service.send_gpt_request(2, content),
-            gpt_service.send_dalle_request("꿈에서 본 장면: " + content),
+            gpt_service.send_dalle_request("꿈에서 본 장면(no text): " + content),
             gpt_service.send_gpt_request(5, mbti_content)
         )
 
