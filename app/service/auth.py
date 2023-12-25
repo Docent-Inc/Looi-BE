@@ -31,9 +31,9 @@ class AuthService(AbstractAuthService):
                 "prod": f"https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id={settings.LINE_CHANNEL_ID}&redirect_uri={settings.LINE_REDIRECT_URI_PROD}&state={random.randint(1000000000, 9999999999)}&scope=profile%20openid%20email"
             },
             "apple": {
-                "local": f"https://appleid.apple.com/auth/authorize?client_id=looi.docent.zip&redirect_uri={settings.APPLE_REDIRECT_URI_DEV}&response_type=code%20id_token&scope=name%20email&response_mode=form_post",
-                "dev": f"https://appleid.apple.com/auth/authorize?client_id=looi.docent.zip&redirect_uri={settings.APPLE_REDIRECT_URI_DEV}&response_type=code%20id_token&scope=name%20email&response_mode=form_post",
-                "prod": f"https://appleid.apple.com/auth/authorize?client_id=looi.docent.zip&redirect_uri={settings.APPLE_REDIRECT_URI_PROD}&response_type=code%20id_token&scope=name%20email&response_mode=form_post"
+                "local": f"https://appleid.apple.com/auth/authorize?client_id=looi.docent.zip&redirect_uri={settings.APPLE_REDIRECT_URI_DEV}&response_type=code&response_mode=query",
+                "dev": f"https://appleid.apple.com/auth/authorize?client_id=looi.docent.zip&redirect_uri={settings.APPLE_REDIRECT_URI_DEV}&response_type=code&response_mode=query",
+                "prod": f"https://appleid.apple.com/auth/authorize?client_id=looi.docent.zip&redirect_uri={settings.APPLE_REDIRECT_URI_PROD}&response_type=code&response_mode=query"
             }
         }
         return AUTH_URLS[service][env]
