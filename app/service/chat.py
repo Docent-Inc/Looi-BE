@@ -100,7 +100,7 @@ class ChatService(AbstractChatService):
 
         # 랜덤으로 하나 선택
         random_chat = random.choice(data)
-        random_chat.text = random_chat.text.replace("{}", self.user.nickname)
+        random_chat = random_chat.text.replace("{}", self.user.nickname)
 
         return random_chat
 
