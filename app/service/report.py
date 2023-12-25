@@ -55,6 +55,13 @@ class ReportService(AbstractReportService):
         }
 
     async def list(self, page: int) -> list:
+
+        # redis에 저장된 데이터를 가져옵니다.
+        redis_key = f"report:list:{self.user.id}:{page}"
+        redis_data = await self.redis.get(redis_key)
+        if redis_data:
+            return json.loads(redis_data)
+
         limit = 6
         offset = (page - 1) * limit
         reports = self.db.query(Report).filter(
@@ -96,8 +103,7 @@ class ReportService(AbstractReportService):
         # 기간 계산 로직을 추가합니다.
         periods = [await self.calculate_period(report.create_date) for report in generated_reports]
 
-        # 리포트 정보와 함께 제목과 기간을 포함하여 반환합니다.
-        return {
+        response = {
             "generated_total_count": generated_total_count,
             "list_count": report_count,
             "reports": [
@@ -113,8 +119,13 @@ class ReportService(AbstractReportService):
             ]
         }
 
+        # redis에 데이터를 저장합니다.
+        await self.redis.set(redis_key, json.dumps(response, ensure_ascii=False), ex=1800)
+
+        # 리포트 정보와 함께 제목과 기간을 포함하여 반환합니다.
+        return response
+
     async def generate(self) -> dict:
-        print(f"db: {self.db}, redis: {self.redis}, user: {self.user}")
         async def validate_report_structure(report_data):
             try:
                 report_data = json.loads(report_data)

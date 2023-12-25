@@ -75,6 +75,11 @@ class CalendarService(AbstractDiaryService):
         for key in keys:
             await self.redis.delete(key)
 
+        # today_calendar cache 삭제
+        now = await time_now()
+        redis_key = f"today_calendar_list:{self.user.id}:{now.day}"
+        await self.redis.delete(redis_key)
+
         # 캘린더 반환
         return calender
 
@@ -142,6 +147,11 @@ class CalendarService(AbstractDiaryService):
         for key in keys:
             await self.redis.delete(key)
 
+        # today_calendar cache 삭제
+        now = await time_now()
+        redis_key = f"today_calendar_list:{self.user.id}:{now.day}"
+        await self.redis.delete(redis_key)
+
         return calender
 
     async def delete(self, calendar_id: int) -> None:
@@ -164,6 +174,12 @@ class CalendarService(AbstractDiaryService):
         keys = await self.redis.keys(f"calendar:list:{self.user.id}:*")
         for key in keys:
             await self.redis.delete(key)
+
+        # today_calendar cache 삭제
+        now = await time_now()
+        redis_key = f"today_calendar_list:{self.user.id}:{now.day}"
+        await self.redis.delete(redis_key)
+
 
     async def list(self, year: int, month: int, day: int) -> list:
 

@@ -11,7 +11,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 from app.core.aiRequset import GPTService
 from app.core.config import settings
-from app.core.security import get_current_user, time_now
+from app.core.security import get_current_user, time_now, diary_serializer
 from app.db.database import get_db, get_redis_client, save_db
 from app.db.models import User, MorningDiary, Luck, NightDiary, Calendar
 from app.service.abstract import AbstractTodayService
@@ -103,12 +103,21 @@ class TodayService(AbstractTodayService):
         return data
 
     async def calendar(self) -> object:
-        today = await time_now()
+        # redis에서 가져오기
+        now = await time_now()
+        redis_key = f"today_calendar_list:{self.user.id}:{now.day}"
+        calendar_list_json = await self.redis.get(redis_key)
+        if calendar_list_json:
+            calendar_list = json.loads(calendar_list_json)
+            return calendar_list
+
         upcoming_events = self.db.query(Calendar).filter(
             Calendar.User_id == self.user.id,
-            Calendar.start_time >= today,
+            Calendar.start_time >= now,
             Calendar.is_deleted == False
         ).order_by(Calendar.start_time).limit(5).all()
+
+        await self.redis.set(redis_key, json.dumps(upcoming_events, default=diary_serializer, ensure_ascii=False), ex=1800)
         return upcoming_events
 
     async def weather(self, x: float, y: float) -> dict:
