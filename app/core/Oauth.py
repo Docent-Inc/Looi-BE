@@ -6,7 +6,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.core.security import get_user_by_email, get_password_hash, time_now
+from app.core.security import get_password_hash, time_now
 from app.db.database import save_db
 from app.db.models import User, NightDiary
 
@@ -131,7 +131,7 @@ async def check_user(data: dict, service: str, db: Session):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=4024,
         )
-    user = await get_user_by_email(db, email=user_email)
+    user = db.query(User).filter(User.email == user_email, User.is_deleted == False).first()
     is_sign_up = False
     if not user:
         now = await time_now()
