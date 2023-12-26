@@ -11,7 +11,8 @@ async def post_memo_create(
     memo_data: CreateMemoRequest,
     memo_service: Annotated[MemoService, Depends()],
 ) -> ApiResponse:
-    return ApiResponse(data=await memo_service.create(memo_data))
+    memo = await memo_service.create(memo_data)
+    return ApiResponse(data={"memo": memo})
 
 @router.patch("/generate", response_model=ApiResponse, tags=["Memo"])
 async def patch_memo_generate(
