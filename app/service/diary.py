@@ -20,7 +20,7 @@ class DiaryService(AbstractDiaryService):
     async def create(self, diary_data: CreateDiaryRequest) -> NightDiary:
 
         gpt_service = GPTService(self.user, self.db)
-        if diary_data.title == "":
+        if diary_data.diary_name == "":
             # 이미지와 다이어리 제목 생성
             content = diary_data.content
             image_info, diary_name = await asyncio.gather(
@@ -28,7 +28,7 @@ class DiaryService(AbstractDiaryService):
                 gpt_service.send_gpt_request(2, content)
             )
         else:
-            diary_name = diary_data.title
+            diary_name = diary_data.diary_name
             content = diary_data.content
             image_info = await gpt_service.send_dalle_request(content)
 
@@ -106,9 +106,9 @@ class DiaryService(AbstractDiaryService):
                 detail=4012,
             )
 
-        if diary_data.title != "":
-            await check_length(diary_data.title, 255, 4023)
-            diary.diary_name = diary_data.title
+        if diary_data.diary_name != "":
+            await check_length(diary_data.diary_name, 255, 4023)
+            diary.diary_name = diary_data.diary_name
         if diary_data.content != "":
             await check_length(diary_data.content, 1000, 4221)
             diary.content = diary_data.content
