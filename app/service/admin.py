@@ -410,4 +410,5 @@ class AdminService(AbstractAdminService):
             try:
                 await slack_bot()
             finally:
+                self.db.close()
                 await self.redis.delete(lock_key)
