@@ -20,9 +20,9 @@ class DiaryService(AbstractDiaryService):
     async def create(self, diary_data: CreateDiaryRequest) -> NightDiary:
 
         diary_name = ""
-        if diary_data.title != "":
-            await check_length(diary_data.title, 255, 4023)
-            diary_name = diary_data.title
+        if diary_data.diary_name != "":
+            await check_length(diary_data.diary_name, 255, 4023)
+            diary_name = diary_data.diary_name
         now = await time_now()
         if diary_data.date == "":
             diary_data.date = now
@@ -144,9 +144,9 @@ class DiaryService(AbstractDiaryService):
         if not diary:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=4200)
 
-        if diary_data.title != "":
-            await check_length(diary_data.title, 255, 4023)
-            diary.diary_name = diary_data.title
+        if diary_data.diary_name != "":
+            await check_length(diary_data.diary_name, 255, 4023)
+            diary.diary_name = diary_data.diary_name
         if diary_data.content != "":
             await check_length(diary_data.content, 1000, 4221)
             diary.content = diary_data.content

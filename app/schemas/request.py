@@ -44,11 +44,11 @@ class UpdateDreamRequest(BaseModel):
 
 class CreateDiaryRequest(BaseModel):
     date: Optional[str] = ""
-    title: Optional[str] = ""
+    diary_name: Optional[str] = ""
     content: str
 class UpdateDiaryRequest(BaseModel):
     date: Optional[str] = ""
-    title: Optional[str] = ""
+    diary_name: Optional[str] = ""
     content: Optional[str] = ""
 
 class CreateMemoRequest(BaseModel):
