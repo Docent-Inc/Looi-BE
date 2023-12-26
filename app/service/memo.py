@@ -18,7 +18,7 @@ class MemoService(AbstractDiaryService):
         self.db = db
         self.redis = redis
 
-    async def create(self, memo_data: CreateMemoRequest) -> dict:
+    async def create(self, memo_data: CreateMemoRequest) -> Memo:
 
         # 제목, 내용 길이 체크
         if memo_data.title != "":
@@ -43,7 +43,7 @@ class MemoService(AbstractDiaryService):
             await self.redis.delete(key)
 
         # 메모 반환
-        return {"memo": memo}
+        return memo
 
     async def generate(self, memo_id: int) -> dict:
 
