@@ -158,9 +158,9 @@ class DiaryService(AbstractDiaryService):
         for key in keys:
             await self.redis.delete(key)
 
-        # diary cache 삭제
+        # diary cache
         redis_key = f"diary:{self.user.id}:{diary_id}"
-        await self.redis.delete(redis_key)
+        await self.redis.set(redis_key, json.dumps(diary, default=diary_serializer, ensure_ascii=False), ex=1800)
 
         # 다이어리 반환
         return diary
