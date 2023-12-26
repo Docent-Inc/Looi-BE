@@ -62,6 +62,8 @@ class NightDiary(Base):
     content = Column(String(1000), nullable=False)
     image_url = Column(String(200), nullable=True)
     background_color = Column(String(50), nullable=True)
+    resolution = Column(String(1000), nullable=True)
+    main_keyword = Column(String(200), nullable=True)
     create_date = Column(DateTime, nullable=False)
     modify_date = Column(DateTime, nullable=False)
     is_deleted = Column(Boolean, default=False, index=True)

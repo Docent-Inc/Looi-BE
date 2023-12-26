@@ -12,8 +12,9 @@ async def post_dream_create(
     dream_data: CreateDreamRequest,
     dream_service: Annotated[DreamService, Depends()]
 ) -> ApiResponse:
+    diary = await dream_service.create(dream_data)
     return ApiResponse(
-        data=await dream_service.create(dream_data)
+        data={"diary": diary}
     )
 
 @router.patch("/generate", response_model=ApiResponse, tags=["Dream"])

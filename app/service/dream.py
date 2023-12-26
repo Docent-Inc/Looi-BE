@@ -92,7 +92,7 @@ class DreamService(AbstractDiaryService):
             diary.modify_date = await time_now()
             diary.is_generated = True
             diary = save_db(diary, self.db)
-        except Exception as e:
+        except:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=4101,
@@ -142,10 +142,7 @@ class DreamService(AbstractDiaryService):
 
         # 다이어리가 없을 경우 예외 처리
         if not diary:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=4011,
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=4100)
 
         # 수정된 사항이 있을 경우 수정
         if dream_data.diary_name != "":
@@ -174,10 +171,7 @@ class DreamService(AbstractDiaryService):
 
         # 다이어리가 없을 경우 예외 처리
         if not diary:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=4011,
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=4100)
 
         # 다이어리 삭제
         diary.is_deleted = True
