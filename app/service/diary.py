@@ -19,34 +19,22 @@ class DiaryService(AbstractDiaryService):
 
     async def create(self, diary_data: CreateDiaryRequest) -> NightDiary:
 
-        gpt_service = GPTService(self.user, self.db)
-        if diary_data.title == "":
-            # 이미지와 다이어리 제목 생성
-            content = diary_data.content
-            image_info, diary_name = await asyncio.gather(
-                gpt_service.send_dalle_request("오늘의 일기(no text):" + content),
-                gpt_service.send_gpt_request(2, content)
-            )
-        else:
+        diary_name = ""
+        if diary_data.title != "":
+            await check_length(diary_data.title, 255, 4023)
             diary_name = diary_data.title
-            content = diary_data.content
-            image_info = await gpt_service.send_dalle_request(content)
-
-        # 이미지 background color 문자열로 변환
-        image_url, upper_dominant_color, lower_dominant_color = image_info
-        upper_lower_color = "[\"" + str(upper_dominant_color) + "\", \"" + str(lower_dominant_color) + "\"]"
-
-        # 저녁 일기 db에 저장
-        await check_length(diary_name, 255, 4023)
-        await check_length(content, 1000, 4221)
         now = await time_now()
         if diary_data.date == "":
             diary_data.date = now
+
+        await check_length(diary_data.content, 1000, 4221)
         diary = NightDiary(
-            content=content,
+            content=diary_data.content,
             User_id=self.user.id,
-            image_url=image_url,
-            background_color=upper_lower_color,
+            image_url="",
+            background_color="",
+            resolution="",
+            main_keyword="",
             diary_name=diary_name,
             create_date=diary_data.date,
             modify_date=now,
@@ -64,6 +52,60 @@ class DiaryService(AbstractDiaryService):
 
         # 다이어리 반환
         return diary
+
+    async def generate(self, diary_id: int) -> dict:
+
+        # 다이어리 조회
+        diary = self.db.query(NightDiary).filter(NightDiary.id == diary_id, NightDiary.User_id == self.user.id,
+                                                 NightDiary.is_deleted == False).first()
+
+        # 다이어리가 없을 경우 예외 처리
+        if not diary:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=4200)
+
+        if diary.is_generated:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=4201)
+
+        gpt_service = GPTService(self.user, self.db)
+        if diary.diary_name == "":
+            image_info, diary_name, reply = await asyncio.gather(
+                gpt_service.send_dalle_request(f"오늘의 일기(no text): {diary.content}"),
+                gpt_service.send_gpt_request(2, diary.content),
+                gpt_service.send_gpt_request(10, diary.content)
+            )
+            await check_length(diary_name, 255, 4023)
+            diary.diary_name = diary_name
+        elif diary.diary_name != "":
+            image_info, reply = await asyncio.gather(
+                gpt_service.send_dalle_request(f"오늘의 일기(no text): {diary.content}"),
+                gpt_service.send_gpt_request(10, diary.content)
+            )
+
+        # 이미지 background color 문자열로 변환
+        image_url, upper_dominant_color, lower_dominant_color = image_info
+        upper_lower_color = "[\"" + str(upper_dominant_color) + "\", \"" + str(lower_dominant_color) + "\"]"
+
+        try:
+            diary.image_url = image_url
+            diary.background_color = upper_lower_color
+            diary.resolution = json.loads(reply)["reply"]
+            diary.main_keyword = json.dumps(json.loads(reply)["main_keywords"], ensure_ascii=False)
+            diary.is_generated = True
+            diary.modify_date = await time_now()
+            diary = save_db(diary, self.db)
+        except:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=4202)
+
+        # list cache 삭제
+        keys = await self.redis.keys(f"diary:list:{self.user.id}:*")
+        for key in keys:
+            await self.redis.delete(key)
+
+        # 새로운 cache 생성
+        redis_key = f"diary:{self.user.id}:{diary.id}"
+        await self.redis.set(redis_key, json.dumps(diary, default=diary_serializer, ensure_ascii=False), ex=1800)
+
+        return {"diary": diary}
 
     async def read(self, diary_id: int, background_tasks: BackgroundTasks) -> NightDiary:
 
@@ -84,10 +126,7 @@ class DiaryService(AbstractDiaryService):
 
         # 다이어리가 없을 경우 예외 처리
         if not diary:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=4012,
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=4200)
 
         # 데이터 캐싱
         await self.redis.set(redis_key, json.dumps(diary, default=diary_serializer, ensure_ascii=False), ex=1800)
@@ -95,16 +134,15 @@ class DiaryService(AbstractDiaryService):
         # 다이어리 반환
         return diary
 
+
+
     async def update(self, diary_id: int, diary_data: CreateDiaryRequest) -> NightDiary:
         # 다이어리 조회
         diary = self.db.query(NightDiary).filter(NightDiary.id == diary_id, NightDiary.User_id == self.user.id, NightDiary.is_deleted == False).first()
 
         # 다이어리가 없을 경우 예외 처리
         if not diary:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=4012,
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=4200)
 
         if diary_data.title != "":
             await check_length(diary_data.title, 255, 4023)
@@ -134,10 +172,7 @@ class DiaryService(AbstractDiaryService):
 
         # 다이어리가 없을 경우 예외 처리
         if not diary:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=4012,
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=4200)
         # 다이어리 삭제
         diary.is_deleted = True
         diary = save_db(diary, self.db)
