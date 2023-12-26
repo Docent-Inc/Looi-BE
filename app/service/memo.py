@@ -21,13 +21,14 @@ class MemoService(AbstractDiaryService):
     async def create(self, memo_data: CreateMemoRequest) -> dict:
 
         # 제목, 내용 길이 체크
-        await check_length(text=memo_data.title, max_length=255, error_code=4023)
+        if memo_data.title != "":
+            await check_length(text=memo_data.title, max_length=255, error_code=4023)
         await check_length(text=memo_data.content, max_length=1000, error_code=4221)
 
         # 메모 생성
         now = await time_now()
         memo = Memo(
-            title="",
+            title=memo_data.title,
             content=memo_data.content,
             User_id=self.user.id,
             tags="",
@@ -81,9 +82,12 @@ class MemoService(AbstractDiaryService):
         await check_length(text=memo.content, max_length=1000, error_code=4221)
 
         # 저장
-        memo.tags = json.dumps(data['tags'], ensure_ascii=False)
-        memo.modify_date = await time_now()
-        memo = save_db(memo, self.db)
+        try:
+            memo.tags = json.dumps(data['tags'], ensure_ascii=False)
+            memo.modify_date = await time_now()
+            memo = save_db(memo, self.db)
+        except:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=4406)
 
         # list cache 삭제
         keys = await self.redis.keys(f"memo:list:{self.user.id}:*")

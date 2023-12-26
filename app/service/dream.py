@@ -21,41 +21,18 @@ class DreamService(AbstractDiaryService):
 
     async def create(self, dream_data: CreateDreamRequest) -> MorningDiary:
 
-        # 사용자의 mbti와 content를 합친 문자열 생성
-        content = dream_data.content
-        if self.user.id == 1:
-            mbti_list = ["ENTJ", "INTJ", "ENTP", "INTP", "ENFJ", "INFJ", "ENFP", "INFP", "ESTJ", "ISTJ", "ESTP", "ISTP", "ESFJ", "ISFJ", "ESFP", "ISFP"]
-            random_mbti = random.choice(mbti_list)
-            mbti_content = f"{random_mbti}, {content}"
-        else:
-            mbti_content = content if self.user.mbti is None else self.user.mbti + ", " + content
-
-        # 다이어리 제목, 이미지, 해몽 생성
-        gpt_service = GPTService(self.user, self.db)
-        diary_name, image_info, resolution = await asyncio.gather(
-            gpt_service.send_gpt_request(2, content),
-            gpt_service.send_dalle_request("꿈에서 본 장면(no text): " + content),
-            gpt_service.send_gpt_request(5, mbti_content)
-        )
-
-        # 이미지 background color 문자열로 변환
-        image_url, upper_dominant_color, lower_dominant_color = image_info
-        upper_lower_color = "[\"" + str(upper_dominant_color) + "\", \"" + str(lower_dominant_color) + "\"]"
-
         # db에 저장
-        await check_length(diary_name, 255, 4023)
-        await check_length(content, 1000, 4221)
+        await check_length(dream_data.content, 1000, 4221)
         now = await time_now()
-        resolution = json.loads(resolution)
         try:
             diary = MorningDiary(
-                content=content,
+                content=dream_data.content,
                 User_id=self.user.id,
-                image_url=image_url,
-                background_color=upper_lower_color,
-                diary_name=diary_name,
-                resolution=resolution['resolution'],
-                main_keyword=json.dumps(resolution["main_keywords"], ensure_ascii=False),
+                image_url="",
+                background_color="",
+                diary_name="",
+                resolution="",
+                main_keyword="",
                 create_date=now,
                 modify_date=now,
             )
@@ -78,6 +55,60 @@ class DreamService(AbstractDiaryService):
         # 다이어리 반환
         return diary
 
+    async def generate(self, dream_id: int) -> dict:
+
+        # 다이어리 조회
+        diary = self.db.query(MorningDiary).filter(MorningDiary.id == dream_id, MorningDiary.User_id == self.user.id, MorningDiary.is_deleted == False).first()
+
+        # 꿈이 없을 경우 예외 처리
+        if not diary:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=4100)
+
+        if diary.is_generated == True:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=4102)
+
+        # 다이어리 제목, 이미지, 해몽 생성
+        gpt_service = GPTService(self.user, self.db)
+        diary_name, image_info, resolution = await asyncio.gather(
+            gpt_service.send_gpt_request(2, diary.content),
+            gpt_service.send_dalle_request(f"꿈에서 본 장면(no text): {diary.content}"),
+            gpt_service.send_gpt_request(5, f"{self.user.mbti}, {diary.content}")
+        )
+
+        # 이미지 background color 문자열로 변환
+        image_url, upper_dominant_color, lower_dominant_color = image_info
+        upper_lower_color = "[\"" + str(upper_dominant_color) + "\", \"" + str(lower_dominant_color) + "\"]"
+
+        # db에 저장
+        if diary.diary_name == "":
+            await check_length(diary_name, 255, 4023)
+            diary.diary_name = diary_name
+
+        try:
+            diary.image_url = image_url
+            diary.background_color = upper_lower_color
+            diary.resolution = json.loads(resolution)['resolution']
+            diary.main_keyword = json.dumps(json.loads(resolution)["main_keywords"], ensure_ascii=False)
+            diary.modify_date = await time_now()
+            diary.is_generated = True
+            diary = save_db(diary, self.db)
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=4101,
+            )
+
+        # list cache 삭제
+        keys = await self.redis.keys(f"dream:list:{self.user.id}:*")
+        for key in keys:
+            await self.redis.delete(key)
+
+        # 새로운 cache 생성
+        redis_key = f"diary:{self.user.id}:{diary.id}"
+        await self.redis.set(redis_key, json.dumps(diary, default=diary_serializer, ensure_ascii=False), ex=1800)
+
+        return {"diary": diary}
+
     async def read(self, dream_id: int, background_tasks: BackgroundTasks) -> MorningDiary:
         async def count_view(dream_id: int) -> None:
             diary = self.db.query(MorningDiary).filter(MorningDiary.id == dream_id, MorningDiary.User_id == self.user.id, MorningDiary.is_deleted == False).first()
@@ -96,10 +127,7 @@ class DreamService(AbstractDiaryService):
 
         # 꿈이 없을 경우 예외 처리
         if not diary:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=4011,
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=4100)
 
         # 데이터 캐싱
         await self.redis.set(redis_key, json.dumps(diary, default=diary_serializer, ensure_ascii=False), ex=1800)
