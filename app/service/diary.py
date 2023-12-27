@@ -23,6 +23,7 @@ class DiaryService(AbstractDiaryService):
         if diary_data.diary_name != "":
             await check_length(diary_data.diary_name, 255, 4023)
             diary_name = diary_data.diary_name
+
         now = await time_now()
         if diary_data.date == "" or str(diary_data.date[:10]) == str(now.date()):
             diary_data.date = now
