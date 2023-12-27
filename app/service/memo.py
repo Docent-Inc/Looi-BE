@@ -5,7 +5,7 @@ from aiohttp import ClientSession
 from bs4 import BeautifulSoup
 from fastapi import Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
-from app.core.security import get_current_user, check_length, time_now
+from app.core.security import get_current_user, check_length, time_now, diary_serializer
 from app.db.database import get_db, save_db, get_redis_client
 from app.db.models import Memo, User
 from app.core.aiRequset import GPTService
@@ -20,30 +20,9 @@ class MemoService(AbstractDiaryService):
 
     async def create(self, memo_data: CreateMemoRequest) -> Memo:
 
-        # url이면 title을 가져옴
-        gpt_service = GPTService(self.user, self.db)
-        if memo_data.content.startswith('http://') or memo_data.content.startswith('https://'):
-            async with ClientSession() as session:
-                async with session.get(memo_data.content) as response:
-                    html_content = await response.text()
-                soup = BeautifulSoup(html_content, 'html.parser')
-                title = soup.title.string if soup.title else "No title"
-            if title == "No title":
-                content = f"title = URL 주소, content = {memo_data.content}"
-            else:
-                content = f"title = {title}, content = {memo_data.content}"
-            data = await gpt_service.send_gpt_request(8, content)
-
-        else:
-            data = await gpt_service.send_gpt_request(8, memo_data.content)
-
-        # 제목이 없다면 자동 생성
-        data = json.loads(data)
-        if memo_data.title == "":
-            memo_data.title = data['title']
-
         # 제목, 내용 길이 체크
-        await check_length(text=memo_data.title, max_length=255, error_code=4023)
+        if memo_data.title != "":
+            await check_length(text=memo_data.title, max_length=255, error_code=4023)
         await check_length(text=memo_data.content, max_length=1000, error_code=4221)
 
         # 메모 생성
@@ -52,7 +31,7 @@ class MemoService(AbstractDiaryService):
             title=memo_data.title,
             content=memo_data.content,
             User_id=self.user.id,
-            tags=json.dumps(data['tags'], ensure_ascii=False),
+            tags="",
             create_date=now,
             modify_date=now,
         )
@@ -63,18 +42,94 @@ class MemoService(AbstractDiaryService):
         for key in keys:
             await self.redis.delete(key)
 
+        # 새로운 cache 생성
+        redis_key = f"memo:{self.user.id}:{memo.id}"
+        await self.redis.set(redis_key, json.dumps(memo, default=diary_serializer, ensure_ascii=False), ex=1800)
+
+        # ratio cache 삭제
+        redis_key = f"statistics:ratio:{self.user.id}"
+        await self.redis.delete(redis_key)
+
         # 메모 반환
         return memo
+
+    async def generate(self, memo_id: int) -> dict:
+
+        # 메모 조회
+        memo = self.db.query(Memo).filter(Memo.id == memo_id, Memo.is_deleted == False).first()
+        if not memo:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=4400)
+
+        if memo.is_deleted == True:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=4405)
+
+        # url이면 title을 가져옴
+        gpt_service = GPTService(self.user, self.db)
+        if memo.content.startswith('http://') or memo.content.startswith('https://'):
+            async with ClientSession() as session:
+                async with session.get(memo.content) as response:
+                    html_content = await response.text()
+                soup = BeautifulSoup(html_content, 'html.parser')
+                title = soup.title.string if soup.title else "No title"
+            if title == "No title":
+                content = f"title = URL 주소, content = {memo.content}"
+            else:
+                content = f"title = {title}, content = {memo.content}"
+            data = await gpt_service.send_gpt_request(8, content)
+
+        else:
+            data = await gpt_service.send_gpt_request(8, memo.content)
+
+        # 제목이 없다면 자동 생성
+        data = json.loads(data)
+        if memo.title == "":
+            memo.title = data['title']
+
+        # 제목, 내용 길이 체크
+        await check_length(text=memo.title, max_length=255, error_code=4023)
+        await check_length(text=memo.content, max_length=1000, error_code=4221)
+
+        # 저장
+        try:
+            memo.tags = json.dumps(data['tags'], ensure_ascii=False)
+            memo.modify_date = await time_now()
+            memo.is_generated = True
+            memo = save_db(memo, self.db)
+        except:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=4406)
+
+        # list cache 삭제
+        keys = await self.redis.keys(f"memo:list:{self.user.id}:*")
+        for key in keys:
+            await self.redis.delete(key)
+
+        # 새로운 cache 생성
+        redis_key = f"memo:{self.user.id}:{memo.id}"
+        await self.redis.set(redis_key, json.dumps(memo, default=diary_serializer, ensure_ascii=False), ex=1800)
+
+        # 메모 반환
+        return {"memo": memo}
 
     async def read(self, memo_id: int) -> Memo:
         memo = self.db.query(Memo).filter(Memo.id == memo_id, Memo.User_id == self.user.id, Memo.is_deleted == False).first()
 
         # 메모가 없을 경우 예외 처리
         if not memo:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=4016,
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=4400)
+
+        # 캐시에서 메모를 가져옴
+        redis_key = f"memo:{self.user.id}:{memo.id}"
+        memo = await self.redis.get(redis_key)
+        if memo:
+            memo = json.loads(memo)
+            return memo
+
+        # 캐시에 메모가 없을 경우
+        memo = self.db.query(Memo).filter(Memo.id == memo_id, Memo.User_id == self.user.id, Memo.is_deleted == False).first()
+
+        # 새로 캐시 생성
+        redis_key = f"memo:{self.user.id}:{memo.id}"
+        await self.redis.set(redis_key, json.dumps(memo, default=diary_serializer, ensure_ascii=False), ex=1800)
 
         # 메모 반환
         return memo
@@ -105,6 +160,10 @@ class MemoService(AbstractDiaryService):
         for key in keys:
             await self.redis.delete(key)
 
+        # 새로운 cache 생성
+        redis_key = f"memo:{self.user.id}:{memo.id}"
+        await self.redis.set(redis_key, json.dumps(memo, default=diary_serializer, ensure_ascii=False), ex=1800)
+
         # 메모 반환
         return memo
 
@@ -127,6 +186,14 @@ class MemoService(AbstractDiaryService):
         keys = await self.redis.keys(f"memo:list:{self.user.id}:*")
         for key in keys:
             await self.redis.delete(key)
+
+        # 캐시 삭제
+        redis_key = f"memo:{self.user.id}:{memo.id}"
+        await self.redis.delete(redis_key)
+
+        # ratio cache 삭제
+        redis_key = f"statistics:ratio:{self.user.id}"
+        await self.redis.delete(redis_key)
 
     async def list(self, page: int, background_tasks: BackgroundTasks) -> dict:
         async def cache_next_page(page: int, total_count: int) -> None:

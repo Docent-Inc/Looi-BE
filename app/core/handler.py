@@ -31,14 +31,19 @@ def register_exception_handlers(app):
             pass
         else:
             if settings.SERVER_TYPE == "prod":
-                db = next(get_db())
-                error = ErrorLog(error_code=exc.detail, error_message=CUSTOM_EXCEPTIONS[exc.detail], create_date=await time_now())
-                save_db(error, db)
-                client = AsyncWebClient(token=settings.SLACK_BOT_TOKEN)
-                await client.chat_postMessage(
-                    channel="C064ZCNDVU1",
-                    text=f"Error Code: {exc.detail}\nError Message: {CUSTOM_EXCEPTIONS[exc.detail]}"
-                )
+                try:
+                    db = next(get_db())
+                    error = ErrorLog(error_code=exc.detail, error_message=CUSTOM_EXCEPTIONS[exc.detail], create_date=await time_now())
+                    save_db(error, db)
+                    client = AsyncWebClient(token=settings.SLACK_BOT_TOKEN)
+                    await client.chat_postMessage(
+                        channel="C064ZCNDVU1",
+                        text=f"Error Code: {exc.detail}\nError Message: {CUSTOM_EXCEPTIONS[exc.detail]}"
+                    )
+                except:
+                    pass
+                finally:
+                    db.close()
             else:
                 pass
         return JSONResponse(

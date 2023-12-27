@@ -9,8 +9,6 @@ from PIL import Image
 from fastapi import HTTPException, status
 import datetime
 import pytz
-from google.cloud import storage
-from google.oauth2 import service_account
 from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.security import time_now
@@ -159,29 +157,31 @@ prompt5 = [
 ]
 
 prompt6 = [
-    {"role": "system", "content": "Translate the user's schedule into the json format (start_time, end_time, title, description). 월요일부터 일요일까지 한 주고, 1, 3, 5, 7, 8, 10, 12월은 31일, 4, 6, 9, 11월은 30일, 2월은 28일로 가정한다."},
+    {"role": "system", "content": "Translate the user's schedule into the json format (start_time, end_time, title). 월요일부터 일요일까지 한 주고, 1, 3, 5, 7, 8, 10, 12월은 31일, 4, 6, 9, 11월은 30일, 2월은 28일로 가정한다."},
     {"role": "user", "content": "local time: 2023-08-19 13:28:42 Saturday, 내일 오후 3시에 네이버 그린하우스 팀과 미팅이 있어"},
-    {"role": "system", "content": "{\"start_time\": \"2023-08-20 15:00:00\", \"end_time\": \"2023-08-20 16:00:00\", \"title\": \"미팅\", \"description\": \"네이버 그린하우스 팀\"}"},
+    {"role": "system", "content": "{\"start_time\": \"2023-08-20 15:00:00\", \"end_time\": \"2023-08-20 16:00:00\", \"title\": \"네이버 그린하우스 팀 미팅\"}"},
     {"role": "user", "content": "local time: 2023-08-20 13:28:42 Sunday, 다음주 화요일부터 목요일 부산 해운대로 여행가"},
-    {"role": "system", "content": "{\"start_time\": \"2023-08-22 00:00:00\", \"end_time\": \"2023-08-24 00:00:00\", \"title\": \"여행\", \"description\": \"부산 해운대\"}"},
+    {"role": "system", "content": "{\"start_time\": \"2023-08-22 00:00:00\", \"end_time\": \"2023-08-24 00:00:00\", \"title\": \"부산 해운대 여행\"}"},
     {"role": "user", "content": "local time: 2023-08-20 13:28:42 Sunday, 다음주 금요일 오후 2시에 용산 아이맥스에서 친구랑 영화 미션임파서블 보러 가"},
-    {"role": "system", "content": "{\"start_time\": \"2023-08-25 14:00:00\", \"end_time\": \"2023-08-25 16:00:00\", \"title\": \"영화 보기\", \"description\": \"용산 아이맥스에서 미션 임파서블\"}"},
+    {"role": "system", "content": "{\"start_time\": \"2023-08-25 14:00:00\", \"end_time\": \"2023-08-25 16:00:00\", \"title\": \"용산 아이맥스에서 미션 임파서블 영화 보기\"}"},
     {"role": "user", "content": "local time: 2023-08-23 13:28:42 Wednesday, 다음주 금요일 6시에 중앙도서관 앞에서 자동차 동아리 모임이 있어"},
-    {"role": "system", "content": "{\"start_time\": \"2023-09-01 18:00:00\", \"end_time\": \"2023-09-01 19:00:00\", \"title\": \"동아리 모임\", \"description\": \"중앙도서관 앞에서 자동차 동아리 모임\"}"},
+    {"role": "system", "content": "{\"start_time\": \"2023-09-01 18:00:00\", \"end_time\": \"2023-09-01 19:00:00\", \"title\": \"중앙도서관 앞에서 자동차 동아리 모임\"}"},
     {"role": "user", "content": "local time: 2023-11-16 15:23:26 Thursday, 다음주 토요일 8시에 친구랑 노래방 가"},
-    {"role": "system", "content": "{\"start_time\": \"2023-11-25 20:00:00\", \"end_time\": \"2023-11-25 22:00:00\", \"title\": \"노래방\", \"description\": \"친구랑 노래방\"}"},
+    {"role": "system", "content": "{\"start_time\": \"2023-11-25 20:00:00\", \"end_time\": \"2023-11-25 22:00:00\", \"title\": \"친구랑 노래방 가기\"}"},
     {"role": "user", "content": "local time: 2023-11-16 15:23:26 Thursday, 다음주 월요일에 서현이 누나랑 데이트!!"},
-    {"role": "system", "content": "{\"start_time\": \"2023-11-20 09:00:00\", \"end_time\": \"2023-11-20 22:00:00\", \"title\": \"데이트\", \"description\": \"서현이 누나랑 데이트\"}"},
+    {"role": "system", "content": "{\"start_time\": \"2023-11-20 09:00:00\", \"end_time\": \"2023-11-20 22:00:00\", \"title\": \"서현이 누나랑 데이트\"}"},
     {"role": "user", "content": "local time: 2023-11-16 15:23:26 Thursday, 12월 23일-25일 후쿠오카"},
-    {"role": "system", "content": "{\"start_time\": \"2023-12-23 09:00:00\", \"end_time\": \"2023-12-25 22:00:00\", \"title\": \"여행\", \"description\": \"후쿠오카\"}"},
+    {"role": "system", "content": "{\"start_time\": \"2023-12-23 09:00:00\", \"end_time\": \"2023-12-25 22:00:00\", \"title\": \"후쿠오카 여행\"}"},
     {"role": "user", "content": "local time: 2023-11-21 15:23:26 Tuesday, 1월 1일에 서현이 누나랑 데이트"},
-    {"role": "system", "content": "{\"start_time\": \"2024-01-01 09:00:00\", \"end_time\": \"2024-01-01 22:00:00\", \"title\": \"데이트\", \"description\": \"서현이 누나랑 데이트\"}"},
+    {"role": "system", "content": "{\"start_time\": \"2024-01-01 09:00:00\", \"end_time\": \"2024-01-01 22:00:00\", \"title\": \"서현이 누나랑 데이트\"}"},
     {"role": "user", "content": "local time: 2023-11-24 10:21:46 Friday, 다음주 수요일부터 금요일까지 일본 여행"},
-    {"role": "system", "content": "{\"start_time\": \"2023-11-29 09:00:00\", \"end_time\": \"2023-12-01 22:00:00\", \"title\": \"여행\", \"description\": \"일본\"}"},
+    {"role": "system", "content": "{\"start_time\": \"2023-11-29 09:00:00\", \"end_time\": \"2023-12-01 22:00:00\", \"title\": \"일본 여행\"}"},
     {"role": "user", "content": "local time: 2023-11-27 10:07:01 Monday, 12시에 일정 등록해줘"},
-    {"role": "system", "content": "{\"start_time\": \"2023-11-27 12:00:00\", \"end_time\": \"2023-11-27 13:00:00\", \"title\": \"일정\", \"description\": \"일정\"}"},
+    {"role": "system", "content": "{\"start_time\": \"2023-11-27 12:00:00\", \"end_time\": \"2023-11-27 13:00:00\", \"title\": \"일정\"}"},
     {"role": "user", "content": "local time: 2023-12-24 01:05:01 Sunday, 다음주 목요일 아침 8시반에 자동차 정기점검"},
-    {"role": "system", "content": "{\"start_time\": \"2023-12-28 08:30:00\", \"end_time\": \"2023-12-28 09:30:00\", \"title\": \"자동차 정기점검\", \"description\": \"자동차 정기점검\"}"},
+    {"role": "system", "content": "{\"start_time\": \"2023-12-28 08:30:00\", \"end_time\": \"2023-12-28 09:30:00\", \"title\": \"자동차 정기점검\"}"},
+    {"role": "user", "content": "local time: 2023-12-26 11:08:01 Thursday, 다음주 금요일 저녁약속"},
+    {"role": "system", "content": "{\"start_time\": \"2024-01-05 18:00:00\", \"end_time\": \"2024-01-05 19:00:00\", \"title\": \"저녁 약속\"}"},
 ]
 
 prompt7 = [
@@ -202,11 +202,13 @@ prompt8 = [
     {"role": "user", "content": "컴퓨터 구조 책 다 읽고 정리하기"},
     {"role": "system", "content": "{\"title\": \"해야될 일\", \"tags\":[\"컴퓨터 구조\", \"책\", \"정리\"]}"},
     {"role": "user", "content": "title = 아이유(IU)의 킬링보이스를 라이브로! - 하루 끝, 너의 의미, 스물셋, 밤편지, 팔레트, 가을 아침, 삐삐, Blueming, 에잇, Coin, 라일락 ㅣ 딩고뮤직 - YouTube, content = https://www.youtube.com/watch?v=wDfqXR_5yyQ"},
-    {"role": "system", "content": "{\"title\": \아이유(IU)의 킬링보이스를 라이브로!\", \"tags\": [\"아이유\", \"킬링보이스\", \"라이브\"]}"},
+    {"role": "system", "content": "{\"title\": \아이유(IU)의 킬링보이스를 라이브로!\", \"tags\": [\"아이유\", \"킬링보이스\", \"라이브\", \"딩고 뮤직\", \"유튜브 링크\"]}"},
     {"role": "user", "content": "애덤 그랜트 오리지널스"},
     {"role": "system", "content": "{\"title\": \"읽을 책\", \"tags\": [\"애덤 그랜트\", \"오리지널스\"]}"},
     {"role": "user", "content": "안녕"},
     {"role": "system", "content": "{\"title\": \"안녕\", \"tags\": [\"안녕\"]}"},
+    {"role": "user", "content": "《기브앤테이크》\n느낌이 아닌 생각에 감정이입하라~\n정에 이끌린 감정이입 ※호구로 전락\n"},
+    {"role": "system", "content": "{\"title\": \"《기브앤테이크》\", \"tags\": [\"감정이입\", \"생각\", \"감정\", \"호구\"]}"},
 ]
 
 prompt9 = [
@@ -225,6 +227,16 @@ prompt9 = [
     {"role": "system", "content": "테스트"},
     {"role": "user", "content": "하루단백바 치즈베리맛 또는 솔직단백 쿠키앤크림맛"},
     {"role": "system", "content": "식단"},
+]
+
+prompt10 = [
+    {"role": "system", "content": "사용자의 일기에 대한 답장을 해줘. json format"},
+    {"role": "user", "content": "학원갔다왔다. 나때문에 크리스마스 당일에 집에있는 관규한테 미안하기도하고 동시에 학교에서 친구들이랑 있는 관규가 부럽기도했다. 어제 같이 술먹고 어어엄청 취했는데 난 오늘 7시에 일어나고 관규는 하루종일 자고 일찍 집와서 낮잠까지 잤다. 부럽기도하고 얄밉기도한데 이런 감정을 느끼는게 미안하기도하다. 어떤 시험이든 수험생이된다는건 참 사람을  작아지게 만드는 것 같다. 오늘 김인배변리사님의 강의를 듣다가 들은 말이 기억난다. 비록 공부가 미흡하더라도 운좋게 붙겠다는 마음가짐으로라도 마지막까지 포기하지말라는 말.. 두달 열심히 달리자"},
+    {"role": "system", "content": "{\"reply\": \"학원 다녀오신 것과 시험 준비로 바쁜 나날을 보내고 계시는군요. 친구 관규에 대한 복잡한 감정들도 매우 이해가 갑니다. 크리스마스에 친구가 휴식을 취하는 동안 학원에 가야 하는 상황이 당연히 부러움과 어느 정도의 애증을 불러일으킬 수 있어요. 하지만, 이런 감정은 자연스러운 것입니다. 누구나 자신과 다른 상황에 처한 사람들을 보며 다양한 감정을 느끼기 마련이니까요. 시험 준비는 정말 힘든 과정이지만, 김인배 변리사님의 말씀처럼, 끝까지 포기하지 않는 태도가 중요합니다. 비록 공부가 완벽하지 않더라도, 긍정적인 마음가짐으로 최선을 다하면 예상치 못한 좋은 결과를 얻을 수 있습니다. 남은 두 달 동안 열심히 달리시면서도 자신을 너무 몰아세우지 말고, 적절한 휴식과 자기 관리를 잊지 마세요. 당신의 노력과 인내가 좋은 결과로 이어지기를 진심으로 바랍니다!\", \"main_keywords\": [\"중요한건 꺾이지 않는 마음\", \"힘들어도 괜찮아\", \"휴식도 필요해\", \"자기 관리\"]}"},
+    {"role": "user", "content": "2023년의 시작! 해돋이를 보러 갔다. 무려 밤새 버스를 타고 정동진으로 이동하는 루트! 괴로웠던 것은 뒤의 남자의 코골이 소리가 정말 심각하게 커서 내가 2022년의 마지막 날에 남의 코골이에 이렇게 고통스러워야 하나.. 라는 회의감도 들긴 했다. 하지만, 결과적으로는 눈부시게 올라오는 23년 첫 해를 맞이했고, 새롭게 다가올 나날들에 대한 다짐을 한 날이었다!"},
+    {"role": "system", "content": "{\"reply\": \"새해 첫날을 멋진 해돋이와 함께 시작하셨군요! 밤새 버스를 타고 정동진까지 가는 긴 여정과 남의 코골이 소리에 시달리는 것은 분명 쉽지 않은 경험이었겠지만, 그럼에도 불구하고 2023년의 첫 해를 눈부시게 맞이한 것은 정말 특별한 경험이었을 것 같습니다. 그런 힘든 상황 속에서도 새로운 해의 시작을 감상하고, 새해에 대한 다짐을 하는 것은 매우 의미 있는 일입니다. 이런 경험들이 새해에 대한 여러분의 기대와 희망을 더욱 강하게 만들어 줄 것 같아요. 이 새해가 여러분에게 행복과 성취가 가득한 한 해가 되기를 진심으로 바랍니다. 새로운 시작에 힘찬 발걸음을 내딛으시길 기원합니다!\", \"main_keywords\": [\"새해 다짐\", \"좋은 일들이 많이 일어나길\", \"행복한 한 해\", \"힘찬 발걸음\"]}"},
+    {"role": "user", "content": "오늘 코로나 걸렸다 ㅋ 나진짜 억울하다 사실 안억울할지도? 면역력 떨어져있는데 그렇게 싸돌아다녔으니ㅜㅠㅠㅠ엄마가 또 고생이다.. 나는야 불효녀.., 인생~ 슬프다 슬퍼 내일 고모부랑 고모 오셔서 양고기 먹는다그랬는데 너무 기대했는데. 아쉽다ㅠㅠ 하ㅜㅜㅜㅠㅠ"},
+    {"role": "system", "content": "{\"reply\": \"코로나19에 걸리셨다니, 정말 힘든 상황이네요. 건강이 약해져 있을 때 바깥 활동을 하다가 아프게 되는 것은 정말 불행한 일입니다. 이런 상황에서 엄마가 걱정하시는 것도 이해가 되고, 자신을 불효녀라고 생각하시는 마음도 충분히 이해할 수 있어요. 하지만, 병에 걸리는 것은 누구에게나 일어날 수 있는 일이고, 잘못이나 부끄러운 일이 아닙니다. 지금은 몸과 마음을 잘 돌보며 빨리 회복하는 것이 가장 중요해요. 고모부와 고모와의 양고기 식사를 기대했던 것도 안타까운 일이지만, 건강이 회복된 후에 더 좋은 시간을 보낼 수 있을 거예요. 자신을 탓하지 말고, 이 시간을 통해 몸과 마음의 휴식을 취하는 것도 중요합니다. 무엇보다 건강이 최우선이니, 충분한 휴식을 취하시고, 빠른 쾌유를 기원합니다. 앞으로 더 좋은 날들이 기다리고 있을 거예요!\", \"main_keywords\": [\"양고기 식사\", \"건강이 최우선\", \"빠른 쾌유\", \"휴식을 취하는 것도 중요\"]}"},
 ]
 
 class GPTService:
@@ -257,6 +269,7 @@ class GPTService:
             7: (prompt7, "한 주 돌아보기", "gpt-4-1106-preview", {"type": "json_object"}),
             8: (prompt8, "메모", "gpt-3.5-turbo-1106", {"type": "json_object"}),
             9: (prompt9, "일정 제목", "gpt-3.5-turbo", None),
+            10: (prompt10, "일기 답장", "gpt-4-1106-preview", {"type": "json_object"}),
         }
         if prompt_num == 1 or prompt_num == 6:
             messages_prompt = f"{datetime.datetime.now(pytz.timezone('Asia/Seoul'))}, {messages_prompt}"

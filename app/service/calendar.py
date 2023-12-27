@@ -34,7 +34,7 @@ class CalendarService(AbstractDiaryService):
                     title=schedule['title'],
                     start_time=schedule['start_time'],
                     end_time=schedule['end_time'],
-                    content=schedule['description'],
+                    content="",
                     create_date=await time_now(),
                 )
                 save_db(calender, self.db)
@@ -82,6 +82,9 @@ class CalendarService(AbstractDiaryService):
 
         # 캘린더 반환
         return calender
+
+    async def generate(self, id: int):
+        pass
 
     async def read(self, calender_id: int) -> Calendar:
 
