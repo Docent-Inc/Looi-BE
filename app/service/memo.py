@@ -46,6 +46,10 @@ class MemoService(AbstractDiaryService):
         redis_key = f"memo:{self.user.id}:{memo.id}"
         await self.redis.set(redis_key, json.dumps(memo, default=diary_serializer, ensure_ascii=False), ex=1800)
 
+        # ratio cache 삭제
+        redis_key = f"statistics:ratio:{self.user.id}"
+        await self.redis.delete(redis_key)
+
         # 메모 반환
         return memo
 
@@ -185,6 +189,10 @@ class MemoService(AbstractDiaryService):
 
         # 캐시 삭제
         redis_key = f"memo:{self.user.id}:{memo.id}"
+        await self.redis.delete(redis_key)
+
+        # ratio cache 삭제
+        redis_key = f"statistics:ratio:{self.user.id}"
         await self.redis.delete(redis_key)
 
     async def list(self, page: int, background_tasks: BackgroundTasks) -> dict:
