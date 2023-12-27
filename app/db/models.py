@@ -66,6 +66,7 @@ class NightDiary(Base):
     main_keyword = Column(String(200), nullable=True)
     create_date = Column(DateTime, nullable=False)
     modify_date = Column(DateTime, nullable=False)
+    is_generated = Column(Boolean, default=False, index=True)
     is_deleted = Column(Boolean, default=False, index=True)
     is_generated = Column(Boolean, default=False, index=True)
     view_count = Column(Integer, default=1, nullable=True)
