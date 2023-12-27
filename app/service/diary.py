@@ -50,6 +50,10 @@ class DiaryService(AbstractDiaryService):
         redis_key = f"diary:{self.user.id}:{diary.id}"
         await self.redis.set(redis_key, json.dumps(diary, default=diary_serializer, ensure_ascii=False), ex=1800)
 
+        # ratio cache 삭제
+        redis_key = f"statistics:ratio:{self.user.id}"
+        await self.redis.delete(redis_key)
+
         # 다이어리 반환
         return diary
 
@@ -200,6 +204,10 @@ class DiaryService(AbstractDiaryService):
 
         # diary cache 삭제
         await redis.delete(f"diary:{self.user.id}:{diary.id}")
+
+        # ratio cache 삭제
+        redis_key = f"statistics:ratio:{self.user.id}"
+        await self.redis.delete(redis_key)
 
     async def list(self, page: int, background_tasks: BackgroundTasks) -> dict:
 
