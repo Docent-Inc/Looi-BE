@@ -100,7 +100,7 @@ class MemoService(AbstractDiaryService):
             await self.redis.delete(key)
 
         # 새로운 cache 생성
-        redis_key = f"dream:{self.user.id}:{memo.id}"
+        redis_key = f"memo:{self.user.id}:{memo.id}"
         await self.redis.set(redis_key, json.dumps(memo, default=diary_serializer, ensure_ascii=False), ex=1800)
 
         # 메모 반환
