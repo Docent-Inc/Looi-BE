@@ -49,7 +49,7 @@ class DreamService(AbstractDiaryService):
             await self.redis.delete(key)
 
         # 새로운 cache 생성
-        redis_key = f"diary:{self.user.id}:{diary.id}"
+        redis_key = f"dream:{self.user.id}:{diary.id}"
         await self.redis.set(redis_key, json.dumps(diary, default=diary_serializer, ensure_ascii=False), ex=1800)
 
         # 다이어리 반환
@@ -104,7 +104,7 @@ class DreamService(AbstractDiaryService):
             await self.redis.delete(key)
 
         # 새로운 cache 생성
-        redis_key = f"diary:{self.user.id}:{diary.id}"
+        redis_key = f"dream:{self.user.id}:{diary.id}"
         await self.redis.set(redis_key, json.dumps(diary, default=diary_serializer, ensure_ascii=False), ex=1800)
 
         return {"diary": diary}
@@ -116,7 +116,7 @@ class DreamService(AbstractDiaryService):
             save_db(diary, self.db)
 
         # 캐시된 데이터가 있는지 확인
-        redis_key = f"dream:{self.user.id}:{dream_id}"
+        redis_key = f"dream:{self.user.id}:{dream_id.id}"
         cached_data = await self.redis.get(redis_key)
         if cached_data:
             background_tasks.add_task(count_view, dream_id)
