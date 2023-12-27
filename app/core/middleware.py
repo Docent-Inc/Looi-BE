@@ -13,7 +13,7 @@ class TimingMiddleware(BaseHTTPMiddleware):
         process_time = (end_time - start_time) * 1000  # Convert to milliseconds
         process_time = int(process_time)
         response.headers["X-Process-Time"] = str(process_time) + " ms"
-        max_process_time = 40000  # 최대 허용 응답 시간 (밀리초)
+        max_process_time = 60000  # 최대 허용 응답 시간 (밀리초)
         if process_time > max_process_time:
             content = {
                 "success": False,
