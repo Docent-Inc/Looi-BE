@@ -116,7 +116,7 @@ class DreamService(AbstractDiaryService):
             save_db(diary, self.db)
 
         # 캐시된 데이터가 있는지 확인
-        redis_key = f"dream:{self.user.id}:{dream_id.id}"
+        redis_key = f"dream:{self.user.id}:{dream_id}"
         cached_data = await self.redis.get(redis_key)
         if cached_data:
             background_tasks.add_task(count_view, dream_id)
