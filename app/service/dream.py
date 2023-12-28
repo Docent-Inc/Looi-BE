@@ -85,8 +85,8 @@ class DreamService(AbstractDiaryService):
 
         # db에 저장
         if diary.diary_name == "":
-            await check_length(diary_name, 255, 4023)
-            diary.diary_name = diary_name
+            # await check_length(diary_name, 255, 4023)
+            diary.diary_name = diary_name[:254]
 
         try:
             diary.image_url = image_url
