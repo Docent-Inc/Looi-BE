@@ -206,6 +206,7 @@ class MemoService(AbstractDiaryService):
                 memo_dict = memo.__dict__.copy()
                 memo_dict.pop('_sa_instance_state', None)
                 memo_dict["diary_type"] = 3
+                memo_dict["diary_name"] = memo.title
                 memos_dict_list.append(memo_dict)
             redis_key = f"memo:list:{self.user.id}:{page}"
             await self.redis.set(redis_key, json.dumps({"list": memos_dict_list, "count": limit, "total_count": total_count}, default=str, ensure_ascii=False), ex=1800)
@@ -230,6 +231,7 @@ class MemoService(AbstractDiaryService):
             memo_dict = memo.__dict__.copy()
             memo_dict.pop('_sa_instance_state', None)
             memo_dict["diary_type"] = 3
+            memo_dict["diary_name"] = memo.title
             memos_dict_list.append(memo_dict)
 
             # 다음 페이지 캐싱
