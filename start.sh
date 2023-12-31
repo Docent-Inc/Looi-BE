@@ -7,4 +7,4 @@ redis-cli flushall
 redis-server &
 
 # Uvicorn으로 FastAPI 애플리케이션 실행
-uvicorn main:app --host 0.0.0.0 --port 8001 --reload --workers 4
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload --workers 4

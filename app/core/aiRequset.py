@@ -268,7 +268,7 @@ class GPTService:
         save_db(api_request_log, db)
 
     async def send_gpt_request(self, prompt_num: int, messages_prompt: str, retries=3):
-        messages_prompt = messages_prompt[:300]
+
         prompt_dict = {
             1: (prompt1, "텍스트 분류", "gpt-4-1106-preview", None),
             2: (prompt2, "제목", "gpt-3.5-turbo", None),
@@ -281,6 +281,10 @@ class GPTService:
             9: (prompt9, "일정 제목", "gpt-3.5-turbo", None),
             10: (prompt10, "일기 답장", "gpt-4-1106-preview", {"type": "json_object"}),
         }
+        if prompt_num == 7:
+            messages_prompt = messages_prompt[:1000]
+        else:
+            messages_prompt = messages_prompt[:300]
         if prompt_num == 1 or prompt_num == 6:
             messages_prompt = f"{datetime.datetime.now(pytz.timezone('Asia/Seoul'))}, {messages_prompt}"
         prompt = prompt_dict[prompt_num][0].copy()
@@ -316,7 +320,7 @@ class GPTService:
                         detail=4501,
                     )
 
-    async def send_dalle_request(self, messages_prompt: str, background=True, retries=3):
+    async def send_dalle_request(self, messages_prompt: str, retries=3):
         messages_prompt = messages_prompt[:300]
         for i in range(retries):
             try:
@@ -342,7 +346,7 @@ class GPTService:
 
                 # 이미지 생성 프롬프트 저장
                 save_promt = Prompt(
-                    text=messages_prompt[:255],
+                    text=messages_prompt[:300],
                     prompt=response['data'][0]['revised_prompt'],
                 )
                 save_db(save_promt, self.db)
@@ -351,20 +355,6 @@ class GPTService:
                 response = await asyncio.to_thread(requests.get, response['data'][0]['url'])
                 img = Image.open(BytesIO(response.content))
                 img = img.resize((512, 512), Image.ANTIALIAS)
-
-                if background:
-                    width, height = img.size
-
-                    # 이미지를 상하로 2등분
-                    upper_half = img.crop((0, 0, width, height // 2))
-                    lower_half = img.crop((0, height // 2, width, height))
-
-                    # 각 부분의 대표색 추출
-                    upper_colors, _ = extcolors.extract_from_image(upper_half)
-                    lower_colors, _ = extcolors.extract_from_image(lower_half)
-
-                    upper_dominant_color = upper_colors[0][0]
-                    lower_dominant_color = lower_colors[0][0]
 
                 # 유니크한 파일 이름 생성
                 unique_id = uuid.uuid4()
@@ -388,10 +378,7 @@ class GPTService:
                 public_url = f"{endpoint_url}/{bucket_name}/{destination_blob_name}"
 
                 # public url 반환
-                if background:
-                    return [public_url, upper_dominant_color, lower_dominant_color]
-                else:
-                    return public_url
+                return public_url
             except Exception as e:
                 print(f"DALL-E API Error{e}")
                 if i < retries - 1:
