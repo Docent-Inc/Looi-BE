@@ -73,15 +73,11 @@ class DreamService(AbstractDiaryService):
 
         # 다이어리 제목, 이미지, 해몽 생성
         gpt_service = GPTService(self.user, self.db)
-        diary_name, image_info, resolution = await asyncio.gather(
+        diary_name, image_url, resolution = await asyncio.gather(
             gpt_service.send_gpt_request(2, diary.content),
             gpt_service.send_dalle_request(f"꿈에서 본 장면(no text): {diary.content}"),
             gpt_service.send_gpt_request(5, f"{self.user.mbti}, {diary.content}")
         )
-
-        # 이미지 background color 문자열로 변환
-        image_url, upper_dominant_color, lower_dominant_color = image_info
-        upper_lower_color = "[\"" + str(upper_dominant_color) + "\", \"" + str(lower_dominant_color) + "\"]"
 
         # db에 저장
         if diary.diary_name == "":
@@ -90,7 +86,6 @@ class DreamService(AbstractDiaryService):
 
         try:
             diary.image_url = image_url
-            diary.background_color = upper_lower_color
             diary.resolution = json.loads(resolution)['resolution']
             diary.main_keyword = json.dumps(json.loads(resolution)["main_keywords"], ensure_ascii=False)
             diary.modify_date = await time_now()

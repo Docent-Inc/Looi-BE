@@ -73,26 +73,22 @@ class DiaryService(AbstractDiaryService):
 
         gpt_service = GPTService(self.user, self.db)
         if diary.diary_name == "":
-            image_info, diary_name, reply = await asyncio.gather(
+            image_url, diary_name, reply = await asyncio.gather(
                 gpt_service.send_dalle_request(f"오늘의 일기(no text): {diary.content}"),
                 gpt_service.send_gpt_request(2, diary.content),
                 gpt_service.send_gpt_request(10, diary.content)
             )
             await check_length(diary_name, 255, 4023)
             diary.diary_name = diary_name
+
         elif diary.diary_name != "":
-            image_info, reply = await asyncio.gather(
+            image_url, reply = await asyncio.gather(
                 gpt_service.send_dalle_request(f"오늘의 일기(no text): {diary.content}"),
                 gpt_service.send_gpt_request(10, diary.content)
             )
 
-        # 이미지 background color 문자열로 변환
-        image_url, upper_dominant_color, lower_dominant_color = image_info
-        upper_lower_color = "[\"" + str(upper_dominant_color) + "\", \"" + str(lower_dominant_color) + "\"]"
-
         try:
             diary.image_url = image_url
-            diary.background_color = upper_lower_color
             diary.resolution = json.loads(reply)["reply"]
             diary.main_keyword = json.dumps(json.loads(reply)["main_keywords"], ensure_ascii=False)
             diary.is_generated = True
