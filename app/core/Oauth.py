@@ -152,11 +152,11 @@ async def check_user(data: dict, service: str, db: Session):
         user = save_db(user, db)
         diary = NightDiary(
             User_id=user.id,
-            diary_name="나만의 기록 친구 Look-i와의 특별한 첫 만남",
-            content="오늘은 인상깊은 날이다. 기록 친구 Look-i와 만나게 되었다. 앞으로 기록 열심히 해야지~!",
+            diary_name="나만의 기록 친구 Looi와의 특별한 첫 만남",
+            content="오늘은 인상깊은 날이다. 기록 친구 Looi와 만나게 되었다. 앞으로 기록 열심히 해야지~!",
             resolution="오늘 같은 특별한 날이 기억에 오래 남을 수 있도록 만들어주는 멋진 친구 Looi와 만남이 있었군요! 이런 만남은 삶에 긍정적인 변화를 가져다주고, 새로운 습관이나 좋은 결심을 시작하는데 도움을 줍니다. 앞으로 기록을 열심히 하기로 한 결심을 실천하여, 일상의 소중함과 성장의 순간들을 남겨두시면 좋겠네요. 지금의 생각과 감정, 목표와 꿈들을 기록하는 것은 추후에 돌이켜보았을 때 살아온 길을 반추하고 다시 동기부여를 얻는 데 큰 힘이 될 것입니다. 오늘의 만남이 앞으로 여러분의 기록 여정에 큰 영감을 주길 바라며, 새로운 습관을 잘 유지하시길 응원합니다!",
-            image_url="https://storage.googleapis.com/docent/c1c96c92-a8d2-4b18-9465-48be554d8880.png",
-            background_color="[\"(253, 254, 253)\", \"(77, 37, 143)\"]",
+            image_url="https://kr.object.ncloudstorage.com/looi/onboarding_female.png",
+            main_keyword="[\"기록의 습관\", \"Looi와의 만남\", \"새로운 시작\", \"Look at yourself\"]",
             is_generated=True,
             create_date=now,
             modify_date=now,
