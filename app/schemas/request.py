@@ -26,6 +26,7 @@ class UserUpdateRequest(BaseModel):
     mbti: Optional[str] = ""
     gender: Optional[str] = ""
     birth: Optional[str] = ""
+    push_token: Optional[str] = ""
 
 class PushUpdateRequest(BaseModel):
     type: str

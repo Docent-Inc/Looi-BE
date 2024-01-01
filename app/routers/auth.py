@@ -71,6 +71,3 @@ async def delete_auth_delete(
 ):
     await auth_service.delete(current_user)
     return ApiResponse()
-
-
-
