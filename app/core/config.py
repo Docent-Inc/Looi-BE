@@ -37,6 +37,8 @@ class Settings(BaseSettings):
     APPLE_REDIRECT_URI_PROD: str
     NAVER_CLOUD_ACCESS_KEY_ID: str
     NAVER_CLOUD_SECRET_KEY: str
+    FIREBASE_API_KEY: str
+    FIREBASE_JSON: str
 
     class Config:
         env_file = ".env"
