@@ -31,3 +31,4 @@ cryptography==41.0.5
 apscheduler==3.10.1
 boto3==1.26.160
 firebase-admin==6.3.0
+pyjwt==2.8.0
