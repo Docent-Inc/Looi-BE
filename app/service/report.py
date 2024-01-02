@@ -1,5 +1,8 @@
 import aioredis
 from fastapi import Depends
+from slack_sdk.web.async_client import AsyncWebClient
+
+from app.core.config import settings
 from app.core.security import get_current_user
 from app.db.database import get_db
 from datetime import timedelta
@@ -12,6 +15,8 @@ from app.db.models import Report, MorningDiary, NightDiary, Calendar
 from app.db.models import User
 from app.core.aiRequset import GPTService
 from app.service.abstract import AbstractReportService
+from app.service.push import PushService
+
 
 class ReportService(AbstractReportService):
     def __init__(self, user: User = Depends(get_current_user), db: Session = Depends(get_db), redis: aioredis.Redis = Depends(get_redis_client)):
@@ -243,6 +248,11 @@ class ReportService(AbstractReportService):
 
             if retries >= MAX_RETRIES:
                 print(f"Failed to generate report for user {user.nickname}")
+                client = AsyncWebClient(token=settings.SLACK_BOT_TOKEN)
+                await client.chat_postMessage(
+                    channel="C064ZCNDVU1",
+                    text=f"{user.nickname}님의 리포트 생성에 실패했습니다. 관리자에게 문의해주세요."
+                )
                 return False
 
             data = json.loads(report_data)
@@ -268,6 +278,7 @@ class ReportService(AbstractReportService):
                 ).all()
                 total_count = 0
                 generate_user_list = []
+                push_service = PushService(db=self.db, user=self.user)
                 for user in users:
                     print(f"processing {user.nickname}")
                     if await check_count(user):
@@ -277,6 +288,8 @@ class ReportService(AbstractReportService):
                 for user in generate_user_list:
                     await generate_report(user)
                     print(f"{user.nickname} 유저 리포트 생성 완료")
+                    if user.push_report == True:
+                        await push_service.send("Looi", f"{user.nickname}님의 한 주 돌아보기 보고서를 만들었어요! 얼른 확인해 보세요~!", user.push_token)
                     print(f"progress: {generate_user_list.index(user) + 1}/{total_count}")
             finally:
                 self.db.close()

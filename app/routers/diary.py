@@ -19,10 +19,11 @@ async def post_diary_create(
 @router.patch("/generate", response_model=ApiResponse, tags=["Diary"])
 async def patch_diary_generate(
     diary_id: int,
+    background_tasks: BackgroundTasks,
     diary_service: Annotated[DiaryService, Depends()],
 ) -> ApiResponse:
     return ApiResponse(
-        data=await diary_service.generate(diary_id)
+        data=await diary_service.generate(diary_id, background_tasks)
     )
 
 @router.get("/read", response_model=ApiResponse, tags=["Diary"])

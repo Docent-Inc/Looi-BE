@@ -131,3 +131,11 @@ class AbstractAdminService(ABC):
     @abstractmethod
     async def slack_bot(self) -> dict:
         pass
+
+class AbstractPushService(ABC):
+    @abstractmethod
+    async def test(self) -> None:
+        pass
+    @abstractmethod
+    async def send(self, title: str, body: str, token: str) -> None:
+        pass
