@@ -12,7 +12,6 @@ python-jose==3.3.0
 python-dotenv==1.0.0
 passlib==1.7.4
 bcrypt==4.0.1
-fastapi_jwt_auth==0.5.0
 gunicorn==20.1.0
 pytz==2023.3
 httpx_oauth==0.11.2
@@ -30,3 +29,5 @@ slack_sdk==3.23.0
 cryptography==41.0.5
 apscheduler==3.10.1
 boto3==1.26.160
+firebase-admin==6.3.0
+pyjwt==2.8.0

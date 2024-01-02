@@ -8,7 +8,7 @@ from app.core.Oauth import get_user_kakao, get_user_apple, check_user, get_user_
 from app.core.config import settings
 from app.core.security import create_token, check_token, time_now
 from app.db.database import get_db, save_db, get_redis_client
-from app.db.models import User
+from app.db.models import User, NightDiary
 from app.schemas.request import UserUpdateRequest, PushUpdateRequest
 from app.schemas.response import TokenData
 from app.service.abstract import AbstractAuthService
@@ -81,8 +81,16 @@ class AuthService(AbstractAuthService):
             user.mbti = auth_data.mbti
         if auth_data.gender != "":
             user.gender = auth_data.gender
+            night_diary = self.db.query(NightDiary).filter(NightDiary.User_id == user.id).first()
+            if user.gender == "남":
+                night_diary.image_url = "https://kr.object.ncloudstorage.com/looi/onboarding_male.png"
+            else:
+                night_diary.image_url = "https://kr.object.ncloudstorage.com/looi/onboarding_female.png"
+            save_db(night_diary, self.db)
         if auth_data.birth != "":
             user.birth = auth_data.birth
+        if auth_data.push_token != "":
+            user.push_token = auth_data.push_token
 
         user.is_sign_up = False
         await self.redis.delete(f"user:{user.email}")
