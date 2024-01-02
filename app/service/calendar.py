@@ -80,7 +80,6 @@ class CalendarService(AbstractDiaryService):
         redis_key = f"today_calendar_list:{self.user.id}:{now.day}"
         await self.redis.delete(redis_key)
 
-        # 캘린더 반환
         return calender
 
     async def generate(self, id: int):
