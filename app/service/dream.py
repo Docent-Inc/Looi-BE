@@ -11,6 +11,7 @@ from app.db.models import User, MorningDiary
 from app.core.aiRequset import GPTService
 from app.schemas.request import CreateDreamRequest, UpdateDreamRequest
 from app.service.abstract import AbstractDiaryService
+from app.service.push import PushService
 
 
 class DreamService(AbstractDiaryService):
@@ -19,7 +20,7 @@ class DreamService(AbstractDiaryService):
         self.db = db
         self.redis = redis
 
-    async def create(self, dream_data: CreateDreamRequest) -> MorningDiary:
+    async def create(self, dream_data: CreateDreamRequest, background_tasks: BackgroundTasks) -> MorningDiary:
 
         # db에 저장
         await check_length(dream_data.content, 1000, 4221)
@@ -59,7 +60,7 @@ class DreamService(AbstractDiaryService):
         # 다이어리 반환
         return diary
 
-    async def generate(self, dream_id: int) -> dict:
+    async def generate(self, dream_id: int, background_tasks) -> dict:
 
         # 다이어리 조회
         diary = self.db.query(MorningDiary).filter(MorningDiary.id == dream_id, MorningDiary.User_id == self.user.id, MorningDiary.is_deleted == False).first()
@@ -81,8 +82,7 @@ class DreamService(AbstractDiaryService):
 
         # db에 저장
         if diary.diary_name == "":
-            # await check_length(diary_name, 255, 4023)
-            diary.diary_name = diary_name[:254]
+            diary.diary_name = diary_name[:10]
 
         try:
             diary.image_url = image_url
@@ -91,6 +91,13 @@ class DreamService(AbstractDiaryService):
             diary.modify_date = await time_now()
             diary.is_generated = True
             diary = save_db(diary, self.db)
+            push_service = PushService(db=self.db, user=self.user)
+            background_tasks.add_task(
+                push_service.send,
+                "Looi",
+                f"{self.user.nickname}님의 꿈 해석 결과가 도착했어요! 얼른 확인해 보세요~!",
+                self.user.push_token
+            )
         except:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,

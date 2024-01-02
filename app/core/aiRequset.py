@@ -107,6 +107,8 @@ prompt2 = [
     {"role": "system", "content": "의문의 이상형"},
     {"role": "user", "content": "비행기나 기차를 놓치는 꿈"},
     {"role": "system", "content": "잃어버린 시간"},
+    {"role": "user", "content": "누군가를 죽이는 꿈"},
+    {"role": "system", "content": "죽음의 예감"},
 ]
 
 prompt3 = [
@@ -166,12 +168,6 @@ prompt5 = [
 
 prompt6 = [
     {"role": "system", "content": "Translate the user's schedule into the json format (start_time, end_time, title). 월요일부터 일요일까지 한 주고, 1, 3, 5, 7, 8, 10, 12월은 31일, 4, 6, 9, 11월은 30일, 2월은 28일로 가정한다."},
-    {"role": "user", "content": "local time: 2023-08-19 13:28:42 Saturday, 내일 오후 3시에 네이버 그린하우스 팀과 미팅이 있어"},
-    {"role": "system", "content": "{\"start_time\": \"2023-08-20 15:00:00\", \"end_time\": \"2023-08-20 16:00:00\", \"title\": \"네이버 그린하우스 팀 미팅\"}"},
-    {"role": "user", "content": "local time: 2023-08-20 13:28:42 Sunday, 다음주 화요일부터 목요일 부산 해운대로 여행가"},
-    {"role": "system", "content": "{\"start_time\": \"2023-08-22 00:00:00\", \"end_time\": \"2023-08-24 00:00:00\", \"title\": \"부산 해운대 여행\"}"},
-    {"role": "user", "content": "local time: 2023-08-20 13:28:42 Sunday, 다음주 금요일 오후 2시에 용산 아이맥스에서 친구랑 영화 미션임파서블 보러 가"},
-    {"role": "system", "content": "{\"start_time\": \"2023-08-25 14:00:00\", \"end_time\": \"2023-08-25 16:00:00\", \"title\": \"용산 아이맥스에서 미션 임파서블 영화 보기\"}"},
     {"role": "user", "content": "local time: 2023-08-23 13:28:42 Wednesday, 다음주 금요일 6시에 중앙도서관 앞에서 자동차 동아리 모임이 있어"},
     {"role": "system", "content": "{\"start_time\": \"2023-09-01 18:00:00\", \"end_time\": \"2023-09-01 19:00:00\", \"title\": \"중앙도서관 앞에서 자동차 동아리 모임\"}"},
     {"role": "user", "content": "local time: 2023-11-16 15:23:26 Thursday, 다음주 토요일 8시에 친구랑 노래방 가"},
@@ -190,6 +186,8 @@ prompt6 = [
     {"role": "system", "content": "{\"start_time\": \"2023-12-28 08:30:00\", \"end_time\": \"2023-12-28 09:30:00\", \"title\": \"자동차 정기점검\"}"},
     {"role": "user", "content": "local time: 2023-12-26 11:08:01 Thursday, 다음주 금요일 저녁약속"},
     {"role": "system", "content": "{\"start_time\": \"2024-01-05 18:00:00\", \"end_time\": \"2024-01-05 19:00:00\", \"title\": \"저녁 약속\"}"},
+    {"role": "user", "content": "local time: 2024-01-02 11:01:23 Thursday, 목요일에 저녁약속 있어"},
+    {"role": "system", "content": "{\"start_time\": \"2024-01-04 18:00:00\", \"end_time\": \"2024-01-04 19:00:00\", \"title\": \"저녁 약속\"}"},
 ]
 
 prompt7 = [
@@ -282,7 +280,7 @@ class GPTService:
             10: (prompt10, "일기 답장", "gpt-4-1106-preview", {"type": "json_object"}),
         }
         if prompt_num == 7:
-            messages_prompt = messages_prompt[:1000]
+            messages_prompt = messages_prompt[:1500]
         else:
             messages_prompt = messages_prompt[:300]
         if prompt_num == 1 or prompt_num == 6:
