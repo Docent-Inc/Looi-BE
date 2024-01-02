@@ -38,6 +38,16 @@ class CalendarService(AbstractDiaryService):
                     create_date=await time_now(),
                 )
                 save_db(calender, self.db)
+
+                # list cache 삭제
+                keys = await self.redis.keys(f"calendar:list:{self.user.id}:*")
+                for key in keys:
+                    await self.redis.delete(key)
+
+                # today_calendar cache 삭제
+                now = await time_now()
+                redis_key = f"today_calendar_list:{self.user.id}:{now.day}"
+                await self.redis.delete(redis_key)
             except:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
