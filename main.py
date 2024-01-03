@@ -3,14 +3,15 @@ from apscheduler.triggers.cron import CronTrigger
 from app.core.handler import register_exception_handlers
 from fastapi import FastAPI
 from app.db.database import get_db, get_redis_client
-from app.routers import auth, report, diary, today, admin, chat, memo, dream, calendar, statistics, share
+from app.routers import auth, report, diary, today, admin, chat, memo, dream, calendar, statistics, share, push
 from app.core.middleware import TimingMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.service.admin import AdminService
+from app.service.push import PushService
 from app.service.report import ReportService
 
-app = FastAPI(title="Look API",
+app = FastAPI(title="Looi API",
               version="0.2.0",
               docs_url='/docs',
               redoc_url='/redoc',
@@ -28,6 +29,7 @@ app.include_router(calendar.router)
 app.include_router(share.router)
 app.include_router(report.router)
 app.include_router(admin.router)
+app.include_router(push.router)
 register_exception_handlers(app)
 app.add_middleware(TimingMiddleware)
 
@@ -43,20 +45,38 @@ if settings.SERVER_TYPE == "prod":
     scheduler = AsyncIOScheduler()
     @app.on_event("startup")
     async def start_scheduler():
-        report_service = ReportService(db=next(get_db()), redis=await get_redis_client())
+        # 한 주 돌아보기 보고서 생성
         scheduler.add_job(
-            report_service.generate,
+            ReportService(db=next(get_db()), redis=await get_redis_client()).generate,
             trigger=CronTrigger(day_of_week='sun', hour=17, minute=0),
             timezone="Asia/Seoul"
         )
 
         # AdminService 작업 스케줄링
-        admin_service = AdminService(db=next(get_db()), redis=await get_redis_client())
         scheduler.add_job(
-            admin_service.slack_bot,
-            trigger=CronTrigger(minute=4, second=55),
+            AdminService(db=next(get_db()), redis=await get_redis_client()).slack_bot,
+            trigger=CronTrigger(minute=59, second=55),
             timezone="Asia/Seoul"
         )
+
+        # PushService 작업 스케줄링
+        # scheduler.add_job(
+        #     PushService(db=next(get_db()), redis=await get_redis_client()).send_morning_push,
+        #     trigger=CronTrigger(hour=8),
+        #     timezone="Asia/Seoul"
+        # )
+        #
+        # scheduler.add_job(
+        #     PushService(db=next(get_db()), redis=await get_redis_client()).send_night_push,
+        #     trigger=CronTrigger(hour=20),
+        #     timezone="Asia/Seoul"
+        # )
+        #
+        # scheduler.add_job(
+        #     PushService(db=next(get_db()), redis=await get_redis_client()).generate_night_push,
+        #     trigger=CronTrigger(hour=18),
+        #     timezone="Asia/Seoul"
+        # )
 
         # 스케줄러 시작 (한 번만 호출)
         scheduler.start()

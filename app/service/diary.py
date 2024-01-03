@@ -9,6 +9,7 @@ from app.db.models import User, NightDiary
 from app.core.aiRequset import GPTService
 from app.schemas.request import CreateDiaryRequest
 from app.service.abstract import AbstractDiaryService
+from app.service.push import PushService
 
 
 class DiaryService(AbstractDiaryService):
@@ -58,7 +59,7 @@ class DiaryService(AbstractDiaryService):
         # 다이어리 반환
         return diary
 
-    async def generate(self, diary_id: int) -> dict:
+    async def generate(self, diary_id: int, background_tasks: BackgroundTasks) -> dict:
 
         # 다이어리 조회
         diary = self.db.query(NightDiary).filter(NightDiary.id == diary_id, NightDiary.User_id == self.user.id,
@@ -94,6 +95,14 @@ class DiaryService(AbstractDiaryService):
             diary.is_generated = True
             diary.modify_date = await time_now()
             diary = save_db(diary, self.db)
+            push_service = PushService(db=self.db, user=self.user)
+            background_tasks.add_task(
+                push_service.send,
+                title="Looi",
+                body=f"{self.user.nickname}님의 일기에 대한 답장이 도착했어요! 얼른 확인해 보세요~!",
+                image_url=diary.image_url,
+                token=self.user.push_token
+            )
         except:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=4202)
 
