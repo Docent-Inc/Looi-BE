@@ -98,9 +98,10 @@ class DiaryService(AbstractDiaryService):
             push_service = PushService(db=self.db, user=self.user)
             background_tasks.add_task(
                 push_service.send,
-                "Looi",
-                f"{self.user.nickname}님의 일기에 대한 답장이 도착했어요! 얼른 확인해 보세요~!",
-                self.user.push_token
+                title="Looi",
+                body=f"{self.user.nickname}님의 일기에 대한 답장이 도착했어요! 얼른 확인해 보세요~!",
+                image_url=diary.image_url,
+                token=self.user.push_token
             )
         except:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=4202)

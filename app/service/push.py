@@ -21,10 +21,10 @@ class PushService(AbstractPushService):
         self.user = user
         self.redis = redis
 
-    async def test(self, title: str, body: str, landing_url: str, token: str) -> None:
-        await self.send(title, body, token, landing_url=landing_url)
+    async def test(self, title: str, body: str, landing_url: str, image_url: str, token: str) -> None:
+        await self.send(title=title, body=body, token=token, image_url=image_url, landing_url=landing_url)
 
-    async def send(self, title: str, body: str, token: str, image_url: str = None, landing_url: str = None) -> None:
+    async def send(self, title: str, body: str, token: str, image_url: str = "", landing_url: str = "") -> None:
         try:
             message = messaging.Message(
                 notification=messaging.Notification(
