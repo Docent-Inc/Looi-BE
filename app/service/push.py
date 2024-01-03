@@ -1,3 +1,4 @@
+import asyncio
 import aioredis
 import firebase_admin
 from fastapi import Depends
@@ -10,7 +11,6 @@ from app.core.security import get_current_user
 from app.db.database import get_redis_client, get_db
 from app.db.models import User
 from app.service.abstract import AbstractPushService
-
 cred = credentials.Certificate(json.loads(settings.FIREBASE_JSON))
 firebase_admin.initialize_app(cred)
 
@@ -21,15 +21,53 @@ class PushService(AbstractPushService):
         self.user = user
         self.redis = redis
 
-    async def test(self) -> None:
-        await self.send("test", "test", self.user.push_token)
+    async def test(self, title: str, body: str, landing_url: str, token: str) -> None:
+        await self.send(title, body, token, landing_url=landing_url)
 
-    async def send(self, title: str, body: str, token: str) -> None:
-        message = messaging.Message(
-            notification=messaging.Notification(
-                title=title,
-                body=body,
-            ),
-            token=token,
-        )
-        messaging.send(message)
+    async def send(self, title: str, body: str, token: str, image_url: str = None, landing_url: str = None) -> None:
+        try:
+            message = messaging.Message(
+                notification=messaging.Notification(
+                    title=title,
+                    body=body,
+                    image=image_url,
+                ),
+                token=token,
+                data={
+                    "landing_url": landing_url,
+                },
+            )
+            await asyncio.to_thread(messaging.send, message)
+        except Exception as e:
+            print(e)
+
+    async def send_all(self, title: str, body: str) -> None:
+        # 토큰 리스트와 닉네임 추출
+        Users = self.db.query(User).filter(User.push_token != None, User.is_deleted == False).all()
+        nickname_and_token = [(user.nickname, user.push_token) for user in Users]
+
+        # 100개씩 토큰을 나누어 배치 전송
+        batch_size = 100
+        for i in range(0, len(nickname_and_token), batch_size):
+            batch = nickname_and_token[i:i + batch_size]
+
+            tasks = [self.send(title=title, body=f"{nickname}{body}", token=token) for nickname, token in batch]
+            await asyncio.gather(*tasks)
+
+    async def send_morning_push(self) -> None:
+        lock_key = "morning_push_lock"
+        if await self.redis.set(lock_key, "locked", ex=300, nx=True):
+            try:
+                await self.send_all("Looi", "님, 오늘은 어떤 꿈을 꾸셨나요?")
+            finally:
+                self.db.close()
+                await self.redis.delete(lock_key)
+
+    async def send_night_push(self) -> None:
+        lock_key = "night_push_lock"
+        if await self.redis.set(lock_key, "locked", ex=300, nx=True):
+            try:
+                await self.send_all("Looi", "님, 오늘은 어떤 하루를 보내셨나요?")
+            finally:
+                self.db.close()
+                await self.redis.delete(lock_key)
