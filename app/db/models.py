@@ -19,7 +19,7 @@ class User(Base):
     language_id = Column(Integer, nullable=True)
     Oauth_from = Column(String(10), nullable=True)
     birth = Column(Date, nullable=True, default=func.now())
-    push_token = Column(String(100), nullable=True)
+    push_token = Column(String(300), nullable=True)
     push_morning = Column(Boolean, default=True)
     push_night = Column(Boolean, default=True)
     push_report = Column(Boolean, default=True)
@@ -171,19 +171,22 @@ class Dashboard(Base):
 
     id = Column(Integer, primary_key=True)
     today_user = Column(Integer, nullable=False)
-    today_chat = Column(Integer, nullable=False)
+    today_record = Column(Integer, nullable=False)
     today_cost = Column(FLOAT, nullable=False)
-    today_morning_diary = Column(Integer, nullable=False)
-    today_night_diary = Column(Integer, nullable=False)
-    today_calender = Column(Integer, nullable=False)
+    today_dream = Column(Integer, nullable=False)
+    today_diary = Column(Integer, nullable=False)
+    today_calendar = Column(Integer, nullable=False)
     today_memo = Column(Integer, nullable=False)
-    today_chat_user = Column(Integer, nullable=False)
-    today_chat_mean_request = Column(FLOAT, nullable=False)
-    create_date = Column(DateTime, nullable=False)
-    error_count = Column(Integer, nullable=False)
+    today_mean_request = Column(FLOAT, nullable=False)
     dau = Column(Integer, nullable=False)
     wau = Column(Integer, nullable=False)
     mau = Column(Integer, nullable=False)
+    dau_to_mau = Column(FLOAT, nullable=False)
+    dau_to_wau = Column(FLOAT, nullable=False)
+    create_date = Column(DateTime, nullable=False)
+    error_count = Column(Integer, nullable=False)
+
+
 class TextClassification(Base):
     __tablename__ = "TextClassification"
 
@@ -199,6 +202,15 @@ class ErrorLog(Base):
     id = Column(Integer, primary_key=True)
     error_code = Column(Integer, nullable=False)
     error_message = Column(String(255), nullable=False)
+    create_date = Column(DateTime, nullable=False)
+
+class PushQuestion(Base):
+    __tablename__ = "PushQuestion"
+
+    id = Column(Integer, primary_key=True)
+    User_id = Column(Integer, ForeignKey('User.id'), nullable=False, index=True)
+    calendar_content = Column(String(255), nullable=False)
+    question = Column(String(255), nullable=False)
     create_date = Column(DateTime, nullable=False)
 
 def get_Base():

@@ -8,7 +8,7 @@ import aioredis
 
 redis_client = redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=settings.REDIS_DB, decode_responses=True)
 DB_URL = f'mysql+pymysql://{settings.DB_USER}:{settings.DB_PASSWORD}@{settings.DB_ADDRESS}/{settings.DB_NAME}'
-engine = create_engine(DB_URL, pool_recycle=150)
+engine = create_engine(DB_URL, pool_recycle=3600)
 
 Base = get_Base()
 def get_Base():

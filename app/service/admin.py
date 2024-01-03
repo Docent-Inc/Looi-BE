@@ -1,12 +1,12 @@
 import warnings
-from datetime import timedelta
+from datetime import timedelta, datetime
 from decimal import Decimal
 
 import aioredis
 from fastapi import Depends
 from slack_sdk.errors import SlackApiError
 from slack_sdk.web.async_client import AsyncWebClient
-from sqlalchemy import inspect, func
+from sqlalchemy import inspect, func, distinct
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -36,9 +36,7 @@ class AdminService(AbstractAdminService):
         return user_list
 
     async def dashboard(self) -> list:
-
         dashboard = self.db.query(Dashboard).all()
-
         return dashboard
 
     async def user_text(self) -> list:
@@ -124,22 +122,8 @@ class AdminService(AbstractAdminService):
                 ).all()
                 today_users_count = len(today_users)
 
-                # 오늘 생성된 채팅 수
-                total_count = self.db.query(TextClassification).filter(
-                    func.date(TextClassification.create_date) == now.date(),
-                ).count()
-
                 # 오늘 사용된 api 비용
                 total_cost = await calculate_api_usage_cost()
-
-                # 오늘 채팅 요청을 한번이라도 한 사람 수
-                today_chat_users = self.db.query(TextClassification).filter(
-                    func.date(TextClassification.create_date) == now.date(),
-                ).group_by(TextClassification.User_id).all()
-                today_chat_users_count = len(today_chat_users)
-
-                # 오늘 평균 채팅 요청 수
-                mean_request = total_count / today_chat_users_count
 
                 # 오늘 생성된 아침 일기 수
                 morning_diary_count = self.db.query(MorningDiary).filter(
@@ -162,20 +146,76 @@ class AdminService(AbstractAdminService):
                     func.date(Memo.create_date) == now.date(),
                 ).count()
 
+                # 오늘 생성된 기록 수
+                total_count = morning_diary_count + evening_diary_count + calender_count + memo_count
+
+
+
                 dashboards = self.db.query(Dashboard).filter(
                     func.date(Dashboard.create_date) == now.date(),
                 ).first()
 
-                # dau, mau, wau
-                dau_count = self.db.query(User).filter(
-                    func.date(User.last_active_date) == now.date()
+                dau_count = self.db.query(distinct(MorningDiary.User_id)).filter(
+                    func.date(MorningDiary.create_date) == now.date(),
+                ).union(
+                    self.db.query(distinct(NightDiary.User_id)).filter(
+                        func.date(NightDiary.create_date) == now.date()
+                    ),
+                    self.db.query(distinct(Memo.User_id)).filter(
+                        func.date(Memo.create_date) == now.date()
+                    ),
+                    self.db.query(distinct(Calendar.User_id)).filter(
+                        func.date(Calendar.create_date) == now.date()
+                    )
                 ).count()
-                mau_count = self.db.query(User).filter(
-                    func.date(User.last_active_date) >= (now.date() - timedelta(days=30))
+
+                # 평균 기록 수
+                mean_request = total_count / dau_count
+
+                last_week = now.date() - timedelta(days=7)
+                wau_count = self.db.query(distinct(MorningDiary.User_id)).filter(
+                    func.date(MorningDiary.create_date) >= last_week,
+                    func.date(MorningDiary.create_date) <= now.date()
+                ).union(
+                    self.db.query(distinct(NightDiary.User_id)).filter(
+                        func.date(NightDiary.create_date) >= last_week,
+                        func.date(NightDiary.create_date) <= now.date()
+                    ),
+                    self.db.query(distinct(Memo.User_id)).filter(
+                        func.date(Memo.create_date) >= last_week,
+                        func.date(Memo.create_date) <= now.date()
+                    ),
+                    self.db.query(distinct(Calendar.User_id)).filter(
+                        func.date(Calendar.create_date) >= last_week,
+                        func.date(Calendar.create_date) <= now.date()
+                    )
                 ).count()
-                wau_count = self.db.query(User).filter(
-                    func.date(User.last_active_date) >= (now.date() - timedelta(days=7))
+
+                last_month = now.date() - timedelta(days=30)
+                mau_count = self.db.query(distinct(MorningDiary.User_id)).filter(
+                    func.date(MorningDiary.create_date) >= last_month,
+                    func.date(MorningDiary.create_date) <= now.date()
+                ).union(
+                    self.db.query(distinct(NightDiary.User_id)).filter(
+                        func.date(NightDiary.create_date) >= last_month,
+                        func.date(NightDiary.create_date) <= now.date()
+                    ),
+                    self.db.query(distinct(Memo.User_id)).filter(
+                        func.date(Memo.create_date) >= last_month,
+                        func.date(Memo.create_date) <= now.date()
+                    ),
+                    self.db.query(distinct(Calendar.User_id)).filter(
+                        func.date(Calendar.create_date) >= last_month,
+                        func.date(Calendar.create_date) <= now.date()
+                    )
                 ).count()
+
+                # DAU / MAU
+                dau_to_mau = (dau_count / mau_count) * 100
+
+                # DAU / WAU
+
+                dau_to_wau = (dau_count / wau_count) * 100
 
                 # dau 증감율 계산
                 yesterday_dau_count = self.db.query(Dashboard).filter(
@@ -245,7 +285,7 @@ class AdminService(AbstractAdminService):
                             },
                             {
                                 "type": "mrkdwn",
-                                "text": f"*오늘 요청한 채팅 수:* {total_count}"
+                                "text": f"*오늘 기록 수:* {total_count}"
                             },
                             {
                                 "type": "mrkdwn",
@@ -253,11 +293,11 @@ class AdminService(AbstractAdminService):
                             },
                             {
                                 "type": "mrkdwn",
-                                "text": f"*오늘 생성된 아침 일기 수:* {morning_diary_count}"
+                                "text": f"*오늘 생성된 꿈 수:* {morning_diary_count}"
                             },
                             {
                                 "type": "mrkdwn",
-                                "text": f"*오늘 생성된 저녁 일기 수:* {evening_diary_count}"
+                                "text": f"*오늘 생성 일기 수:* {evening_diary_count}"
                             },
                             {
                                 "type": "mrkdwn",
@@ -269,11 +309,7 @@ class AdminService(AbstractAdminService):
                             },
                             {
                                 "type": "mrkdwn",
-                                "text": f"*오늘 평균 채팅 요청 수:* {mean_request:.2f}"
-                            },
-                            {
-                                "type": "mrkdwn",
-                                "text": f"*오늘 채팅 요청한 유저 수:* {today_chat_users_count}"
+                                "text": f"*오늘 평균 기록 수:* {mean_request:.2f}"
                             },
                             {
                                 "type": "mrkdwn",
@@ -300,11 +336,11 @@ class AdminService(AbstractAdminService):
                             },
                             {
                                 "type": "mrkdwn",
-                                "text": f"*전체 생성된 아침 일기 수:* {total_morning_diary_count}"
+                                "text": f"*전체 생성된 꿈 수:* {total_morning_diary_count}"
                             },
                             {
                                 "type": "mrkdwn",
-                                "text": f"*전체 생성된 저녁 일기 수:* {total_evening_diary_count}"
+                                "text": f"*전체 생성된 일기 수:* {total_evening_diary_count}"
                             },
                             {
                                 "type": "mrkdwn",
@@ -320,7 +356,7 @@ class AdminService(AbstractAdminService):
                             },
                             {
                                 "type": "mrkdwn",
-                                "text": f"*전체 생성된 채팅 수:* {total_chat_count}"
+                                "text": f"*전체 생성된 기록 수:* {total_chat_count}"
                             },
                             {
                                 "type": "mrkdwn",
@@ -353,6 +389,10 @@ class AdminService(AbstractAdminService):
                             {
                                 "type": "mrkdwn",
                                 "text": f"*DAU 증감율:* {dau_growth_rate:.2f}%"
+                            },
+                            {
+                                "type": "mrkdwn",
+                                "text": f"*DAU / MAU:* {dau_to_mau:.2f}%"
                             }
                         ]
                     },
@@ -367,18 +407,19 @@ class AdminService(AbstractAdminService):
                 if dashboards:
                     # 대쉬보드에 데이터가 있으면 업데이트
                     dashboards.today_user = today_users_count
-                    dashboards.today_chat = total_count
+                    dashboards.today_record = total_count
                     dashboards.today_cost = total_cost
-                    dashboards.today_morning_diary = morning_diary_count
-                    dashboards.today_night_diary = evening_diary_count
-                    dashboards.today_calender = calender_count
+                    dashboards.today_dream = morning_diary_count
+                    dashboards.today_diary = evening_diary_count
+                    dashboards.today_calendar = calender_count
                     dashboards.today_memo = memo_count
-                    dashboards.today_chat_user = today_chat_users_count
-                    dashboards.today_chat_mean_request = mean_request
+                    dashboards.today_mean_request = mean_request
                     dashboards.create_date = now
                     dashboards.dau = dau_count
                     dashboards.wau = wau_count
                     dashboards.mau = mau_count
+                    dashboards.dau_to_mau = dau_to_mau
+                    dashboards.dau_to_wau = dau_to_wau
                     dashboards.error_count = today_error_count
                     save_db(dashboards, self.db)
 
@@ -387,17 +428,18 @@ class AdminService(AbstractAdminService):
                     save = Dashboard(
                         create_date=now,
                         today_user=today_users_count,
-                        today_chat=total_count,
+                        today_record=total_count,
                         today_cost=total_cost,
-                        today_morning_diary=morning_diary_count,
-                        today_night_diary=evening_diary_count,
-                        today_calender=calender_count,
+                        today_dream=morning_diary_count,
+                        today_diary=evening_diary_count,
+                        today_calendar=calender_count,
                         today_memo=memo_count,
-                        today_chat_user=today_chat_users_count,
-                        today_chat_mean_request=mean_request,
+                        today_mean_request=mean_request,
                         dau=dau_count,
                         wau=wau_count,
                         mau=mau_count,
+                        dau_to_mau=dau_to_mau,
+                        dau_to_wau=dau_to_wau,
                         error_count=today_error_count
                     )
                     save_db(save, self.db)
