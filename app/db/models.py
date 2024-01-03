@@ -171,22 +171,21 @@ class Dashboard(Base):
 
     id = Column(Integer, primary_key=True)
     today_user = Column(Integer, nullable=False)
-    today_chat = Column(Integer, nullable=False)
+    today_record = Column(Integer, nullable=False)
     today_cost = Column(FLOAT, nullable=False)
-    today_morning_diary = Column(Integer, nullable=False)
-    today_night_diary = Column(Integer, nullable=False)
-    today_calender = Column(Integer, nullable=False)
+    today_dream = Column(Integer, nullable=False)
+    today_diary = Column(Integer, nullable=False)
+    today_calendar = Column(Integer, nullable=False)
     today_memo = Column(Integer, nullable=False)
-    today_chat_user = Column(Integer, nullable=False)
-    today_chat_mean_request = Column(FLOAT, nullable=False)
-    create_date = Column(DateTime, nullable=False)
-    error_count = Column(Integer, nullable=False)
+    today_mean_request = Column(FLOAT, nullable=False)
     dau = Column(Integer, nullable=False)
     wau = Column(Integer, nullable=False)
     mau = Column(Integer, nullable=False)
-    hdau = Column(Integer, nullable=True)
-    hwau = Column(Integer, nullable=True)
-    hmau = Column(Integer, nullable=True)
+    dau_to_mau = Column(FLOAT, nullable=False)
+    dau_to_wau = Column(FLOAT, nullable=False)
+    create_date = Column(DateTime, nullable=False)
+    error_count = Column(Integer, nullable=False)
+
 
 class TextClassification(Base):
     __tablename__ = "TextClassification"
