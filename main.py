@@ -41,38 +41,40 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-if settings.SERVER_TYPE == "prod":
+if settings.SERVER_TYPE == "local":
     scheduler = AsyncIOScheduler()
     @app.on_event("startup")
     async def start_scheduler():
         # 한 주 돌아보기 보고서 생성
-        report_service = ReportService(db=next(get_db()), redis=await get_redis_client())
         scheduler.add_job(
-            report_service.generate,
+            ReportService(db=next(get_db()), redis=await get_redis_client()).generate,
             trigger=CronTrigger(day_of_week='sun', hour=17, minute=0),
             timezone="Asia/Seoul"
         )
 
         # AdminService 작업 스케줄링
-        admin_service = AdminService(db=next(get_db()), redis=await get_redis_client())
         scheduler.add_job(
-            admin_service.slack_bot,
+            AdminService(db=next(get_db()), redis=await get_redis_client()).slack_bot,
             trigger=CronTrigger(minute=59, second=55),
             timezone="Asia/Seoul"
         )
 
         # PushService 작업 스케줄링
-        push_service = PushService(db=next(get_db()), redis=await get_redis_client())
         scheduler.add_job(
-            push_service.send_morning_push,
+            PushService(db=next(get_db()), redis=await get_redis_client()).send_morning_push,
             trigger=CronTrigger(hour=8),
             timezone="Asia/Seoul"
         )
 
-        push_service = PushService(db=next(get_db()), redis=await get_redis_client())
         scheduler.add_job(
-            push_service.send_night_push,
+            PushService(db=next(get_db()), redis=await get_redis_client()).send_night_push,
             trigger=CronTrigger(hour=20),
+            timezone="Asia/Seoul"
+        )
+
+        scheduler.add_job(
+            PushService(db=next(get_db()), redis=await get_redis_client()).generate_night_push,
+            trigger=CronTrigger(hour=18),
             timezone="Asia/Seoul"
         )
 

@@ -247,6 +247,26 @@ prompt10 = [
     {"role": "system", "content": "{\"reply\": \"오늘 당근마켓 개발자분과의 미팅이 매우 유익하고 영감을 주는 시간이었던 것 같네요! 인사이트와 동기부여를 얻을 수 있는 만남은 정말 값진 경험입니다. 이런 만남은 여러분의 전문성을 더욱 키우고, 목표에 한 걸음 더 다가서게 하는 소중한 기회가 되죠. 훌륭한 개발자로 성장하여 많은 돈을 벌고 싶다는 꿈은 훌륭한 목표입니다. 그 꿈을 향해 열심히 노력하고 계신 당신의 모습이 정말 멋집니다. 열정과 노력으로 목표를 향해 나아가는 과정 자체가 이미 여러분을 성공으로 이끌고 있는 것입니다. 앞으로도 계속해서 자신의 꿈과 목표를 향해 나아가시길 응원하겠습니다. 훌륭한 개발자로 성장하시는 여정이 계속해서 보람차고 성공적이기를 바랍니다!\", \"main_keywords\": [\"훌륭한 개발자로 성장\", \"훌륭한 목표\", \"열정과 노력\", \"당신 근처의 마켓\"]}"},
 ]
 
+prompt11 = [
+    {"role": "system", "content": "create a question for the user's diary. please write only korean, and return only question"},
+    {"role": "user", "content": "[태완], [곽대표님과 서비스 관련 미팅}, [디캠프 6시]"},
+    {"role": "system", "content": "오늘 미팅에서 가장 인상 깊었던 순간은 무엇이었고, 그 순간이 태완님에게 어떤 의미를 가졌나요?"},
+    {"role": "user", "content": "[서준], [강원도청 방문 (정보화 정책과, 감사원 회의)], [강원도청 오전에 방문(정보화 정책과. 감사워원회)]"},
+    {"role": "system", "content": "강원도청에 잘 다녀오셨나요? 강원도청에서의 회의에서 특별한 순간이 있었다면 공유해 주실 수 있을까요?"},
+    {"role": "user", "content": "[수아], [해돋이 보기], []"},
+    {"role": "system", "content": "오늘 해돋이를 보면서 수아님이 하신 다짐이 있나요? 그 순간이 어떤 영감을 주었나요?"},
+    {"role": "user", "content": "[화민], [홍콩 여행], [With 이해민, 이해영]"},
+    {"role": "system", "content": "친구들과의 홍콩 여행은 어떠셨나요? 홍콩에서의 잊을 수 없는 경험이나 특별한 순간들에 대해 이야기해 주실 수 있나요?"},
+    {"role": "user", "content": "[지훈], [공항], [부모님 모셔다 드리기]"},
+    {"role": "system", "content": "지훈님, 부모님을 공항에 잘 모셔다드리셨나요? 그 과정에서 특별한 순간이나 감정이 있었다면 공유해 주실 수 있을까요?"},
+    {"role": "user", "content": "[예람], [생일선물 챙기기], [휘수형, 미주, 미즈 생일선물로 나이키양말 챙기기]"},
+    {"role": "system", "content": "오늘 생일선물은 잘 전해드렸나요? 선물을 받으신 분의 반응이 어땠는지 궁금해요!"},
+    {"role": "user", "content": "[지혜], [혜진이 결혼식], []"},
+    {"role": "system", "content": "혜진이 결혼식에서의 특별한 순간 중, 지혜님이 가장 기억에 남는 에피소드가 있나요?"},
+    {"role": "user", "content": "[도유망망], [저녁 약속], []"},
+    {"role": "system", "content": "오늘 저녁 약속은 어떠셨나요? 그 자리에서 특히 인상 깊었던 대화나 사건이 있었다면 공유해 주실 수 있을까요?"},
+]
+
 class GPTService:
     def __init__(self, user: User, db: Session):
         self.user = user
@@ -278,6 +298,7 @@ class GPTService:
             8: (prompt8, "메모", "gpt-3.5-turbo-1106", {"type": "json_object"}),
             9: (prompt9, "일정 제목", "gpt-3.5-turbo", None),
             10: (prompt10, "일기 답장", "gpt-4-1106-preview", {"type": "json_object"}),
+            11: (prompt11, "일기 유도 질문 생성", "gpt-4-1106-preview", None),
         }
         if prompt_num == 7:
             messages_prompt = messages_prompt[:1500]

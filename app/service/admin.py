@@ -6,7 +6,7 @@ import aioredis
 from fastapi import Depends
 from slack_sdk.errors import SlackApiError
 from slack_sdk.web.async_client import AsyncWebClient
-from sqlalchemy import inspect, func
+from sqlalchemy import inspect, func, distinct
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -175,6 +175,51 @@ class AdminService(AbstractAdminService):
                 ).count()
                 wau_count = self.db.query(User).filter(
                     func.date(User.last_active_date) >= (now.date() - timedelta(days=7))
+                ).count()
+
+                # hdau, hmau, hwau
+                hdau_count = self.db.query(distinct(MorningDiary.User_id)).filter(
+                    func.date(MorningDiary.create_date) == now.date()
+                ).union(
+                    self.db.query(distinct(NightDiary.User_id)).filter(
+                        func.date(NightDiary.create_date) == now.date()
+                    ),
+                    self.db.query(distinct(Memo.User_id)).filter(
+                        func.date(Memo.create_date) == now.date()
+                    ),
+                    self.db.query(distinct(Calendar.User_id)).filter(
+                        func.date(Calendar.create_date) == now.date()
+                    )
+                ).count()
+
+                last_week = now.date() - timedelta(days=7)
+                hwu_count = self.db.query(distinct(MorningDiary.User_id)).filter(
+                    func.date(MorningDiary.create_date) >= last_week
+                ).union(
+                    self.db.query(distinct(NightDiary.User_id)).filter(
+                        func.date(NightDiary.create_date) >= last_week
+                    ),
+                    self.db.query(distinct(Memo.User_id)).filter(
+                        func.date(Memo.create_date) >= last_week
+                    ),
+                    self.db.query(distinct(Calendar.User_id)).filter(
+                        func.date(Calendar.create_date) >= last_week
+                    )
+                ).count()
+
+                last_month = now.date() - timedelta(days=30)
+                hmu_count = self.db.query(distinct(MorningDiary.User_id)).filter(
+                    func.date(MorningDiary.create_date) >= last_month
+                ).union(
+                    self.db.query(distinct(NightDiary.User_id)).filter(
+                        func.date(NightDiary.create_date) >= last_month
+                    ),
+                    self.db.query(distinct(Memo.User_id)).filter(
+                        func.date(Memo.create_date) >= last_month
+                    ),
+                    self.db.query(distinct(Calendar.User_id)).filter(
+                        func.date(Calendar.create_date) >= last_month
+                    )
                 ).count()
 
                 # dau 증감율 계산
@@ -379,6 +424,9 @@ class AdminService(AbstractAdminService):
                     dashboards.dau = dau_count
                     dashboards.wau = wau_count
                     dashboards.mau = mau_count
+                    dashboards.hdau = hdau_count
+                    dashboards.hwau = hwu_count
+                    dashboards.hmau = hmu_count
                     dashboards.error_count = today_error_count
                     save_db(dashboards, self.db)
 
@@ -398,6 +446,9 @@ class AdminService(AbstractAdminService):
                         dau=dau_count,
                         wau=wau_count,
                         mau=mau_count,
+                        hdau=hdau_count,
+                        hwau=hwu_count,
+                        hmau=hmu_count,
                         error_count=today_error_count
                     )
                     save_db(save, self.db)

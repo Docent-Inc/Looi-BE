@@ -184,6 +184,10 @@ class Dashboard(Base):
     dau = Column(Integer, nullable=False)
     wau = Column(Integer, nullable=False)
     mau = Column(Integer, nullable=False)
+    hdau = Column(Integer, nullable=True)
+    hwau = Column(Integer, nullable=True)
+    hmau = Column(Integer, nullable=True)
+
 class TextClassification(Base):
     __tablename__ = "TextClassification"
 
