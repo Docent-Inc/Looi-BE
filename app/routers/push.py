@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Optional
 
 from fastapi import APIRouter, Depends
 
@@ -11,10 +11,10 @@ router = APIRouter(prefix="/push")
 async def get_push_test(
     title: str,
     body: str,
-    landing_url: str,
-    image_url: str,
     token: str,
     report_service: Annotated[PushService, Depends()],
+    image_url: Optional[str] = "",
+    landing_url: Optional[str] = "",
 ) -> ApiResponse:
     await report_service.test(title, body, landing_url, image_url, token)
     return ApiResponse()

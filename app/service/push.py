@@ -26,17 +26,26 @@ class PushService(AbstractPushService):
 
     async def send(self, title: str, body: str, token: str, image_url: str = "", landing_url: str = "") -> None:
         try:
-            message = messaging.Message(
-                notification=messaging.Notification(
-                    title=title,
-                    body=body,
-                    image=image_url,
-                ),
-                token=token,
-                data={
-                    "landing_url": landing_url,
-                },
+            # 이미지 URL이 비어있지 않은 경우에만 포함
+            notification = messaging.Notification(
+                title=title,
+                body=body,
+                image=image_url if image_url else None,
             )
+
+            # 데이터 필드 설정
+            data = {}
+            if landing_url:
+                data["landing_url"] = landing_url
+
+            # 메시지 구성
+            message = messaging.Message(
+                notification=notification,
+                token=token,
+                data=data,
+            )
+
+            # 비동기적으로 메시지 전송
             await asyncio.to_thread(messaging.send, message)
         except Exception as e:
             print(e)
