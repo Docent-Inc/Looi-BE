@@ -201,5 +201,14 @@ class ErrorLog(Base):
     error_message = Column(String(255), nullable=False)
     create_date = Column(DateTime, nullable=False)
 
+class PushQuestion(Base):
+    __tablename__ = "PushQuestion"
+
+    id = Column(Integer, primary_key=True)
+    User_id = Column(Integer, ForeignKey('User.id'), nullable=False, index=True)
+    calendar_content = Column(String(255), nullable=False)
+    question = Column(String(255), nullable=False)
+    create_date = Column(DateTime, nullable=False)
+
 def get_Base():
     return Base
