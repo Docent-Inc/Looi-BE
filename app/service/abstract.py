@@ -139,6 +139,3 @@ class AbstractPushService(ABC):
     @abstractmethod
     async def send(self, title: str, body: str, token: str) -> None:
         pass
-    @abstractmethod
-    async def send_all(self, title: str, body: str) -> None:
-        pass
