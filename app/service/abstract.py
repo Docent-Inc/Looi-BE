@@ -134,8 +134,11 @@ class AbstractAdminService(ABC):
 
 class AbstractPushService(ABC):
     @abstractmethod
-    async def test(self) -> None:
+    async def test(self, title: str, body: str, landing_url: str, token: str) -> None:
         pass
     @abstractmethod
     async def send(self, title: str, body: str, token: str) -> None:
+        pass
+    @abstractmethod
+    async def send_all(self, title: str, body: str) -> None:
         pass

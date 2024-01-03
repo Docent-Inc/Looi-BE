@@ -8,6 +8,7 @@ from app.core.middleware import TimingMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.service.admin import AdminService
+from app.service.push import PushService
 from app.service.report import ReportService
 
 app = FastAPI(title="Looi API",
@@ -62,7 +63,18 @@ if settings.SERVER_TYPE == "prod":
 
         # PushService 작업 스케줄링
         push_service = PushService(db=next(get_db()), redis=await get_redis_client())
+        scheduler.add_job(
+            push_service.send_morning_push,
+            trigger=CronTrigger(hour=8),
+            timezone="Asia/Seoul"
+        )
 
+        push_service = PushService(db=next(get_db()), redis=await get_redis_client())
+        scheduler.add_job(
+            push_service.send_night_push,
+            trigger=CronTrigger(hour=20),
+            timezone="Asia/Seoul"
+        )
 
         # 스케줄러 시작 (한 번만 호출)
         scheduler.start()
