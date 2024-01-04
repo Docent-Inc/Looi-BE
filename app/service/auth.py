@@ -1,7 +1,7 @@
 import random
 
 import aioredis
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, Cookie, Response
 from sqlalchemy.orm import Session
 
 from app.core.Oauth import get_user_kakao, get_user_apple, check_user, get_user_line
@@ -38,7 +38,7 @@ class AuthService(AbstractAuthService):
         }
         return AUTH_URLS[service][env]
 
-    async def callback(self, service: str, env: str, code: str) -> TokenData:
+    async def callback(self, service: str, env: str, code: str, response: Response) -> TokenData:
         if service == "kakao":
             data = await get_user_kakao(code, env)
         elif service == "line":
@@ -47,6 +47,9 @@ class AuthService(AbstractAuthService):
             data = await get_user_apple(code, env)
         user, is_sign_up = await check_user(data, service, self.db)
         expires_in, refresh_expires_in, access_token, refresh_token = await create_token(user.email)
+        # 쿠키에 액세스 토큰과 리프레시 토큰 설정
+        response.set_cookie(key="access_token", value=access_token, httponly=True, max_age=expires_in)
+        response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, max_age=refresh_expires_in)
         return TokenData(
                 user_name=user.nickname,
                 access_token=access_token,
