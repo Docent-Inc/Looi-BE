@@ -8,7 +8,7 @@ from fastapi import Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from app.core.security import get_current_user, check_length, time_now, diary_serializer
 from app.db.database import get_db, save_db, get_redis_client
-from app.db.models import User, MorningDiary
+from app.db.models import User, MorningDiary, NightDiary
 from app.core.aiRequset import GPTService
 from app.schemas.request import CreateDreamRequest, UpdateDreamRequest
 from app.service.abstract import AbstractDiaryService
@@ -267,24 +267,3 @@ class DreamService(AbstractDiaryService):
 
         # 다이어리 반환
         return {"list": dreams_dict_list, "count": limit, "total_count": total_count}
-
-    async def share(self, dream_id: int) -> str:
-        dream = self.db.query(MorningDiary).filter(MorningDiary.id == dream_id, MorningDiary.is_deleted == False,
-                                                   MorningDiary.User_id == self.user.id).first()
-
-        if dream is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=4100,
-            )
-
-        if dream.is_shared:
-            return dream.share_id
-
-        unique_id = str(uuid.uuid4())
-
-        dream.share_id = unique_id
-        dream.is_shared = True
-        save_db(dream, self.db)
-
-        return unique_id

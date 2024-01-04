@@ -66,13 +66,3 @@ async def get_dream_list(
     return ApiResponse(
         data=await dream_service.list(page, background_tasks)
     )
-
-@router.get("/share", response_model=ApiResponse, tags=["Dream"])
-async def get_dream_share(
-    dream_id: int,
-    dream_service: Annotated[DreamService, Depends()],
-) -> ApiResponse:
-    link = await dream_service.share(dream_id)
-    return ApiResponse(
-        data={"id": link}
-    )
