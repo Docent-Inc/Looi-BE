@@ -201,7 +201,7 @@ class ReportService(AbstractReportService):
 
             return True
 
-        async def generate_report(user: User) -> bool:
+        async def generate_report(user: User) -> Report:
             text = f"nickname: {user.nickname}\n"
             today = await time_now()
             one_week_ago = today - timedelta(days=6)
@@ -214,6 +214,7 @@ class ReportService(AbstractReportService):
             ).all()
 
             text += "Dreams of the last week:\n" + "\n".join(diary.content for diary in morning_diaries)
+            text = text[:300]
 
             # Process Night Diary
             night_diaries = self.db.query(NightDiary).filter(
@@ -224,6 +225,7 @@ class ReportService(AbstractReportService):
             ).all()
 
             text += "\nDiary for the last week:\n" + "\n".join(diary.content for diary in night_diaries)
+            text = text[:1400]
 
             # Process Calendar
             calenders = self.db.query(Calendar).filter(
@@ -253,7 +255,10 @@ class ReportService(AbstractReportService):
                     channel="C064ZCNDVU1",
                     text=f"{user.nickname}님의 리포트 생성에 실패했습니다. 관리자에게 문의해주세요."
                 )
-                return False
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=4600
+                )
 
             data = json.loads(report_data)
             text = "다음 내용을 바탕으로 추상적인 이미지를 생성해주세요(no text).\n"
@@ -267,8 +272,8 @@ class ReportService(AbstractReportService):
                 image_url=image_url,
                 is_deleted=False,
             )
-            save_db(mental_report, self.db)
-            return True
+            report = save_db(mental_report, self.db)
+            return report.id
 
         lock_key = "generate_report_lock"
         if await self.redis.set(lock_key, "locked", ex=60, nx=True):
@@ -286,10 +291,16 @@ class ReportService(AbstractReportService):
                         generate_user_list.append(user)
                 print(f"total_count: {total_count}")
                 for user in generate_user_list:
-                    await generate_report(user)
+                    report = await generate_report(user)
                     print(f"{user.nickname} 유저 리포트 생성 완료")
                     if user.push_report == True:
-                        await push_service.send("Looi", f"{user.nickname}님의 한 주 돌아보기 보고서를 만들었어요! 얼른 확인해 보세요~!", user.push_token)
+                        await push_service.send(
+                            title="Looi",
+                            body=f"{user.nickname}님의 한 주 돌아보기 보고서를 만들었어요! 얼른 확인해 보세요~!",
+                            image_url=report.image_url,
+                            landing_url=f"/report/{report.id}",
+                            token=self.user.push_tokenuser.push_token
+                        )
                     print(f"progress: {generate_user_list.index(user) + 1}/{total_count}")
             finally:
                 self.db.close()
