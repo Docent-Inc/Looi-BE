@@ -1,6 +1,7 @@
 import asyncio
 import json
 import random
+import uuid
 
 import aioredis
 from fastapi import Depends, HTTPException, status, BackgroundTasks
@@ -266,3 +267,24 @@ class DreamService(AbstractDiaryService):
 
         # 다이어리 반환
         return {"list": dreams_dict_list, "count": limit, "total_count": total_count}
+
+    async def share(self, dream_id: int) -> str:
+        dream = self.db.query(MorningDiary).filter(MorningDiary.id == dream_id, MorningDiary.is_deleted == False,
+                                                   MorningDiary.User_id == self.user.id).first()
+
+        if dream is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=4100,
+            )
+
+        if dream.is_shared:
+            return dream.share_id
+
+        unique_id = str(uuid.uuid4())
+
+        dream.share_id = unique_id
+        dream.is_shared = True
+        save_db(dream, self.db)
+
+        return unique_id
