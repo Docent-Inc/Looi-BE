@@ -65,3 +65,13 @@ async def get_diary_list(
     return ApiResponse(
         data=await diary_service.list(page, background_tasks)
     )
+
+@router.get("/share", response_model=ApiResponse, tags=["Diary"])
+async def get_diary_share(
+    diary_id: int,
+    diary_service: Annotated[DiaryService, Depends()],
+) -> ApiResponse:
+    link = await diary_service.share(diary_id)
+    return ApiResponse(
+        data={"id": link}
+    )
