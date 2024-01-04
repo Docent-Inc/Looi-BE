@@ -83,7 +83,7 @@ class PushService(AbstractPushService):
                 batch_size = 50
                 for i in range(0, len(nickname_and_token), batch_size):
                     batch = nickname_and_token[i:i + batch_size]
-                    tasks = [self.send(title="Looi", body=f"{nickname}님, 오늘은 어떤 꿈을 꾸셨나요?", token=token) for nickname, token in batch]
+                    tasks = [self.send(title="Looi", body=f"{nickname}님, 오늘은 어떤 꿈을 꾸셨나요?", token=token, landing_url=f"/chat?guide='{nickname}님, 오늘은 어떤 꿈을 꾸셨나요?'") for nickname, token in batch]
                     await asyncio.gather(*tasks)
 
             finally:
@@ -112,7 +112,7 @@ class PushService(AbstractPushService):
                         ).first()
 
                         question = question_record.question if question_record else default_question
-                        tasks.append(self.send(title="Looi", body=f"{nickname}님, {question}", token=token))
+                        tasks.append(self.send(title="Looi", body=f"{nickname}님, {question}", token=token, landing_url=f"/chat?guide='{nickname}님, {question}'"))
 
                     await asyncio.gather(*tasks)
             finally:
