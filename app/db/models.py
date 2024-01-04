@@ -39,7 +39,6 @@ class MorningDiary(Base):
     content = Column(String(1000), nullable=False)
     resolution = Column(String(1000), nullable=True)
     image_url = Column(String(200), nullable=True)
-    background_color = Column(String(50), nullable=True)
     create_date = Column(DateTime, nullable=False)
     modify_date = Column(DateTime, nullable=False)
     is_deleted = Column(Boolean, default=False, index=True)
@@ -47,6 +46,7 @@ class MorningDiary(Base):
     main_keyword = Column(String(200), nullable=True)
     view_count = Column(Integer, default=1, nullable=True)
     share_count = Column(Integer, default=0, nullable=True)
+    share_id = Column(String(255), nullable=True)
 
     def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
@@ -61,16 +61,15 @@ class NightDiary(Base):
     diary_name = Column(String(255), nullable=False)
     content = Column(String(1000), nullable=False)
     image_url = Column(String(200), nullable=True)
-    background_color = Column(String(50), nullable=True)
     resolution = Column(String(1000), nullable=True)
     main_keyword = Column(String(200), nullable=True)
     create_date = Column(DateTime, nullable=False)
     modify_date = Column(DateTime, nullable=False)
     is_generated = Column(Boolean, default=False, index=True)
     is_deleted = Column(Boolean, default=False, index=True)
-    is_generated = Column(Boolean, default=False, index=True)
     view_count = Column(Integer, default=1, nullable=True)
     share_count = Column(Integer, default=0, nullable=True)
+    share_id = Column(String(255), nullable=True)
 
     def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}

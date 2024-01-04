@@ -1,13 +1,14 @@
 import asyncio
 import json
 import random
+import uuid
 
 import aioredis
 from fastapi import Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from app.core.security import get_current_user, check_length, time_now, diary_serializer
 from app.db.database import get_db, save_db, get_redis_client
-from app.db.models import User, MorningDiary
+from app.db.models import User, MorningDiary, NightDiary
 from app.core.aiRequset import GPTService
 from app.schemas.request import CreateDreamRequest, UpdateDreamRequest
 from app.service.abstract import AbstractDiaryService
@@ -30,9 +31,9 @@ class DreamService(AbstractDiaryService):
                 content=dream_data.content,
                 User_id=self.user.id,
                 image_url="",
-                background_color="",
                 diary_name="",
                 resolution="",
+                share_id=str(uuid.uuid4()),
                 main_keyword="",
                 create_date=now,
                 modify_date=now,

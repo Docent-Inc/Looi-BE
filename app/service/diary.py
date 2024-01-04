@@ -1,5 +1,7 @@
 import asyncio
 import json
+import uuid
+
 import aioredis
 from fastapi import Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
@@ -34,9 +36,9 @@ class DiaryService(AbstractDiaryService):
             content=diary_data.content,
             User_id=self.user.id,
             image_url="",
-            background_color="",
             resolution="",
             main_keyword="",
+            share_id=str(uuid.uuid4()),
             diary_name=diary_name,
             create_date=diary_data.date,
             modify_date=now,
