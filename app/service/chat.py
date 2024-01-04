@@ -26,7 +26,7 @@ class ChatService(AbstractChatService):
         self.db = db
         self.redis = redis
 
-    async def create(self, chat_data: ChatRequest, background_tasks: BackgroundTasks) -> ChatResponse:
+    async def create(self, chat_data: ChatRequest) -> ChatResponse:
         # 택스트 길이 확인
         await check_length(chat_data.content, settings.MAX_LENGTH, 4221)
 
@@ -67,7 +67,7 @@ class ChatService(AbstractChatService):
         # type별 작업
         if chat_data.type == 1:
             dream_service = DreamService(self.user, self.db, self.redis)
-            diary = await dream_service.create(CreateDreamRequest(content=chat_data.content), background_tasks=background_tasks)
+            diary = await dream_service.create(CreateDreamRequest(content=chat_data.content))
         elif chat_data.type == 2:
             diary_service = DiaryService(self.user, self.db, self.redis)
             diary = await diary_service.create(CreateDiaryRequest(content=chat_data.content))

@@ -10,10 +10,9 @@ router = APIRouter(prefix="/dream")
 @router.post("/create", response_model=ApiResponse, tags=["Dream"])
 async def post_dream_create(
     dream_data: CreateDreamRequest,
-    background_tasks: BackgroundTasks,
     dream_service: Annotated[DreamService, Depends()]
 ) -> ApiResponse:
-    diary = await dream_service.create(dream_data, background_tasks)
+    diary = await dream_service.create(dream_data)
     return ApiResponse(
         data={"diary": diary}
     )
