@@ -44,9 +44,26 @@ class PushService(AbstractPushService):
             if landing_url:
                 data["landing_url"] = landing_url
 
+            # Android 및 APNS(애플) 구성 추가
+            android_config = messaging.AndroidConfig(
+                priority='high',
+                notification=messaging.AndroidNotification(
+                    sound='default'
+                )
+            )
+            apns_config = messaging.APNSConfig(
+                payload=messaging.APNSPayload(
+                    aps=messaging.Aps(
+                        sound='default'
+                    )
+                )
+            )
+
             # 메시지 구성
             message = messaging.Message(
                 notification=notification,
+                android=android_config,
+                apns=apns_config,
                 token=token,
                 data=data,
             )
