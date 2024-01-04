@@ -20,7 +20,7 @@ class DreamService(AbstractDiaryService):
         self.db = db
         self.redis = redis
 
-    async def create(self, dream_data: CreateDreamRequest, background_tasks: BackgroundTasks) -> MorningDiary:
+    async def create(self, dream_data: CreateDreamRequest) -> MorningDiary:
 
         # db에 저장
         await check_length(dream_data.content, 1000, 4221)
