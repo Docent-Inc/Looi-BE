@@ -1,8 +1,10 @@
+import uuid
+
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.db.database import get_db, save_db
-from app.db.models import MorningDiary, NightDiary
+from app.db.models import MorningDiary, NightDiary, User
 from app.service.abstract import AbstractShareService
 
 
@@ -10,42 +12,63 @@ class ShareService(AbstractShareService):
     def __init__(self, db: Session = Depends(get_db)):
         self.db = db
 
-    async def dream_read(self, dream_id: int):
+    async def dream_link(self, user: User, dream_id: int) -> str:
+        dream = self.db.query(MorningDiary).filter(MorningDiary.id == dream_id, MorningDiary.is_deleted == False, MorningDiary.User_id == user.id).first()
 
-        # dream 조회
-        diary = self.db.query(MorningDiary).filter(MorningDiary.id == dream_id, MorningDiary.is_deleted == False).first()
-
-        # 다이어리가 없을 경우 예외 처리
-        if not diary:
+        if dream is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=4011,
+                detail=4100,
             )
 
-        # 조회수 증가
-        diary.share_count += 1
-        diary = save_db(diary, self.db)
+        if dream.is_shared:
+            return dream.share_id
 
-        # 다이어리 반환
-        diary.User_id = None
-        return diary
+        unique_id = str(uuid.uuid4())
 
-    async def diary_read(self, diary_id: int) -> NightDiary:
+        dream.share_id = unique_id
+        dream.is_shared = True
+        save_db(dream, self.db)
 
-        # 다이어리 조회
-        diary = self.db.query(NightDiary).filter(NightDiary.id == diary_id, NightDiary.is_deleted == False).first()
+        return unique_id
 
-        # 다이어리가 없을 경우 예외 처리
-        if not diary:
+    async def diary_link(self, user: User, diary_id: int) -> str:
+        diary = self.db.query(NightDiary).filter(NightDiary.id == diary_id, NightDiary.is_deleted == False, NightDiary.User_id == user.id).first()
+
+        if diary is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=4011,
+                detail=4200,
             )
 
-        # 조회수 증가
-        diary.share_count += 1
-        diary = save_db(diary, self.db)
+        if diary.is_shared:
+            return diary.share_id
+        unique_id = str(uuid.uuid4())
 
-        # 다이어리 반환
-        diary.User_id = None
-        return diary
+        diary.share_id = unique_id
+        diary.is_shared = True
+        save_db(diary, self.db)
+
+        return unique_id
+
+    async def read(self, share_id: str) -> object:
+        dream = self.db.query(MorningDiary).filter(MorningDiary.share_id == share_id, MorningDiary.is_deleted == False).first()
+        if dream is not None:
+            dream.share_count += 1
+            save_db(dream, self.db)
+            return dream
+
+        diary = self.db.query(NightDiary).filter(NightDiary.share_id == share_id, NightDiary.is_deleted == False).first()
+        if diary is not None:
+            diary.share_count += 1
+            save_db(diary, self.db)
+            return diary
+
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=4500,
+        )
+
+
+
+

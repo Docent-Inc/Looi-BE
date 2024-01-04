@@ -31,11 +31,15 @@ class AbstractDiaryService(ABC):
 
 class AbstractShareService(ABC):
     @abstractmethod
-    async def dream_read(self, id: int) -> object:
+    async def dream_link(self, user: User, id: int) -> str:
         pass
 
     @abstractmethod
-    async def diary_read(self, id: int) -> object:
+    async def diary_link(self, user: User, id: int) -> str:
+        pass
+
+    @abstractmethod
+    async def read(self, id: int) -> object:
         pass
 
 class AbstractChatService(ABC):
