@@ -1,10 +1,8 @@
-import uuid
-
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.db.database import get_db, save_db
-from app.db.models import MorningDiary, NightDiary, User
+from app.db.models import MorningDiary, NightDiary
 from app.service.abstract import AbstractShareService
 
 

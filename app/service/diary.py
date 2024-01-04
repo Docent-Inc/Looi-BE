@@ -269,24 +269,3 @@ class DiaryService(AbstractDiaryService):
 
         # 다이어리 반환
         return {"list": diaries_dict_list, "count": limit, "total_count": total_count}
-
-    async def share(self, diary_id: int) -> str:
-        diary = self.db.query(NightDiary).filter(NightDiary.id == diary_id, NightDiary.is_deleted == False,
-                                                   NightDiary.User_id == self.user.id).first()
-
-        if diary is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=4100,
-            )
-
-        if diary.is_shared:
-            return diary.share_id
-
-        unique_id = str(uuid.uuid4())
-
-        diary.share_id = unique_id
-        diary.is_shared = True
-        save_db(diary, self.db)
-
-        return unique_id
