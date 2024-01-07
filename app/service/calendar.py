@@ -203,6 +203,7 @@ class CalendarService(AbstractDiaryService):
 
 
     async def list(self, year: int, month: int, day: int) -> list:
+        import datetime
 
         # 잘못된 날짜 입력시 예외처리
         if month < 1 or month > 12:
