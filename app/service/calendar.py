@@ -1,6 +1,5 @@
-import datetime
 import json
-
+from datetime import datetime, timedelta
 import aioredis
 from dateutil.relativedelta import relativedelta
 from fastapi import Depends, HTTPException, status
@@ -29,15 +28,20 @@ class CalendarService(AbstractDiaryService):
             schedule = await gpt_service.send_gpt_request(6, calender_data.content)
             schedule = json.loads(schedule)
             try:
-                calender = Calendar(
+                push_time = None
+                if self.user.push_schedule:
+                    push_time_delta = timedelta(minutes=self.user.push_schedule)
+                    push_time = datetime.strptime(schedule['start_time'], '%Y-%m-%d %H:%M:%S') - push_time_delta
+                calendar = Calendar(
                     User_id=self.user.id,
                     title=schedule['title'],
                     start_time=schedule['start_time'],
                     end_time=schedule['end_time'],
+                    push_time=push_time,
                     content="",
                     create_date=await time_now(),
                 )
-                save_db(calender, self.db)
+                save_db(calendar, self.db)
 
                 # list cache 삭제
                 keys = await self.redis.keys(f"calendar:list:{self.user.id}:*")
@@ -53,7 +57,7 @@ class CalendarService(AbstractDiaryService):
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=4014
                 )
-            return calender
+            return calendar
 
         # 잘못된 날짜 입력시 예외처리
         if calender_data.start_time >= calender_data.end_time:
@@ -70,7 +74,7 @@ class CalendarService(AbstractDiaryService):
         await check_length(text=calender_data.title, max_length=255, error_code=4023)
         await check_length(text=calender_data.content, max_length=255, error_code=4023)
         now = await time_now()
-        calender = Calendar(
+        calendar = Calendar(
             User_id=self.user.id,
             start_time=calender_data.start_time,
             end_time=calender_data.end_time,
@@ -78,7 +82,7 @@ class CalendarService(AbstractDiaryService):
             content=calender_data.content,
             create_date=now,
         )
-        calender = save_db(calender, self.db)
+        calendar = save_db(calendar, self.db)
 
         # list cache 삭제
         keys = await self.redis.keys(f"calendar:list:{self.user.id}:*")
@@ -90,7 +94,7 @@ class CalendarService(AbstractDiaryService):
         redis_key = f"today_calendar_list:{self.user.id}:{now.day}"
         await self.redis.delete(redis_key)
 
-        return calender
+        return calendar
 
     async def generate(self, id: int):
         pass
@@ -110,49 +114,54 @@ class CalendarService(AbstractDiaryService):
         # 캘린더 반환
         return calender
 
-    async def update(self, calender_id: int, calender_data: UpdateCalendarRequest) -> Calendar:
+    async def update(self, calendar_id: int, calendar_data: UpdateCalendarRequest) -> Calendar:
 
         # 캘린더 조회
-        calender = self.db.query(Calendar).filter(Calendar.id == calender_id, Calendar.User_id == self.user.id, Calendar.is_deleted == False).first()
+        calendar = self.db.query(Calendar).filter(Calendar.id == calendar_id, Calendar.User_id == self.user.id, Calendar.is_deleted == False).first()
 
         # 캘린더가 없을 경우 예외 처리
-        if not calender:
+        if not calendar:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=4015,
             )
 
         # 캘린더 수정
-        if calender_data.title != "":
-            await check_length(text=calender_data.title, max_length=255, error_code=4023)
-            calender.title = calender_data.title
-        if calender_data.content != "":
-            await check_length(text=calender_data.content, max_length=255, error_code=4023)
-            calender.content = calender_data.content
-        if calender_data.start_time != "" and calender_data.end_time != "":
-            if calender_data.start_time >= calender_data.end_time:
+        if calendar_data.title != "":
+            await check_length(text=calendar_data.title, max_length=255, error_code=4023)
+            calendar.title = calendar_data.title
+        if calendar_data.content != "":
+            await check_length(text=calendar_data.content, max_length=255, error_code=4023)
+            calendar.content = calendar_data.content
+        if calendar_data.start_time != "" and calendar_data.end_time != "":
+            if calendar_data.start_time >= calendar_data.end_time:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=4022,
                 )
-            calender.start_time = calender_data.start_time
-            calender.end_time = calender_data.end_time
-        elif calender_data.start_time != "":
-            if calender_data.start_time >= calender.end_time:
+            calendar.start_time = calendar_data.start_time
+            calendar.end_time = calendar_data.end_time
+        elif calendar_data.start_time != "":
+            if calendar_data.start_time >= calendar.end_time:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=4022,
                 )
-            calender.start_time = calender_data.start_time
-        elif calender_data.end_time != "":
-            if calender.start_time >= calender_data.end_time:
+            calendar.start_time = calendar_data.start_time
+        elif calendar_data.end_time != "":
+            if calendar.start_time >= calendar_data.end_time:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=4022,
                 )
-            calender.end_time = calender_data.end_time
+            calendar.end_time = calendar_data.end_time
 
-        calender = save_db(calender, self.db)
+        if self.user.push_schedule:
+            push_time_delta = timedelta(minutes=self.user.push_schedule)
+            push_time = datetime.strptime(calendar.start_time, '%Y-%m-%d %H:%M:%S') - push_time_delta
+            calendar.push_time = push_time
+
+        calendar = save_db(calendar, self.db)
 
         # list cache 삭제
         keys = await self.redis.keys(f"calendar:list:{self.user.id}:*")
@@ -164,7 +173,7 @@ class CalendarService(AbstractDiaryService):
         redis_key = f"today_calendar_list:{self.user.id}:{now.day}"
         await self.redis.delete(redis_key)
 
-        return calender
+        return calendar
 
     async def delete(self, calendar_id: int) -> None:
 

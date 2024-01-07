@@ -129,7 +129,7 @@ class PushService(AbstractPushService):
 
                 Users = self.db.query(User).filter(User.push_token != None, User.is_deleted == False, User.push_night == True).all()
 
-                user_clanedar_data = {}
+                user_calendar_data = {}
                 for user in Users:
                     calendar_data = self.db.query(Calendar).filter(
                         Calendar.User_id == user.id,
@@ -140,15 +140,15 @@ class PushService(AbstractPushService):
                     if calendar_data:
                         # 마지막 일정 데이터 사용
                         text = f"[{user.nickname}], [{calendar_data[-1].title[:15]}], [{calendar_data[-1].content[:15]}]"
-                        user_clanedar_data[user.id] = text
+                        user_calendar_data[user.id] = text
 
                 # 10개씩 나누어서 질문 생성
                 batch_size = 10
                 gpt_service = GPTService(db=self.db, user=user)
-                user_calendar_data_keys = list(user_clanedar_data.keys())  # 딕셔너리 키를 리스트로 변환
+                user_calendar_data_keys = list(user_calendar_data.keys())  # 딕셔너리 키를 리스트로 변환
                 for i in range(0, len(user_calendar_data_keys), batch_size):
                     batch_keys = user_calendar_data_keys[i:i + batch_size]  # 키 리스트 슬라이스
-                    batch = {key: user_clanedar_data[key] for key in batch_keys}  # 해당 키에 대한 딕셔너리 생성
+                    batch = {key: user_calendar_data[key] for key in batch_keys}  # 해당 키에 대한 딕셔너리 생성
                     tasks = [gpt_service.send_gpt_request(11, text) for text in batch.values()]
                     results = await asyncio.gather(*tasks)
                     # db에 저장
@@ -160,6 +160,41 @@ class PushService(AbstractPushService):
                             create_date=now,
                         )
                         save_db(push_question, self.db)
+            finally:
+                self.db.close()
+                await self.redis.delete(lock_key)
+
+    async def push_schedule(self) -> None:
+        lock_key = "push_schedule_lock"
+        if await self.redis.set(lock_key, "locked", ex=60, nx=True):
+            try:
+                now = await time_now()
+                push_calendar_list = self.db.query(Calendar).filter(
+                    func.date(Calendar.push_time) == now.date(),
+                    func.hour(Calendar.push_time) == now.hour,
+                    func.minute(Calendar.push_time) == now.minute
+                ).all()
+
+                user_calendar_data = []
+                for calendar in push_calendar_list:
+                    user = self.db.query(User).filter(User.id == calendar.User_id).first()
+                    date_str = datetime.strftime(calendar.start_time, "%Y-%m-%d")
+                    landing_url = f"/mypage?tab=calendar&date={date_str}"
+                    # 알림 메시지 생성
+                    if user.push_schedule in [0, 5, 10, 15, 30]:
+                        body = f"{user.nickname}님, {calendar.title}까지 {user.push_schedule}분 남았습니다. 일정을 위해 준비해 주세요!"
+                    elif user.push_schedule in [60, 120, 180]:
+                        body = f"{user.nickname}님, {calendar.title}까지 {user.push_schedule // 60}시간 남았습니다. 일정을 위해 준비해 주세요!"
+                    user_calendar_data.append((user.nickname, user.push_token, body, landing_url))
+
+                batch_size = 50  # 배치 사이즈 설정
+                for i in range(0, len(user_calendar_data), batch_size):
+                    batch = user_calendar_data[i:i + batch_size]
+                    tasks = []
+                    for nickname, token, body, landing_url in batch:
+                        tasks.append(self.send(title="Looi", body=body, token=token, landing_url=landing_url))
+                    await asyncio.gather(*tasks)
+
             finally:
                 self.db.close()
                 await self.redis.delete(lock_key)
