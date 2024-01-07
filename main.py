@@ -48,7 +48,7 @@ if settings.SERVER_TYPE == "prod":
         # 한 주 돌아보기 보고서 생성
         scheduler.add_job(
             ReportService(db=next(get_db()), redis=await get_redis_client()).generate,
-            trigger=CronTrigger(day_of_week='sun', hour=17, minute=0),
+            trigger=CronTrigger(day_of_week='sun', hour=19, minute=0),
             timezone="Asia/Seoul"
         )
 
