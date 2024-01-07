@@ -104,8 +104,8 @@ class AuthService(AbstractAuthService):
             user.push_morning = auth_data.value
         elif auth_data.type == "night":
             user.push_night = auth_data.value
-        elif auth_data.type == "report":
-            user.push_report = auth_data.value
+        elif auth_data.type == "schedule":
+            user.push_schedule = auth_data.value
         await self.redis.delete(f"user:{user.email}")
         save_db(user, self.db)
     async def delete(self, user: User) -> None:

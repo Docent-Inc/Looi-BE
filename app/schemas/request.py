@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union
 
 from pydantic import BaseModel
 
@@ -30,7 +30,7 @@ class UserUpdateRequest(BaseModel):
 
 class PushUpdateRequest(BaseModel):
     type: str
-    value: bool
+    value: Union[bool, int]
 
 '''
 Diary 관련 Request
