@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 from app.schemas.response import ApiResponse
 from app.schemas.request import TokenRefresh, UserUpdateRequest, PushUpdateRequest
 from app.core.security import get_current_user, get_update_user
@@ -22,10 +22,11 @@ async def get_auth_callback(
     service: str,
     env: str,
     code: str,
+    response: Response,
     auth_service: Annotated[AuthService, Depends()]
 ):
     return ApiResponse(
-        data=await auth_service.callback(service, env, code)
+        data=await auth_service.callback(service, env, code, response)
     )
 
 @router.post("/refresh", response_model=ApiResponse, tags=["Auth"])

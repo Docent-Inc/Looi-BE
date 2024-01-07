@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from abc import ABC, abstractmethod
-from fastapi import BackgroundTasks
+from fastapi import BackgroundTasks, Response
 from app.db.models import User
 
 
@@ -71,7 +71,7 @@ class AbstractAuthService(ABC):
         pass
 
     @abstractmethod
-    async def callback(self, service: str, env: str, code: str) -> object:
+    async def callback(self, service: str, env: str, code: str, response: Response) -> object:
         pass
 
     @abstractmethod
