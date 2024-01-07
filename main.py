@@ -41,14 +41,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-if settings.SERVER_TYPE == "prod":
+if settings.SERVER_TYPE == "local":
     scheduler = AsyncIOScheduler()
     @app.on_event("startup")
     async def start_scheduler():
         # 한 주 돌아보기 보고서 생성
         scheduler.add_job(
             ReportService(db=next(get_db()), redis=await get_redis_client()).generate,
-            trigger=CronTrigger(day_of_week='sun', hour=19, minute=0),
+            trigger=CronTrigger(day_of_week='sun', hour=19),
             timezone="Asia/Seoul"
         )
 

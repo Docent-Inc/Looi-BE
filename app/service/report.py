@@ -273,7 +273,7 @@ class ReportService(AbstractReportService):
                 is_deleted=False,
             )
             report = save_db(mental_report, self.db)
-            return report.id
+            return report
 
         lock_key = "generate_report_lock"
         if await self.redis.set(lock_key, "locked", ex=60, nx=True):
@@ -299,7 +299,7 @@ class ReportService(AbstractReportService):
                             body=f"{user.nickname}님의 한 주 돌아보기 보고서를 만들었어요! 얼른 확인해 보세요~!",
                             image_url=report.image_url,
                             landing_url=f"/report/{report.id}",
-                            token=self.user.push_tokenuser.push_token
+                            token=user.push_token
                         )
                     print(f"progress: {generate_user_list.index(user) + 1}/{total_count}")
             finally:
