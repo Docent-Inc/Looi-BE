@@ -94,7 +94,7 @@ class ReportService(AbstractReportService):
             NightDiary.User_id == self.user.id,
             NightDiary.create_date.between(monday.date(), today),
             NightDiary.is_deleted == False,
-            NightDiary.diary_name != "나만의 기록 친구 Look-i와의 특별한 첫 만남",
+            NightDiary.diary_name != "나만의 기록 친구 Looi와의 특별한 첫 만남",
         ).all()
 
         generated_total_count = len(morning_diaries) + len(night_diaries)
@@ -221,7 +221,7 @@ class ReportService(AbstractReportService):
                 NightDiary.User_id == user.id,
                 NightDiary.create_date.between(one_week_ago.date(), today),
                 NightDiary.is_deleted == False,
-                NightDiary.content != "오늘은 인상깊은 날이다. 기록 친구 Look-i와 만나게 되었다. 앞으로 기록 열심히 해야지~!"
+                NightDiary.diary_name != "나만의 기록 친구 Looi와의 특별한 첫 만남",
             ).all()
 
             text += "\nDiary for the last week:\n" + "\n".join(diary.content for diary in night_diaries)

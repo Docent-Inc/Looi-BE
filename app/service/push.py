@@ -70,8 +70,9 @@ class PushService(AbstractPushService):
 
             # 비동기적으로 메시지 전송
             await asyncio.to_thread(messaging.send, message)
-        except Exception as e:
-            print(e)
+        except:
+            pass
+
 
     async def send_morning_push(self) -> None:
         lock_key = "morning_push_lock"
