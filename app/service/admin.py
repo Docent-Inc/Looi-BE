@@ -133,7 +133,7 @@ class AdminService(AbstractAdminService):
                 # 오늘 생성된 저녁 일기 수
                 evening_diary_count = self.db.query(NightDiary).filter(
                     func.date(NightDiary.create_date) == now.date(),
-                    NightDiary.content != "오늘은 인상깊은 날이다. 기록 친구 Look-i와 만나게 되었다. 앞으로 기록 열심히 해야지~!"
+                    NightDiary.diary_name != "나만의 기록 친구 Looi와의 특별한 첫 만남",
                 ).count()
 
                 # 오늘 생성된 캘린더 수
