@@ -41,7 +41,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-if settings.SERVER_TYPE == "local":
+if settings.SERVER_TYPE == "prod":
     scheduler = AsyncIOScheduler()
     @app.on_event("startup")
     async def start_scheduler():
