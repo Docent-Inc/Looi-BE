@@ -95,6 +95,8 @@ class AuthService(AbstractAuthService):
             user.birth = auth_data.birth
         if auth_data.push_token != "":
             user.push_token = auth_data.push_token
+        if auth_data.device != "":
+            user.device = auth_data.device
 
         user.is_sign_up = False
         await self.redis.delete(f"user:{user.email}")

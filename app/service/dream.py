@@ -97,6 +97,7 @@ class DreamService(AbstractDiaryService):
                 push_service.send,
                 title="Looi",
                 body=f"{self.user.nickname}님의 꿈 해석 결과가 도착했어요! 얼른 확인해 보세요~!",
+                device=f"{self.user.device}",
                 image_url=diary.image_url,
                 landing_url=f"/diary/{diary.id}?type=1",
                 token=self.user.push_token

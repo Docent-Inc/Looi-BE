@@ -130,8 +130,8 @@ class AbstractAdminService(ABC):
 
 class AbstractPushService(ABC):
     @abstractmethod
-    async def test(self, title: str, body: str, landing_url: str, image_url: str, token: str) -> None:
+    async def test(self, title: str, body: str, landing_url: str, image_url: str, token: str, device: str) -> None:
         pass
     @abstractmethod
-    async def send(self, title: str, body: str, token: str) -> None:
+    async def send(self, title: str, body: str, token: str, device: str) -> None:
         pass
