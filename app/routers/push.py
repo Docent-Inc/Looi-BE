@@ -12,9 +12,10 @@ async def get_push_test(
     title: str,
     body: str,
     token: str,
+    device: str,
     report_service: Annotated[PushService, Depends()],
     image_url: Optional[str] = "",
     landing_url: Optional[str] = "",
 ) -> ApiResponse:
-    await report_service.test(title, body, landing_url, image_url, token)
+    await report_service.test(title, body, landing_url, image_url, token, device)
     return ApiResponse()
