@@ -43,11 +43,11 @@ class PushService(AbstractPushService):
             data = {}
             if landing_url:
                 data["landing_url"] = landing_url
-            if image_url:
-                data["image_url"] = image_url
-
-            data["title"] = title,
-            data["body"] = body,
+            # if image_url:
+            #     data["image_url"] = image_url
+            #
+            # data["title"] = title,
+            # data["body"] = body,
 
             # Android 및 APNS(애플) 구성 추가
             android_config = messaging.AndroidConfig(
