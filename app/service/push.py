@@ -33,22 +33,21 @@ class PushService(AbstractPushService):
     async def send(self, title: str, body: str, token: str, image_url: str = "", landing_url: str = "") -> None:
         try:
             # 이미지 URL이 비어있지 않은 경우에만 포함
-            notification = messaging.Notification(
-                title=title,
-                body=body,
-                image=image_url if image_url else None,
-            )
+            # notification = messaging.Notification(
+            #     title=title,
+            #     body=body,
+            #     image=image_url if image_url else None,
+            # )
 
             # 데이터 필드 설정
             data = {}
             if landing_url:
                 data["landing_url"] = landing_url
-            # if image_url:
-            #     data["image_url"] = image_url
-            #
-            # data["title"] = title,
-            # data["body"] = body,
+            if image_url:
+                data["image_url"] = image_url
 
+            data["title"] = title
+            data["body"] = body
             # Android 및 APNS(애플) 구성 추가
             android_config = messaging.AndroidConfig(
                 priority='high',
@@ -66,7 +65,7 @@ class PushService(AbstractPushService):
 
             # 메시지 구성
             message = messaging.Message(
-                notification=notification,
+                # notification=notification,
                 android=android_config,
                 apns=apns_config,
                 token=token,
