@@ -121,7 +121,11 @@ class AbstractAdminService(ABC):
         pass
 
     @abstractmethod
-    async def user_text(self) -> list:
+    async def user_dream_data(self) -> list:
+        pass
+
+    @abstractmethod
+    async def user_diary_data(self) -> list:
         pass
 
     @abstractmethod
