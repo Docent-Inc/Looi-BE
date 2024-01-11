@@ -74,7 +74,7 @@ if settings.SERVER_TYPE == "prod":
 
         scheduler.add_job(
             PushService(db=next(get_db()), redis=await get_redis_client()).generate_night_push,
-            trigger=CronTrigger(hour=18),
+            trigger=CronTrigger(hour=19),
             timezone="Asia/Seoul"
         )
 

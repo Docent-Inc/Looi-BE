@@ -27,6 +27,7 @@ class UserUpdateRequest(BaseModel):
     gender: Optional[str] = ""
     birth: Optional[str] = ""
     push_token: Optional[str] = ""
+    device: Optional[str] = ""
 
 class PushUpdateRequest(BaseModel):
     type: str
