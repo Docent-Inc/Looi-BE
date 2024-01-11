@@ -59,7 +59,7 @@ class PushService(AbstractPushService):
                 payload=messaging.APNSPayload(
                     aps=messaging.Aps(
                         sound='default',
-                        alert=data,
+                        alert=str(data),
                     ),
                 )
             )
