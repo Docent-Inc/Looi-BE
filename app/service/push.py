@@ -31,6 +31,7 @@ class PushService(AbstractPushService):
         await self.send(title=title, body=body, token=token, image_url=image_url, landing_url=landing_url, device=device)
 
     async def send(self, title: str, body: str, token: str, device: str, image_url: str = "", landing_url: str = "") -> None:
+        print(f"title: {title}, body: {body}, token: {token}, device: {device}")
         try:
             # 데이터 필드 설정
             data = {}
