@@ -189,7 +189,7 @@ class PushService(AbstractPushService):
                     landing_url = f"/mypage?tab=calendar&date={date_str}"
                     # 알림 메시지 생성
                     if user.push_schedule == 0:
-                        body = f"{user.nickname}님, {calendar.title}이 지금 시작합니다. 일정을 위해 준비해 주세요!"
+                        body = f"{user.nickname}님, {calendar.title}가 지금 시작합니다. 일정을 위해 준비해 주세요!"
                     elif user.push_schedule in [5, 10, 15, 30]:
                         body = f"{user.nickname}님, {calendar.title}까지 {user.push_schedule}분 남았습니다. 일정을 위해 준비해 주세요!"
                     elif user.push_schedule in [60, 120, 180]:
