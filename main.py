@@ -42,13 +42,13 @@ app.add_middleware(
 )
 
 if settings.SERVER_TYPE == "prod":
-    scheduler = AsyncIOScheduler()
+    scheduler = AsyncIOScheduler() # -9시간..?
     @app.on_event("startup")
     async def start_scheduler():
         # 한 주 돌아보기 보고서 생성
         scheduler.add_job(
             ReportService(db=next(get_db()), redis=await get_redis_client()).generate,
-            trigger=CronTrigger(day_of_week='sun', hour=19),
+            trigger=CronTrigger(day_of_week='sun', hour=10),
             timezone="Asia/Seoul"
         )
 
@@ -62,19 +62,19 @@ if settings.SERVER_TYPE == "prod":
         # PushService 작업 스케줄링
         scheduler.add_job(
             PushService(db=next(get_db()), redis=await get_redis_client()).send_morning_push,
-            trigger=CronTrigger(hour=8),
+            trigger=CronTrigger(hour=23),
             timezone="Asia/Seoul"
         )
 
         scheduler.add_job(
             PushService(db=next(get_db()), redis=await get_redis_client()).send_night_push,
-            trigger=CronTrigger(hour=20),
+            trigger=CronTrigger(hour=11),
             timezone="Asia/Seoul"
         )
 
         scheduler.add_job(
             PushService(db=next(get_db()), redis=await get_redis_client()).generate_night_push,
-            trigger=CronTrigger(hour=19),
+            trigger=CronTrigger(hour=10),
             timezone="Asia/Seoul"
         )
 
