@@ -98,7 +98,6 @@ class DiaryService(AbstractDiaryService):
             diary.modify_date = await time_now()
             diary = save_db(diary, self.db)
             push_service = PushService(db=self.db, user=self.user)
-            print(self.user.device)
             background_tasks.add_task(
                 push_service.send,
                 title="Looi",
