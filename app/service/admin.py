@@ -1,3 +1,4 @@
+import json
 import warnings
 from datetime import timedelta, datetime
 from decimal import Decimal
@@ -6,7 +7,7 @@ import aioredis
 from fastapi import Depends
 from slack_sdk.errors import SlackApiError
 from slack_sdk.web.async_client import AsyncWebClient
-from sqlalchemy import inspect, func, distinct
+from sqlalchemy import inspect, func, distinct, select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -39,12 +40,63 @@ class AdminService(AbstractAdminService):
         dashboard = self.db.query(Dashboard).all()
         return dashboard
 
-    async def user_text(self) -> list:
+    async def user_dream_data(self) -> list:
+        results = self.db.execute(
+            select(
+                MorningDiary.User_id,
+                User.mbti,
+                MorningDiary.content,
+                MorningDiary.resolution,
+                MorningDiary.main_keyword
+            ).join(User, MorningDiary.User_id == User.id)
+        ).fetchall()
 
-        user_text = self.db.query(TextClassification).all()
+        data = []
 
-        return user_text
+        for user_id, mbti, content, resolution, main_keyword in results:
+            keyword_list = []
+            try:
+                for keyword in json.loads(main_keyword):
+                    keyword_list.append(keyword)
+                dream_info = {
+                    "Text": f"{mbti}, {content}",
+                    "Completion": {"resolution": resolution, "main_keywords": keyword_list}
+                }
+                dream_info["Completion"] = json.dumps(dream_info["Completion"], ensure_ascii=False)
+                data.append(dream_info)
+            except:
+                pass
 
+        return data
+
+    async def user_diary_data(self) -> list:
+        results = self.db.execute(
+            select(
+                NightDiary.User_id,
+                NightDiary.content,
+                NightDiary.resolution,
+                NightDiary.main_keyword
+            ).join(User, NightDiary.User_id == User.id)
+        ).fetchall()
+
+        data = []
+
+        for user_id, content, resolution, main_keyword in results:
+            keyword_list = []
+            try:
+                if "오늘은 인상깊은 날이다." in content:
+                    continue
+                for keyword in json.loads(main_keyword):
+                    keyword_list.append(keyword)
+                dream_info = {
+                    "Text": f"{content}",
+                    "Completion": {"resolution": resolution, "main_keywords": keyword_list}
+                }
+                dream_info["Completion"] = json.dumps(dream_info["Completion"], ensure_ascii=False)
+                data.append(dream_info)
+            except:
+                pass
+        return data
     async def slack_bot(self) -> dict:
         async def calculate_api_usage_cost():
             now = await time_now()
@@ -133,7 +185,7 @@ class AdminService(AbstractAdminService):
                 # 오늘 생성된 저녁 일기 수
                 evening_diary_count = self.db.query(NightDiary).filter(
                     func.date(NightDiary.create_date) == now.date(),
-                    NightDiary.content != "오늘은 인상깊은 날이다. 기록 친구 Look-i와 만나게 되었다. 앞으로 기록 열심히 해야지~!"
+                    NightDiary.diary_name != "나만의 기록 친구 Looi와의 특별한 첫 만남",
                 ).count()
 
                 # 오늘 생성된 캘린더 수

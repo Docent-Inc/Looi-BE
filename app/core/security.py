@@ -43,6 +43,7 @@ async def user_to_json(user):
             "push_morning": user.push_morning,
             "push_night": user.push_night,
             "push_report": user.push_report,
+            "device": user.device,
         }, ensure_ascii=False
     )
 

@@ -102,9 +102,10 @@ class DiaryService(AbstractDiaryService):
                 push_service.send,
                 title="Looi",
                 body=f"{self.user.nickname}님의 일기에 대한 답장이 도착했어요! 얼른 확인해 보세요~!",
+                token=self.user.push_token,
+                device=f"{self.user.device}",
                 image_url=diary.image_url,
                 landing_url=f"/diary/{diary.id}?type=2",
-                token=self.user.push_token
             )
         except:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=4202)

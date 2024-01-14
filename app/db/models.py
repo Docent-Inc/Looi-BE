@@ -20,6 +20,7 @@ class User(Base):
     Oauth_from = Column(String(10), nullable=True)
     birth = Column(Date, nullable=True, default=func.now())
     push_token = Column(String(300), nullable=True)
+    device = Column(String(10), nullable=True)
     push_morning = Column(Boolean, default=True)
     push_night = Column(Boolean, default=True)
     push_report = Column(Boolean, default=True)

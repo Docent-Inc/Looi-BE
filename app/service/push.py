@@ -27,63 +27,70 @@ class PushService(AbstractPushService):
         self.user = user
         self.redis = redis
 
-    async def test(self, title: str, body: str, landing_url: str, image_url: str, token: str) -> None:
-        await self.send(title=title, body=body, token=token, image_url=image_url, landing_url=landing_url)
+    async def test(self, title: str, body: str, landing_url: str, image_url: str, token: str, device: str) -> None:
+        await self.send(title=title, body=body, token=token, image_url=image_url, landing_url=landing_url, device=device)
 
-    async def send(self, title: str, body: str, token: str, image_url: str = "", landing_url: str = "") -> None:
+    async def send(self, title: str, body: str, token: str, device: str, image_url: str = "", landing_url: str = "") -> None:
         try:
-            # 이미지 URL이 비어있지 않은 경우에만 포함
-            notification = messaging.Notification(
-                title=title,
-                body=body,
-                image=image_url if image_url else None,
-            )
-
             # 데이터 필드 설정
             data = {}
             if landing_url:
                 data["landing_url"] = landing_url
+            if image_url:
+                data["image_url"] = image_url
 
-            # Android 및 APNS(애플) 구성 추가
-            android_config = messaging.AndroidConfig(
-                priority='high',
-                notification=messaging.AndroidNotification(
-                    sound='default'
+            data["title"] = title
+            data["body"] = body
+
+            if device == "iOS":
+                notification = messaging.Notification(
+                    title=title,
+                    body=body,
+                    image=image_url if image_url else None,
                 )
-            )
-            apns_config = messaging.APNSConfig(
-                payload=messaging.APNSPayload(
-                    aps=messaging.Aps(
+                apns_config = messaging.APNSConfig(
+                    payload=messaging.APNSPayload(
+                        aps=messaging.Aps(
+                            sound='default',
+                        ),
+                    )
+                )
+                message = messaging.Message(
+                    notification=notification,
+                    apns=apns_config,
+                    token=token,
+                    data=data,
+                )
+            if device == "AOS":
+                android_config = messaging.AndroidConfig(
+                    priority='high',
+                    notification=messaging.AndroidNotification(
                         sound='default'
                     )
                 )
-            )
-
-            # 메시지 구성
-            message = messaging.Message(
-                notification=notification,
-                android=android_config,
-                apns=apns_config,
-                token=token,
-                data=data,
-            )
+                message = messaging.Message(
+                    android=android_config,
+                    token=token,
+                    data=data,
+                )
 
             # 비동기적으로 메시지 전송
             await asyncio.to_thread(messaging.send, message)
-        except Exception as e:
-            print(e)
+        except:
+            pass
+
 
     async def send_morning_push(self) -> None:
         lock_key = "morning_push_lock"
         if await self.redis.set(lock_key, "locked", ex=60, nx=True):
             try:
                 Users = self.db.query(User).filter(User.push_token != None, User.is_deleted == False, User.push_morning == True).all()
-                nickname_and_token = [(user.nickname, user.push_token) for user in Users]
+                nickname_and_token = [(user.nickname, user.push_token, user.device) for user in Users]
 
                 batch_size = 50
                 for i in range(0, len(nickname_and_token), batch_size):
                     batch = nickname_and_token[i:i + batch_size]
-                    tasks = [self.send(title="Looi", body=f"{nickname}님, 오늘은 어떤 꿈을 꾸셨나요?", token=token, landing_url=f"/chat?guide={nickname}님, 오늘은 어떤 꿈을 꾸셨나요?") for nickname, token in batch]
+                    tasks = [self.send(title="Looi", body=f"{nickname}님, 오늘은 어떤 꿈을 꾸셨나요?", token=token, landing_url=f"/chat?guide={nickname}님, 오늘은 어떤 꿈을 꾸셨나요?", device=f"{device}") for nickname, token, device in batch]
                     await asyncio.gather(*tasks)
 
             finally:
@@ -98,13 +105,13 @@ class PushService(AbstractPushService):
             try:
                 now = await time_now()
                 Users = self.db.query(User).filter(User.push_token != None, User.is_deleted == False, User.push_night == True).all()
-                nickname_and_token = [(user.nickname, user.push_token, user.id) for user in Users]
+                nickname_and_token = [(user.nickname, user.push_token, user.id, user.device) for user in Users]
 
                 batch_size = 50
                 for i in range(0, len(nickname_and_token), batch_size):
                     batch = nickname_and_token[i:i + batch_size]
                     tasks = []
-                    for nickname, token, user_id in batch:
+                    for nickname, token, user_id, device in batch:
                         # DB에서 해당 사용자의 오늘 생성된 질문 조회
                         question_record = self.db.query(PushQuestion).filter(
                             PushQuestion.User_id == user_id,
@@ -112,7 +119,7 @@ class PushService(AbstractPushService):
                         ).first()
 
                         question = question_record.question if question_record else default_question
-                        tasks.append(self.send(title="Looi", body=f"{nickname}님, {question}", token=token, landing_url=f"/chat?guide={nickname}님, {question}"))
+                        tasks.append(self.send(title="Looi", body=f"{nickname}님, {question}", token=token, landing_url=f"/chat?guide={nickname}님, {question}", device=f"{device}"))
 
                     await asyncio.gather(*tasks)
             finally:
@@ -185,14 +192,14 @@ class PushService(AbstractPushService):
                         body = f"{user.nickname}님, {calendar.title}까지 {user.push_schedule}분 남았습니다. 일정을 위해 준비해 주세요!"
                     elif user.push_schedule in [60, 120, 180]:
                         body = f"{user.nickname}님, {calendar.title}까지 {user.push_schedule // 60}시간 남았습니다. 일정을 위해 준비해 주세요!"
-                    user_calendar_data.append((user.nickname, user.push_token, body, landing_url))
+                    user_calendar_data.append((user.nickname, user.push_token, body, landing_url, user.device))
 
                 batch_size = 50  # 배치 사이즈 설정
                 for i in range(0, len(user_calendar_data), batch_size):
                     batch = user_calendar_data[i:i + batch_size]
                     tasks = []
-                    for nickname, token, body, landing_url in batch:
-                        tasks.append(self.send(title="Looi", body=body, token=token, landing_url=landing_url))
+                    for nickname, token, body, landing_url, device in batch:
+                        tasks.append(self.send(title="Looi", body=body, token=token, landing_url=landing_url, device=f"{device}"))
                     await asyncio.gather(*tasks)
 
             finally:
