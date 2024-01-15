@@ -67,6 +67,7 @@ class AdminService(AbstractAdminService):
             except:
                 pass
 
+        print(len(data))
         return data
 
     async def user_diary_data(self) -> list:
@@ -96,6 +97,8 @@ class AdminService(AbstractAdminService):
                 data.append(dream_info)
             except:
                 pass
+
+        print(len(data))
         return data
     async def slack_bot(self) -> dict:
         async def calculate_api_usage_cost():

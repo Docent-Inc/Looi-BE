@@ -141,6 +141,7 @@ class PushService(AbstractPushService):
                     calendar_data = self.db.query(Calendar).filter(
                         Calendar.User_id == user.id,
                         Calendar.is_deleted == False,
+                        Calendar.start_time > start_of_day,
                         Calendar.end_time < eight_pm,
                     ).order_by(Calendar.start_time).all()
 
