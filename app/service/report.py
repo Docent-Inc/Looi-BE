@@ -297,7 +297,7 @@ class ReportService(AbstractReportService):
                         await push_service.send(
                             title="Looi",
                             body=f"{user.nickname}님의 한 주 돌아보기 보고서를 만들었어요! 얼른 확인해 보세요~!",
-                            device=f"{self.user.device}",
+                            device=f"{user.device}",
                             image_url=report.image_url,
                             landing_url=f"/report/{report.id}",
                             token=user.push_token
