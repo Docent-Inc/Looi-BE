@@ -161,7 +161,10 @@ class DreamService(AbstractDiaryService):
         if dream_data.content != "":
             await check_length(dream_data.content, 1000, 4221)
             diary.content = dream_data.content
-
+        try:
+            diary.is_like = dream_data.is_like
+        except:
+            pass
         # 수정된 날짜 저장
         diary.modify_date = await time_now()
         diary = save_db(diary, self.db)

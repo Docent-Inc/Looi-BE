@@ -9,7 +9,7 @@ from app.core.security import get_current_user, check_length, time_now, datetime
 from app.db.database import get_db, save_db, get_redis_client
 from app.db.models import User, NightDiary
 from app.core.aiRequset import GPTService
-from app.schemas.request import CreateDiaryRequest
+from app.schemas.request import UpdateDiaryRequest, CreateDiaryRequest
 from app.service.abstract import AbstractDiaryService
 from app.service.push import PushService
 
@@ -150,7 +150,7 @@ class DiaryService(AbstractDiaryService):
 
 
 
-    async def update(self, diary_id: int, diary_data: CreateDiaryRequest) -> NightDiary:
+    async def update(self, diary_id: int, diary_data: UpdateDiaryRequest) -> NightDiary:
         # 다이어리 조회
         diary = self.db.query(NightDiary).filter(NightDiary.id == diary_id, NightDiary.User_id == self.user.id, NightDiary.is_deleted == False).first()
 
@@ -164,6 +164,10 @@ class DiaryService(AbstractDiaryService):
         if diary_data.content != "":
             await check_length(diary_data.content, 1000, 4221)
             diary.content = diary_data.content
+        try:
+            diary.is_like = diary_data.is_like
+        except:
+            pass
         diary.modify_date = await time_now()
         diary = save_db(diary, self.db)
 

@@ -43,6 +43,7 @@ class CreateDreamRequest(BaseModel):
 class UpdateDreamRequest(BaseModel):
     diary_name: Optional[str] = ""
     content: Optional[str] = ""
+    is_like: Optional[bool]
 
 class CreateDiaryRequest(BaseModel):
     date: Optional[str] = ""
@@ -52,6 +53,7 @@ class UpdateDiaryRequest(BaseModel):
     date: Optional[str] = ""
     diary_name: Optional[str] = ""
     content: Optional[str] = ""
+    is_like: Optional[bool]
 
 class CreateMemoRequest(BaseModel):
     title: Optional[str] = ""
