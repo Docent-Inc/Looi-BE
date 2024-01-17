@@ -49,6 +49,7 @@ class MorningDiary(Base):
     view_count = Column(Integer, default=1, nullable=True)
     share_count = Column(Integer, default=0, nullable=True)
     share_id = Column(String(255), nullable=True)
+    is_like = Column(Boolean, default=False, nullable=True)
 
     def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
@@ -72,6 +73,7 @@ class NightDiary(Base):
     view_count = Column(Integer, default=1, nullable=True)
     share_count = Column(Integer, default=0, nullable=True)
     share_id = Column(String(255), nullable=True)
+    is_like = Column(Boolean, default=False, nullable=True)
 
     def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
