@@ -78,12 +78,12 @@ class DreamService(AbstractDiaryService):
         diary_name, image_url, resolution = await asyncio.gather(
             gpt_service.send_gpt_request(2, diary.content),
             gpt_service.send_dalle_request(f"꿈에서 본 장면(no text): {diary.content}"),
-            gpt_service.send_gpt_request(5, f"{self.user.mbti}, {diary.content}")
+            gpt_service.send_gpt_request(5, f"nickname: {self.user.nickname}, mbti: {self.user.mbti}, dream: {diary.content}")
         )
 
         # db에 저장
         if diary.diary_name == "":
-            diary.diary_name = diary_name[:10]
+            diary.diary_name = diary_name[:20]
 
         try:
             diary.image_url = image_url
