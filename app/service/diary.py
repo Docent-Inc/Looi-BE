@@ -79,15 +79,15 @@ class DiaryService(AbstractDiaryService):
             image_url, diary_name, reply = await asyncio.gather(
                 gpt_service.send_dalle_request(f"오늘의 일기(no text): {diary.content}"),
                 gpt_service.send_gpt_request(2, diary.content),
-                gpt_service.send_gpt_request(10, f"user nickname: {self.user.nickname}, diary: {diary.content}")
+                gpt_service.send_gpt_request(10, f"nickname: {self.user.nickname}, diary: {diary.content}")
             )
             await check_length(diary_name, 255, 4023)
-            diary.diary_name = diary_name
+            diary.diary_name = diary_name[:20]
 
         elif diary.diary_name != "":
             image_url, reply = await asyncio.gather(
                 gpt_service.send_dalle_request(f"오늘의 일기(no text): {diary.content}"),
-                gpt_service.send_gpt_request(10, f"user nickname: {self.user.nickname}, diary: {diary.content}")
+                gpt_service.send_gpt_request(10, f"nickname: {self.user.nickname}, diary: {diary.content}")
             )
 
         try:
