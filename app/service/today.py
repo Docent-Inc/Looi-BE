@@ -168,20 +168,22 @@ class TodayService(AbstractTodayService):
 
         async def get_api_date():
             standard_time = [2, 5, 8, 11, 14, 17, 20, 23]
-            time_now = datetime.datetime.now(tz=pytz.timezone('Asia/Seoul')).strftime('%H')
-            check_time = int(time_now) - 1
+            now = datetime.datetime.now(tz=pytz.timezone('Asia/Seoul'))
+            check_time = now.hour
             day_calibrate = 0
-            # hour to api time
-            while not check_time in standard_time:
+
+            # 시간이 standard_time에 없으면, 이전 가장 가까운 standard_time으로 조정
+            while check_time not in standard_time:
                 check_time -= 1
-                if check_time < 2:
-                    day_calibrate = 1  # yesterday
+                if check_time < 0:
                     check_time = 23
+                    day_calibrate = 1
 
-            date_now = datetime.datetime.now(tz=pytz.timezone('Asia/Seoul')).strftime('%Y%m%d')
-            check_date = int(date_now) - day_calibrate
+            # 날짜 조정
+            date_now = now - datetime.timedelta(days=day_calibrate)
+            date_str = date_now.strftime('%Y%m%d')
 
-            return (str(check_date), (str(check_time) + '00'))
+            return (date_str, f"{check_time:02d}00")
 
         async def select_weather_icon(sky, pty):
             if pty == '0':  # 강수 없음
@@ -244,5 +246,6 @@ class TodayService(AbstractTodayService):
         sky = passing_data.get('SKY')  # 하늘 상태
         pty = passing_data.get('PTY')  # 강수 형태
         weather_icon = await select_weather_icon(sky, pty)
+
 
         return {"pop": pop, "tmx": tmx, "tmn": tmn, "icon": weather_icon}
