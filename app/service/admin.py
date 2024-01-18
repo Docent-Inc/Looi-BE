@@ -269,7 +269,6 @@ class AdminService(AbstractAdminService):
                 dau_to_mau = (dau_count / mau_count) * 100
 
                 # DAU / WAU
-
                 dau_to_wau = (dau_count / wau_count) * 100
 
                 # dau 증감율 계산
@@ -290,18 +289,13 @@ class AdminService(AbstractAdminService):
                 total_evening_diary_count -= total_users_count
 
                 # 전체 생성된 캘린더 수
-                total_calender_count = self.db.query(Calendar).count()
+                total_calendar_count = self.db.query(Calendar).count()
 
                 # 전체 생성된 메모 수
                 total_memo_count = self.db.query(Memo).count()
 
                 # 전체 생성된 리포트 수
-                total_report_count = self.db.query(Report).filter(
-                    Report.is_deleted == False
-                ).count()
-
-                # 전체 생성된 채팅 수
-                total_chat_count = self.db.query(TextClassification).count()
+                total_report_count = self.db.query(Report).filter().count()
 
                 # 전체 게시물 공유 조회수
                 MorningDiary_share_count_result = self.db.query(func.sum(MorningDiary.share_count)).scalar()
@@ -399,7 +393,7 @@ class AdminService(AbstractAdminService):
                             },
                             {
                                 "type": "mrkdwn",
-                                "text": f"*전체 생성된 캘린더 수:* {total_calender_count}"
+                                "text": f"*전체 생성된 캘린더 수:* {total_calendar_count}"
                             },
                             {
                                 "type": "mrkdwn",
@@ -411,7 +405,7 @@ class AdminService(AbstractAdminService):
                             },
                             {
                                 "type": "mrkdwn",
-                                "text": f"*전체 생성된 기록 수:* {total_chat_count}"
+                                "text": f"*전체 생성된 기록 수:* {total_morning_diary_count + total_evening_diary_count + total_calendar_count + total_memo_count}"
                             },
                             {
                                 "type": "mrkdwn",

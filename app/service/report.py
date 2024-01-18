@@ -69,10 +69,12 @@ class ReportService(AbstractReportService):
 
         limit = 6
         offset = (page - 1) * limit
+
+        # 모든 리포트를 가져옵니다 (내림차순 정렬).
         reports = self.db.query(Report).filter(
             Report.User_id == self.user.id,
             Report.is_deleted == False
-        ).order_by(Report.create_date.desc()).all()  # 주의: 오름차순으로 변경
+        ).order_by(Report.create_date.desc()).all()
 
         report_count = len(reports)  # 모든 리포트의 개수를 가져옴
         generated_reports = reports[offset:offset + limit]  # 현재 페이지에 해당하는 리포트
@@ -99,11 +101,11 @@ class ReportService(AbstractReportService):
 
         generated_total_count = len(morning_diaries) + len(night_diaries)
 
+        # 각 페이지에 대한 올바른 시작 번호 계산
         start_number = report_count - offset
-        titles = [f"{start_number - idx}번째 돌아보기" for idx in range(len(reports))]
 
-        # 페이지네이션을 위한 로직
-        paginated_titles = titles[offset:offset + limit]
+        # 현재 페이지에 해당하는 리포트에 대한 제목을 생성합니다.
+        titles = [f"{start_number - idx}번째 돌아보기" for idx in range(len(generated_reports))]
 
         # 기간 계산 로직을 추가합니다.
         periods = [await self.calculate_period(report.create_date) for report in generated_reports]
@@ -120,7 +122,7 @@ class ReportService(AbstractReportService):
                     "image_url": report.image_url,
                     "create_date": report.create_date.strftime("%Y년 %m월 %d일"),
                     "is_read": report.is_read
-                } for title, period, report in zip(paginated_titles, periods, generated_reports)
+                } for title, period, report in zip(titles, periods, generated_reports)
             ]
         }
 
