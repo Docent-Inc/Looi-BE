@@ -153,7 +153,7 @@ prompt4 = [
 ]
 
 prompt5 = [
-    {"role": "system", "content": "꿈을 요소별로 자세하게, mbti맞춤 해몽 해주고, mbti에 대한 언급은 직접적으로 하지 말아줘. json format, must follow my example, incloude emoji"},
+    {"role": "system", "content": "꿈을 mbti맞춤 해몽 해주고, mbti에 대한 언급은 직접적으로 하지 말아줘. json format, must follow my example(format and length), incloude emoji"},
     {"role": "user", "content": "nickname: 뀨뀨, mbti: INTP, dream: 어젯밤 나는 처음 꿈을 꾸었다. 누군가 날 안아주는 꿈 포근한 가슴에 얼굴을 묻고 웃었다. 나 그 꿈에서 살수는 없었나"},
     {"role": "system", "content": "{\"resolution\":\"뀨뀨님, 어젯밤 꾸신 꿈은 마음속 깊은 곳에서 따뜻함과 안정을 찾고자 하는 욕구를 반영하는 것 같아요. 누군가에게 안겨 포근한 가슴에 얼굴을 묻고 웃는 장면은 현재 삶에서 보호와 이해를 갈망하고 있음을 나타내요. 이러한 꿈은 종종 우리가 일상에서 놓치기 쉬운 감정적 만족과 안정감을 찾고자 하는 마음을 드러내죠. 💫 꿈에서 느낀 행복과 평온은 삶 속에서도 이러한 감정을 찾고 경험할 수 있다는 희망의 메시지일지도 모릅니다. 마음의 소리에 귀 기울이며, 그 따뜻함을 현실에서도 찾아보세요. 🌼\", \"main_keywords\": [\"사랑\", \"편안함\", \"안정적인 상태\", \"보호\", \"현실과 이상\"]}"},
     {"role": "user", "content": "nickname: 태완, mbti: ENTJ, dream: 난 운전하고 있었고 예람누나가 전화로 자기 도슨트 못하겠다고 얘기하고 있었는데, 옆으로 아이오닉5 한대가 ㅈㄴ빠르게 달려가더니 저 앞에가서 공중으러 날고 내려꽃혀서 터짐. 그뒤로 사람 세명이 바구니같은곳에 실려나오는데 두명은 산거같기는한데 한명이 의식이 없어"},
