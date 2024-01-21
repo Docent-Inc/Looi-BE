@@ -305,7 +305,7 @@ class GPTService:
         if prompt_num == 7:
             messages_prompt = messages_prompt[:1500]
         else:
-            messages_prompt = messages_prompt[:300]
+            messages_prompt = messages_prompt[:500]
         if prompt_num == 1 or prompt_num == 6:
             messages_prompt = f"{datetime.datetime.now(pytz.timezone('Asia/Seoul'))}, {messages_prompt}"
         prompt = prompt_dict[prompt_num][0].copy()
