@@ -296,16 +296,16 @@ class GPTService:
             4: (prompt4, "오늘의 운세", "gpt-3.5-turbo", None),
             5: (prompt5, "해몽", "gpt-4-1106-preview", {"type": "json_object"}),
             6: (prompt6, "일정", "gpt-3.5-turbo-1106", {"type": "json_object"}),
-            7: (prompt7, "한 주 돌아보기", "gpt-4-1106-preview", {"type": "json_object"}),
+            7: (prompt7, "한 주 돌아보기", "gpt-4", None), # -1106-preview", {"type": "json_object"}),
             8: (prompt8, "메모", "gpt-3.5-turbo-1106", {"type": "json_object"}),
             9: (prompt9, "일정 제목", "gpt-3.5-turbo", None),
-            10: (prompt10, "일기 답장", "gpt-4-1106-preview", {"type": "json_object"}),
+            10: (prompt10, "일기 답장", "gpt-4", None), # -1106-preview", {"type": "json_object"}),
             11: (prompt11, "일기 유도 질문 생성", "gpt-4-1106-preview", None),
         }
         if prompt_num == 7:
             messages_prompt = messages_prompt[:1500]
         else:
-            messages_prompt = messages_prompt[:300]
+            messages_prompt = messages_prompt[:500]
         if prompt_num == 1 or prompt_num == 6:
             messages_prompt = f"{datetime.datetime.now(pytz.timezone('Asia/Seoul'))}, {messages_prompt}"
         prompt = prompt_dict[prompt_num][0].copy()
