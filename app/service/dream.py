@@ -77,7 +77,7 @@ class DreamService(AbstractDiaryService):
         gpt_service = GPTService(self.user, self.db)
         diary_name, image_url, resolution = await asyncio.gather(
             gpt_service.send_gpt_request(2, diary.content),
-            gpt_service.send_dalle_request(f"꿈에서 본 장면(no text): {diary.content}"),
+            gpt_service.send_dalle_request(f"꿈에서 본 장면(no text, digital art, illustration): {diary.content}"),
             gpt_service.send_gpt_request(5, f"nickname: {self.user.nickname}, mbti: {self.user.mbti}, dream: {diary.content}")
         )
 

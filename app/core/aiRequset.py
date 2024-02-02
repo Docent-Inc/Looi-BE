@@ -60,31 +60,30 @@ prompt1 = [
     {"role": "system", "content": "사용자의 텍스트가 꿈, 일기, 메모, 일정 중 어떤 카테고리인지 분류해서 숫자만 반환해줘. 꿈 = 1, 일기 = 2, 메모 = 3, 일정 = 4"},
     {"role": "system", "content": "내용이 짧으면 메모 또는 일정일 확률이 높고, 꿈이라는 단어가 포함되면 꿈, 오늘 내가 한 일들과 생각들이 포함되면 일기일 확률이 높다."},
     {"role": "system", "content": "날짜와 관련된 단어가 포함되면 일정일 확률이 높다."},
-    {"role": "system", "content": "시간대가 오전이면 꿈일 확률이 높고 오후면 일기일 확률이 높다."},
     {"role": "system", "content": "나머지는 메모로 분류해줘. return 1, 2, 3, 4"},
-    {"role": "user", "content": "2023-08-20 07:00:00 엄청나게 맑고 깨끗한 낚시터에서 낚시했는데 어찌나 투명한지 물고기가 다 보이는 꿈"},
+    {"role": "user", "content": "엄청나게 맑고 깨끗한 낚시터에서 낚시했는데 어찌나 투명한지 물고기가 다 보이는 꿈"},
     {"role": "system", "content": "1"},
-    {"role": "user", "content": "2023-08-20 22:00:00 오늘은 하루종일 코딩을 했다. 내가 만든 코드는 잘 돌아가지 않고, 너무 고통받았다. 내일은 개발을 마무리해서 얼른 서비스를 출시하고 싶다"},
+    {"role": "user", "content": "오늘은 하루종일 코딩을 했다. 내가 만든 코드는 잘 돌아가지 않고, 너무 고통받았다. 내일은 개발을 마무리해서 얼른 서비스를 출시하고 싶다"},
     {"role": "system", "content": "2"},
-    {"role": "user", "content": "2023-08-20 15:00:00 엘리스 세습 책 읽기, 56쪽"},
+    {"role": "user", "content": "엘리스 세습 책 읽기, 56쪽"},
     {"role": "system", "content": "3"},
-    {"role": "user", "content": "2023-08-20 15:00:00 8월25일 저녁6시 강남 약속"},
+    {"role": "user", "content": "8월25일 저녁6시 강남 약속"},
     {"role": "system", "content": "4"},
-    {"role": "user", "content": "2023-08-20 19:00:00 오늘은 크리스마스다. 여자친구와 현대백화점에 가서 아웃백을 먹고 영화를 봤다. 오펜하이머를 봤는데 나는 사실 물리학과를 갔어야 될 것 같다. 너무 재미있었다."},
+    {"role": "user", "content": "오늘은 크리스마스다. 여자친구와 현대백화점에 가서 아웃백을 먹고 영화를 봤다. 오펜하이머를 봤는데 나는 사실 물리학과를 갔어야 될 것 같다. 너무 재미있었다."},
     {"role": "system", "content": "2"},
-    {"role": "user", "content": "2023-08-20 15:00:00 다음주 금요일 6시에 중앙도서관 앞에서 자동차 동아리 모임이 있어"},
+    {"role": "user", "content": "다음주 금요일 6시에 중앙도서관 앞에서 자동차 동아리 모임이 있어"},
     {"role": "system", "content": "4"},
-    {"role": "user", "content": "2023-08-21 08:00:00 스키장에서 스키를 타고 있는데 뒤에서 곰이 갑자기 튀어나와서 도망가다가 넘어지고, 꿈에서 깼어"},
+    {"role": "user", "content": "스키장에서 스키를 타고 있는데 뒤에서 곰이 갑자기 튀어나와서 도망가다가 넘어지고, 꿈에서 깼어"},
     {"role": "system", "content": "1"},
-    {"role": "user", "content": "2023-08-24 09:00:00 꿈에서 어떤 길에서 있었는데 하을을 올려보니 보름달이 구름에 가려져 빛나고 있었다. 구름에 가려졌지만 밝게 빛나고 있어서 보름달이 잘 보였다. 보름달은 이내 구름 위로 솟아 올라 밝게 빛났다."},
+    {"role": "user", "content": "꿈에서 어떤 길에서 있었는데 하을을 올려보니 보름달이 구름에 가려져 빛나고 있었다. 구름에 가려졌지만 밝게 빛나고 있어서 보름달이 잘 보였다. 보름달은 이내 구름 위로 솟아 올라 밝게 빛났다."},
     {"role": "system", "content": "1"},
-    {"role": "user", "content": "2023-08-24 17:00:00 학교에서 계속 공부를했다. 너무 힘든 하루였지만 마무리가 깔끔해서 기분좋게 잠에 잘 수 있을 것 같다. 내일은 더 열심히 해야겠다."},
+    {"role": "user", "content": "학교에서 계속 공부를했다. 너무 힘든 하루였지만 마무리가 깔끔해서 기분좋게 잠에 잘 수 있을 것 같다. 내일은 더 열심히 해야겠다."},
     {"role": "system", "content": "2"},
-    {"role": "user", "content": "2023-08-25 19:11:24 11월 20일부터 28일은 부산으로 여행갈거야"},
+    {"role": "user", "content": "11월 20일부터 28일은 부산으로 여행갈거야"},
     {"role": "system", "content": "4"},
-    {"role": "user", "content": "2023-11-22 19:24:24 오늘 내역서 작업하느라 매우 바빴는데 저녁에 회를 먹어서 호다닥 달려옴"},
+    {"role": "user", "content": "오늘 내역서 작업하느라 매우 바빴는데 저녁에 회를 먹어서 호다닥 달려옴"},
     {"role": "system", "content": "2"},
-    {"role": "user", "content": "2023-11-22 20:12:51 아침마다 파업 그만했으면 좋겠다 한놈만 걸려라 다 패버린다"},
+    {"role": "user", "content": "아침마다 파업 그만했으면 좋겠다 한놈만 걸려라 다 패버린다"},
     {"role": "system", "content": "2"},
 ]
 
@@ -306,7 +305,7 @@ class GPTService:
             messages_prompt = messages_prompt[:1500]
         else:
             messages_prompt = messages_prompt[:500]
-        if prompt_num == 1 or prompt_num == 6:
+        if prompt_num == 6:
             messages_prompt = f"{datetime.datetime.now(pytz.timezone('Asia/Seoul'))}, {messages_prompt}"
         prompt = prompt_dict[prompt_num][0].copy()
         prompt.append({"role": "user", "content": messages_prompt})

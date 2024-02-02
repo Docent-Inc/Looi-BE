@@ -12,6 +12,7 @@ from app.core.aiRequset import GPTService
 from app.schemas.request import UpdateDiaryRequest, CreateDiaryRequest
 from app.service.abstract import AbstractDiaryService
 from app.service.push import PushService
+from app.service.report import ReportService
 
 
 class DiaryService(AbstractDiaryService):
@@ -20,7 +21,21 @@ class DiaryService(AbstractDiaryService):
         self.db = db
         self.redis = redis
 
-    async def create(self, diary_data: CreateDiaryRequest) -> NightDiary:
+    async def create_report(self):
+        report_service = ReportService(self.user, self.db, self.redis)
+        push_service = PushService(self.db, self.user)
+        if await report_service.check_count(self.user):
+            report = await report_service.generate()
+            await push_service.send(
+                title="Looi",
+                body=f"{self.user.nickname}님의 마음 상태 보고서를 만들었어요! 얼른 확인해 보세요~!",
+                device=f"{self.user.device}",
+                image_url=report.image_url,
+                landing_url=f"/report/{report.id}",
+                token=self.user.push_token
+            )
+
+    async def create(self, diary_data: CreateDiaryRequest, background_tasks: BackgroundTasks) -> NightDiary:
 
         diary_name = ""
         if diary_data.diary_name != "":
@@ -44,6 +59,9 @@ class DiaryService(AbstractDiaryService):
             modify_date=now,
         )
         diary = save_db(diary, self.db)
+
+        # 일기를 3개 이상 작성했을 때 한 주 돌아보기 보고서 생성
+        background_tasks.add_task(self.create_report)
 
         # list cache 삭제
         keys = await self.redis.keys(f"diary:list:{self.user.id}:*")
@@ -77,7 +95,7 @@ class DiaryService(AbstractDiaryService):
         gpt_service = GPTService(self.user, self.db)
         if diary.diary_name == "":
             image_url, diary_name, reply = await asyncio.gather(
-                gpt_service.send_dalle_request(f"오늘의 일기(no text): {diary.content}"),
+                gpt_service.send_dalle_request(f"오늘의 일기(no text, digital art, illustration): {diary.content}"),
                 gpt_service.send_gpt_request(2, diary.content),
                 gpt_service.send_gpt_request(10, f"nickname: {self.user.nickname}, diary: {diary.content}")
             )
@@ -86,7 +104,7 @@ class DiaryService(AbstractDiaryService):
 
         elif diary.diary_name != "":
             image_url, reply = await asyncio.gather(
-                gpt_service.send_dalle_request(f"오늘의 일기(no text): {diary.content}"),
+                gpt_service.send_dalle_request(f"오늘의 일기(no text, digital art, illustration): {diary.content}"),
                 gpt_service.send_gpt_request(10, f"nickname: {self.user.nickname}, diary: {diary.content}")
             )
 

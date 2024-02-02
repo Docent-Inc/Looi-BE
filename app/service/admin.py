@@ -47,19 +47,20 @@ class AdminService(AbstractAdminService):
                 User.mbti,
                 MorningDiary.content,
                 MorningDiary.resolution,
-                MorningDiary.main_keyword
+                MorningDiary.main_keyword,
+                User.nickname
             ).join(User, MorningDiary.User_id == User.id)
         ).fetchall()
 
         data = []
 
-        for user_id, mbti, content, resolution, main_keyword in results:
+        for user_id, mbti, content, resolution, main_keyword, nickname in results:
             keyword_list = []
             try:
                 for keyword in json.loads(main_keyword):
                     keyword_list.append(keyword)
                 dream_info = {
-                    "Text": f"{mbti}, {content}",
+                    "Text": f"nickname: {nickname}, mbti: {mbti}, dream: {content}",
                     "Completion": {"resolution": resolution, "main_keywords": keyword_list}
                 }
                 dream_info["Completion"] = json.dumps(dream_info["Completion"], ensure_ascii=False)
@@ -76,13 +77,14 @@ class AdminService(AbstractAdminService):
                 NightDiary.User_id,
                 NightDiary.content,
                 NightDiary.resolution,
-                NightDiary.main_keyword
+                NightDiary.main_keyword,
+                User.nickname,
             ).join(User, NightDiary.User_id == User.id)
         ).fetchall()
 
         data = []
 
-        for user_id, content, resolution, main_keyword in results:
+        for user_id, content, resolution, main_keyword, nickname in results:
             keyword_list = []
             try:
                 if "오늘은 인상깊은 날이다." in content:
@@ -90,8 +92,8 @@ class AdminService(AbstractAdminService):
                 for keyword in json.loads(main_keyword):
                     keyword_list.append(keyword)
                 dream_info = {
-                    "Text": f"{content}",
-                    "Completion": {"resolution": resolution, "main_keywords": keyword_list}
+                    "Text": f"nickname: {nickname}, diary: {content}",
+                    "Completion": {"reply": resolution, "main_keywords": keyword_list}
                 }
                 dream_info["Completion"] = json.dumps(dream_info["Completion"], ensure_ascii=False)
                 data.append(dream_info)
