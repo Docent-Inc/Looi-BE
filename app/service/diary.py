@@ -37,16 +37,17 @@ class DiaryService(AbstractDiaryService):
 
     async def create(self, diary_data: CreateDiaryRequest, background_tasks: BackgroundTasks) -> NightDiary:
 
-        diary_name = ""
-        if diary_data.diary_name != "":
-            await check_length(diary_data.diary_name, 255, 4023)
-            diary_name = diary_data.diary_name
+        # diary_name = ""
+        # if diary_data.diary_name != "":
+        #     await check_length(diary_data.diary_name, 255, 4023)
+        #     diary_name = diary_data.diary_name
 
         now = await time_now()
         if diary_data.date == "" or str(diary_data.date[:10]) == str(now.date()):
             diary_data.date = now
 
         await check_length(diary_data.content, 1000, 4221)
+        diary_name = f"{now.year}년 {now.month}월 {now.day}일의 일기"
         diary = NightDiary(
             content=diary_data.content,
             User_id=self.user.id,

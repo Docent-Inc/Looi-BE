@@ -26,12 +26,13 @@ class DreamService(AbstractDiaryService):
         # db에 저장
         await check_length(dream_data.content, 1000, 4221)
         now = await time_now()
+        diary_name = f"{now.year}년 {now.month}월 {now.day}일의 꿈"
         try:
             diary = MorningDiary(
                 content=dream_data.content,
                 User_id=self.user.id,
                 image_url="",
-                diary_name="",
+                diary_name=diary_name,
                 resolution="",
                 share_id=str(uuid.uuid4()),
                 main_keyword="",
