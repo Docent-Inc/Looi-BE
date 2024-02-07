@@ -55,7 +55,7 @@ class ChatService(AbstractChatService):
                 )
 
         # 텍스트 저장
-        text_type_dict = {1: "꿈", 2: "일기", 3: "메모", 4: "일정"}
+        text_type_dict = {1: "꿈", 2: "일기", 3: "메모", 4: "일정", 5: "단축어 일기"}
         save_chat = TextClassification(
             text=chat_data.content,
             User_id=self.user.id,
@@ -77,6 +77,10 @@ class ChatService(AbstractChatService):
         elif chat_data.type == 4:
             calendar_service = CalendarService(self.user, self.db, self.redis)
             diary = await calendar_service.create(CreateCalendarRequest(content=chat_data.content))
+        elif chat_data.type == 5:
+            diary_service = DiaryService(self.user, self.db, self.redis)
+            diary = await diary_service.create(CreateDiaryRequest(content=chat_data.content), background_tasks)
+            diary = await diary_service.generate(diary.id, background_tasks)
         else:
             # 텍스트 분류 실패
             raise HTTPException(
