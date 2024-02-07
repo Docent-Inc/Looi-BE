@@ -21,14 +21,15 @@ class MemoService(AbstractDiaryService):
     async def create(self, memo_data: CreateMemoRequest) -> Memo:
 
         # 제목, 내용 길이 체크
-        if memo_data.title != "":
-            await check_length(text=memo_data.title, max_length=255, error_code=4023)
+        # if memo_data.title != "":
+        #     await check_length(text=memo_data.title, max_length=255, error_code=4023)
         await check_length(text=memo_data.content, max_length=1000, error_code=4221)
 
         # 메모 생성
         now = await time_now()
+        memo_title = f"{now.year}년 {now.month}월 {now.day}일의 메모"
         memo = Memo(
-            title=memo_data.title,
+            title=memo_title,
             content=memo_data.content,
             User_id=self.user.id,
             tags="",
