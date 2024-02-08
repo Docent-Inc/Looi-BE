@@ -82,8 +82,8 @@ class ReportService(AbstractReportService):
 
         data = json.loads(report.content)
 
-        redis_key = f"report:list:{self.user.id}:*"
-        await self.redis.delete(redis_key)
+        # redis_key = f"report:list:{self.user.id}:*"
+        # await self.redis.delete(redis_key)
 
         return {
             "id": report.id,
@@ -94,11 +94,11 @@ class ReportService(AbstractReportService):
 
     async def list(self, page: int) -> list:
 
-        # redis에 저장된 데이터를 가져옵니다.
-        redis_key = f"report:list:{self.user.id}:{page}"
-        redis_data = await self.redis.get(redis_key)
-        if redis_data:
-            return json.loads(redis_data)
+        # # redis에 저장된 데이터를 가져옵니다.
+        # redis_key = f"report:list:{self.user.id}:{page}"
+        # redis_data = await self.redis.get(redis_key)
+        # if redis_data:
+        #     return json.loads(redis_data)
 
         limit = 6
         offset = (page - 1) * limit
@@ -131,8 +131,8 @@ class ReportService(AbstractReportService):
             ]
         }
 
-        # redis에 데이터를 저장합니다.
-        await self.redis.set(redis_key, json.dumps(response, ensure_ascii=False), ex=1800)
+        # # redis에 데이터를 저장합니다.
+        # await self.redis.set(redis_key, json.dumps(response, ensure_ascii=False), ex=1800)
 
         # 리포트 정보와 함께 제목과 기간을 포함하여 반환합니다.
         return response
@@ -254,7 +254,7 @@ class ReportService(AbstractReportService):
             save_db(push_question, self.db)
 
 
-        redis_key = f"report:list:{self.user.id}:*"
-        await self.redis.delete(redis_key)
+        # redis_key = f"report:list:{self.user.id}:*"
+        # await self.redis.delete(redis_key)
 
         return report
