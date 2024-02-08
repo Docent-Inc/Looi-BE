@@ -170,7 +170,6 @@ class ReportService(AbstractReportService):
         return last_date, reports, diary_list
 
     async def generate(self) -> dict:
-        print(f"Generating report for user {self.user.nickname}")
         text = f"nickname: {self.user.nickname}\n"
         today = await time_now()
 
@@ -178,6 +177,7 @@ class ReportService(AbstractReportService):
         if len(diary_list) < 3:
             return False
 
+        print(f"Generating report for user {self.user.nickname}")
         text += "\nDiary for the last week:\n" + "\n".join(diary.content for diary in diary_list)
         text = text[:1400]
 
