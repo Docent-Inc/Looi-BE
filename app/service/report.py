@@ -149,8 +149,11 @@ class ReportService(AbstractReportService):
         today = await time_now()
 
         # 마지막 보고서 생성일 다음날 부터 오늘까지의 일기를 가져옵니다.
-        last_report = reports[0]
-        last_date = last_report.create_date + timedelta(days=1)
+        try:
+            last_report = reports[0]
+            last_date = last_report.create_date + timedelta(days=1)
+        except:
+            last_date = today - timedelta(days=7)
 
         night_diaries = self.db.query(NightDiary).filter(
             NightDiary.User_id == user.id,
@@ -167,6 +170,7 @@ class ReportService(AbstractReportService):
         return last_date, reports, diary_list
 
     async def generate(self) -> dict:
+        print(f"Generating report for user {self.user.nickname}")
         text = f"nickname: {self.user.nickname}\n"
         today = await time_now()
 
