@@ -18,6 +18,45 @@ from app.service.abstract import AbstractReportService
 from app.service.push import PushService
 
 
+async def calculate_period(start_date):
+    start_of_week = start_date - timedelta(days=start_date.weekday())
+    end_of_week = start_of_week + timedelta(days=6)
+    return {
+        "start_date": start_of_week.strftime("%Y년 %m월 %d일"),
+        "end_date": end_of_week.strftime("%Y년 %m월 %d일")
+    }
+
+
+async def validate_report_structure(report_data):
+    try:
+        report_data = json.loads(report_data)
+    except:
+        return False
+    required_keys = {
+        "mental_state": str,
+        "positives": dict,
+        "negatives": dict,
+        # "recommendations": list,
+        "personal_questions": list,
+        "keywords": list,
+    }
+    for key, expected_type in required_keys.items():
+        if key not in report_data or not isinstance(report_data[key], expected_type):
+            return False
+        if key in ["positives", "negatives"]:
+            if "comment" not in report_data[key] or not isinstance(report_data[key]["comment"], str):
+                return False
+            if "main_keyword" not in report_data[key] or not isinstance(report_data[key]["main_keyword"], str):
+                return False
+        # if key in ["recommendations", "personal_questions"]:
+        #     if not all(isinstance(item, str) for item in report_data[key]):
+        #         return False
+
+    if not all(isinstance(keyword, str) for keyword in report_data["keywords"]):
+        return False
+    return True
+
+
 class ReportService(AbstractReportService):
     def __init__(self, user: User = Depends(get_current_user), db: Session = Depends(get_db), redis: aioredis.Redis = Depends(get_redis_client)):
         self.user = user
@@ -48,15 +87,7 @@ class ReportService(AbstractReportService):
             "content": data,
             "image_url": report.image_url,
             "create_date": report.create_date.strftime("%Y년 %m월 %d일"),
-            "period": await self.calculate_period(report.create_date)
-        }
-
-    async def calculate_period(self, start_date):
-        start_of_week = start_date - timedelta(days=start_date.weekday())
-        end_of_week = start_of_week + timedelta(days=6)
-        return {
-            "start_date": start_of_week.strftime("%Y년 %m월 %d일"),
-            "end_date": end_of_week.strftime("%Y년 %m월 %d일")
+            "period": await calculate_period(report.create_date)
         }
 
     async def list(self, page: int) -> list:
@@ -70,59 +101,31 @@ class ReportService(AbstractReportService):
         limit = 6
         offset = (page - 1) * limit
 
-        # 모든 리포트를 가져옵니다 (내림차순 정렬).
-        reports = self.db.query(Report).filter(
-            Report.User_id == self.user.id,
-            Report.is_deleted == False
-        ).order_by(Report.create_date.desc()).all()
+        last_date, reports, diary_list = await self.check_count(self.user)
 
-        report_count = len(reports)  # 모든 리포트의 개수를 가져옴
-        generated_reports = reports[offset:offset + limit]  # 현재 페이지에 해당하는 리포트
-
-        # 현재 날짜와 시간을 구합니다.
-        today = await time_now()
-
-        # 현재 날짜가 속한 주의 월요일 날짜를 계산합니다.
-        weekday = today.weekday()  # 월요일은 0, 일요일은 6
-        monday = today - timedelta(days=weekday)  # 이번 주 월요일
-
-        morning_diaries = self.db.query(MorningDiary).filter(
-            MorningDiary.User_id == self.user.id,
-            MorningDiary.create_date.between(monday.date(), today),
-            MorningDiary.is_deleted == False
-        ).all()
-
-        night_diaries = self.db.query(NightDiary).filter(
-            NightDiary.User_id == self.user.id,
-            NightDiary.create_date.between(monday.date(), today),
-            NightDiary.is_deleted == False,
-            NightDiary.diary_name != "나만의 기록 친구 Looi와의 특별한 첫 만남",
-        ).all()
-
-        generated_total_count = len(morning_diaries) + len(night_diaries)
+        generated_reports = reports[offset:offset + limit]
 
         # 각 페이지에 대한 올바른 시작 번호 계산
-        start_number = report_count - offset
+        start_number = len(reports) - offset
 
         # 현재 페이지에 해당하는 리포트에 대한 제목을 생성합니다.
-        titles = [f"{start_number - idx}번째 돌아보기" for idx in range(len(generated_reports))]
+        titles = [f"{start_number - idx}번째 마음 상태" for idx in range(len(generated_reports))]
 
-        # 기간 계산 로직을 추가합니다.
-        periods = [await self.calculate_period(report.create_date) for report in generated_reports]
+        # # 기간 계산 로직을 추가합니다.
+        # periods = [await self.calculate_period(report.create_date) for report in generated_reports]
 
         response = {
-            "generated_total_count": generated_total_count,
-            "list_count": report_count,
+            "generated_total_count": len(diary_list),
+            "list_count": len(reports),
             "reports": [
                 {
                     "id": report.id,
                     "title": title,
-                    "period": period,
                     "main_keyword": json.loads(report.content)["keywords"],
                     "image_url": report.image_url,
                     "create_date": report.create_date.strftime("%Y년 %m월 %d일"),
                     "is_read": report.is_read
-                } for title, period, report in zip(titles, periods, generated_reports)
+                } for title, report in zip(titles, generated_reports)
             ]
         }
 
@@ -132,129 +135,74 @@ class ReportService(AbstractReportService):
         # 리포트 정보와 함께 제목과 기간을 포함하여 반환합니다.
         return response
 
-    async def validate_report_structure(self, report_data):
-        try:
-            report_data = json.loads(report_data)
-        except:
-            return False
-        required_keys = {
-            "mental_state": str,
-            "positives": dict,
-            "negatives": dict,
-            "extroverted_activities": list,
-            "introverted_activities": list,
-            "recommendations": list,
-            "statistics": dict,
-            "keywords": list,
-        }
-        for key, expected_type in required_keys.items():
-            if key not in report_data or not isinstance(report_data[key], expected_type):
-                return False
-            if key in ["positives", "negatives"]:
-                if "comment" not in report_data[key] or not isinstance(report_data[key]["comment"], str):
-                    return False
-                if "main_keyword" not in report_data[key] or not isinstance(report_data[key]["main_keyword"], str):
-                    return False
-
-        statistics = report_data["statistics"]
-        if not ("extrovert" in statistics and isinstance(statistics["extrovert"], int)):
-            return False
-        if not ("introvert" in statistics and isinstance(statistics["introvert"], int)):
-            return False
-
-        if not all(isinstance(keyword, str) for keyword in report_data["keywords"]):
-            return False
-        return True
-
     async def check_count(self, user: User) -> bool:
+        # 모든 리포트를 가져옵니다 (내림차순 정렬).
+        reports = self.db.query(Report).filter(
+            Report.User_id == self.user.id,
+            Report.is_deleted == False
+        ).order_by(Report.create_date.desc()).all()
+        #TODO: 페이징 기능 필요
+
+        # 현재 날짜와 시간을 구합니다.
         today = await time_now()
-        one_week_ago = today - timedelta(days=6)
 
-        # 이번주에 생성된 리포트가 있는지 확인합니다.
-        report = self.db.query(Report).filter(
-            Report.User_id == user.id,
-            Report.is_deleted == False,
-            Report.create_date >= one_week_ago.date(),
-        ).first()
+        # 마지막 보고서 생성일 다음날 부터 오늘까지의 일기를 가져옵니다.
+        last_report = reports[0]
+        last_date = last_report.create_date + timedelta(days=1)
 
-        if report:
-            return False
-
-        # # Process Morning Diary
-        # morning_diaries = self.db.query(MorningDiary).filter(
-        #     MorningDiary.User_id == user.id,
-        #     MorningDiary.create_date.between(one_week_ago.date(), today),
-        #     MorningDiary.is_deleted == False
-        # ).count()
-
-        # Process Night Diary
         night_diaries = self.db.query(NightDiary).filter(
             NightDiary.User_id == user.id,
-            NightDiary.create_date.between(one_week_ago.date(), today),
-            NightDiary.is_deleted == False,
-            NightDiary.diary_name != "나만의 기록 친구 Look-i와의 특별한 첫 만남",
-        ).count()
-
-        total_count = night_diaries
-
-        if total_count < 3:
-            return False
-
-        return True
-
-    async def generate_report(self, user: User) -> Report:
-        text = f"nickname: {user.nickname}\n"
-        today = await time_now()
-        one_week_ago = today - timedelta(days=6)
-
-        # # Process Morning Diary
-        # morning_diaries = self.db.query(MorningDiary).filter(
-        #     MorningDiary.User_id == user.id,
-        #     MorningDiary.create_date.between(one_week_ago.date(), today),
-        #     MorningDiary.is_deleted == False
-        # ).all()
-        #
-        # text += "Dreams of the last week:\n" + "\n".join(diary.content for diary in morning_diaries)
-        # text = text[:300]
-
-        # Process Night Diary
-        night_diaries = self.db.query(NightDiary).filter(
-            NightDiary.User_id == user.id,
-            NightDiary.create_date.between(one_week_ago.date(), today),
+            NightDiary.create_date.between(last_date.date(), today),
             NightDiary.is_deleted == False,
             NightDiary.diary_name != "나만의 기록 친구 Looi와의 특별한 첫 만남",
         ).all()
 
-        text += "\nDiary for the last week:\n" + "\n".join(diary.content for diary in night_diaries)
+        diary_list = []
+        for diary in night_diaries:
+            if len(diary.content) > 50:
+                diary_list.append(diary)
+
+        return last_date, reports, diary_list
+
+    async def generate(self) -> dict:
+        text = f"nickname: {self.user.nickname}\n"
+        today = await time_now()
+
+        last_date, reports, diary_list = await self.check_count(self.user)
+        if len(diary_list) < 3:
+            return False
+
+        text += "\nDiary for the last week:\n" + "\n".join(diary.content for diary in diary_list)
         text = text[:1400]
 
         # Process Calendar
         calenders = self.db.query(Calendar).filter(
-            Calendar.User_id == user.id,
-            Calendar.start_time.between(one_week_ago.date(), today),
+            Calendar.User_id == self.user.id,
+            Calendar.start_time.between(last_date.date(), today),
             Calendar.is_deleted == False
         ).all()
 
         text += "\nSchedule for the last week:\n" + "\n".join(
             f"{content.title}: {content.content}" for content in calenders)
+
         retries = 0
         is_success = False
         MAX_RETRIES = 3
-        gpt_service = GPTService(user, self.db)
+        gpt_service = GPTService(self.user, self.db)
         while is_success == False and retries < MAX_RETRIES:
             report_data = await gpt_service.send_gpt_request(7, text)
             if not await validate_report_structure(report_data):
-                print(f"Invalid report structure for user {user.nickname}, retrying...{retries + 1}")
+                print(f"Invalid report structure for user {self.user.nickname}, retrying...{retries + 1}")
                 retries += 1
             else:
                 is_success = True
 
         if retries >= MAX_RETRIES:
-            print(f"Failed to generate report for user {user.nickname}")
+            print(f"Failed to generate report for user {self.user.nickname}")
             client = AsyncWebClient(token=settings.SLACK_BOT_TOKEN)
             await client.chat_postMessage(
                 channel="C064ZCNDVU1",
-                text=f"{user.nickname}님의 리포트 생성에 실패했습니다. 관리자에게 문의해주세요."
+                text=f"{self.user.nickname}님의 리포트 생성에 실패했습니다. 관리자에게 문의해주세요."
             )
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -262,212 +210,30 @@ class ReportService(AbstractReportService):
             )
 
         data = json.loads(report_data)
-        text = "다음 내용을 바탕으로 추상적인 이미지를 생성해주세요(no text).\n"
-        text += data["mental_state"]
-        image_url = await gpt_service.send_dalle_request(messages_prompt=text)
-
-        mental_report = Report(
-            User_id=user.id,
-            content=json.dumps(data, ensure_ascii=False),
-            create_date=today,
-            image_url=image_url,
-            is_deleted=False,
-        )
-        report = save_db(mental_report, self.db)
-        return report
-
-    async def generate(self) -> dict:
-        async def validate_report_structure(report_data):
-            try:
-                report_data = json.loads(report_data)
-            except:
-                return False
-            required_keys = {
-                "mental_state": str,
-                "positives": dict,
-                "negatives": dict,
-                "extroverted_activities": list,
-                "introverted_activities": list,
-                "recommendations": list,
-                "statistics": dict,
-                "keywords": list,
-            }
-            for key, expected_type in required_keys.items():
-                if key not in report_data or not isinstance(report_data[key], expected_type):
-                    return False
-                if key in ["positives", "negatives"]:
-                    if "comment" not in report_data[key] or not isinstance(report_data[key]["comment"], str):
-                        return False
-                    if "main_keyword" not in report_data[key] or not isinstance(report_data[key]["main_keyword"], str):
-                        return False
-
-            statistics = report_data["statistics"]
-            if not ("extrovert" in statistics and isinstance(statistics["extrovert"], int)):
-                return False
-            if not ("introvert" in statistics and isinstance(statistics["introvert"], int)):
-                return False
-
-            if not all(isinstance(keyword, str) for keyword in report_data["keywords"]):
-                return False
-            return True
-
-        async def check_count(user: User) -> bool:
-            today = await time_now()
-            one_week_ago = today - timedelta(days=6)
-
-            # 이번주에 생성된 리포트가 있는지 확인합니다.
-            report = self.db.query(Report).filter(
-                Report.User_id == user.id,
-                Report.is_deleted == False,
-                Report.create_date >= one_week_ago.date(),
-            ).first()
-
-            if report:
-                return False
-
-            # # Process Morning Diary
-            # morning_diaries = self.db.query(MorningDiary).filter(
-            #     MorningDiary.User_id == user.id,
-            #     MorningDiary.create_date.between(one_week_ago.date(), today),
-            #     MorningDiary.is_deleted == False
-            # ).count()
-
-            # Process Night Diary
-            night_diaries = self.db.query(NightDiary).filter(
-                NightDiary.User_id == user.id,
-                NightDiary.create_date.between(one_week_ago.date(), today),
-                NightDiary.is_deleted == False,
-                NightDiary.diary_name != "나만의 기록 친구 Look-i와의 특별한 첫 만남",
-            ).count()
-
-            total_count = night_diaries
-
-            if total_count < 3:
-                return False
-
-            return True
-
-        async def generate_report(user: User) -> Report:
-            text = f"nickname: {user.nickname}\n"
-            today = await time_now()
-            one_week_ago = today - timedelta(days=6)
-
-            # # Process Morning Diary
-            # morning_diaries = self.db.query(MorningDiary).filter(
-            #     MorningDiary.User_id == user.id,
-            #     MorningDiary.create_date.between(one_week_ago.date(), today),
-            #     MorningDiary.is_deleted == False
-            # ).all()
-            #
-            # text += "Dreams of the last week:\n" + "\n".join(diary.content for diary in morning_diaries)
-            # text = text[:300]
-
-            # Process Night Diary
-            night_diaries = self.db.query(NightDiary).filter(
-                NightDiary.User_id == user.id,
-                NightDiary.create_date.between(one_week_ago.date(), today),
-                NightDiary.is_deleted == False,
-                NightDiary.diary_name != "나만의 기록 친구 Looi와의 특별한 첫 만남",
-            ).all()
-
-            text += "\nDiary for the last week:\n" + "\n".join(diary.content for diary in night_diaries)
-            text = text[:1400]
-
-            # Process Calendar
-            calenders = self.db.query(Calendar).filter(
-                Calendar.User_id == user.id,
-                Calendar.start_time.between(one_week_ago.date(), today),
-                Calendar.is_deleted == False
-            ).all()
-
-            text += "\nSchedule for the last week:\n" + "\n".join(
-                f"{content.title}: {content.content}" for content in calenders)
-            retries = 0
-            is_success = False
-            MAX_RETRIES = 3
-            gpt_service = GPTService(user, self.db)
-            while is_success == False and retries < MAX_RETRIES:
-                report_data = await gpt_service.send_gpt_request(7, text)
-                if not await validate_report_structure(report_data):
-                    print(f"Invalid report structure for user {user.nickname}, retrying...{retries + 1}")
-                    retries += 1
-                else:
-                    is_success = True
-
-            if retries >= MAX_RETRIES:
-                print(f"Failed to generate report for user {user.nickname}")
-                client = AsyncWebClient(token=settings.SLACK_BOT_TOKEN)
-                await client.chat_postMessage(
-                    channel="C064ZCNDVU1",
-                    text=f"{user.nickname}님의 리포트 생성에 실패했습니다. 관리자에게 문의해주세요."
-                )
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=4600
-                )
-
-            data = json.loads(report_data)
-            text = "다음 내용을 바탕으로 추상적인 이미지를 생성해주세요(no text).\n"
-            text += data["mental_state"]
-            image_url = await gpt_service.send_dalle_request(messages_prompt=text)
-
-            mental_report = Report(
-                User_id=user.id,
-                content=json.dumps(data, ensure_ascii=False),
-                create_date=today,
-                image_url=image_url,
-                is_deleted=False,
-            )
-            report = save_db(mental_report, self.db)
-            return report
-
-        lock_key = "generate_report_lock"
-        if await self.redis.set(lock_key, "locked", ex=60, nx=True):
-            try:
-                users = self.db.query(User).filter(
-                    User.is_deleted == False,
-                ).all()
-                total_count = 0
-                generate_user_list = []
-                push_service = PushService(db=self.db, user=self.user)
-                for user in users:
-                    print(f"processing {user.nickname}")
-                    if await check_count(user):
-                        total_count += 1
-                        generate_user_list.append(user)
-                print(f"total_count: {total_count}")
-                for user in generate_user_list:
-                    report = await generate_report(user)
-                    print(f"{user.nickname} 유저 리포트 생성 완료")
-                    if user.push_report == True:
-                        await push_service.send(
-                            title="Looi",
-                            body=f"{user.nickname}님의 한 주 돌아보기 보고서를 만들었어요! 얼른 확인해 보세요~!",
-                            device=f"{user.device}",
-                            image_url=report.image_url,
-                            landing_url=f"/report/{report.id}",
-                            token=user.push_token
-                        )
-                    print(f"progress: {generate_user_list.index(user) + 1}/{total_count}")
-            finally:
-                self.db.close()
-                await self.redis.delete(lock_key)
-
-    async def test(self, content: str):
-        print(content)
-        data = json.loads(content)
         text = "다음 내용을 바탕으로 이미지를 생성해주세요(no text, digital art, illustration).\n"
         text += data["mental_state"]
-        gpt_service = GPTService(self.user, self.db)
         image_url = await gpt_service.send_dalle_request(messages_prompt=text)
-        today = await time_now()
+
         mental_report = Report(
-            User_id=1,
+            User_id=self.user.id,
             content=json.dumps(data, ensure_ascii=False),
             create_date=today,
             image_url=image_url,
             is_deleted=False,
         )
         report = save_db(mental_report, self.db)
+
+        push_service = PushService(db=self.db, user=self.user)
+        await push_service.send(
+            title="Looi",
+            body=f"{self.user.nickname}님의 기록을 토대로 마음 상태 보고서를 만들었어요 📜",
+            device=f"{self.user.device}",
+            image_url=report.image_url,
+            landing_url=f"/report/{report.id}",
+            token=self.user.push_token
+        )
+
+        redis_key = f"report:list:{self.user.id}:*"
+        await self.redis.delete(redis_key)
 
         return report

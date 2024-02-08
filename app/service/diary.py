@@ -23,17 +23,7 @@ class DiaryService(AbstractDiaryService):
 
     async def create_report(self):
         report_service = ReportService(self.user, self.db, self.redis)
-        push_service = PushService(self.db, self.user)
-        if await report_service.check_count(self.user):
-            report = await report_service.generate()
-            await push_service.send(
-                title="Looi",
-                body=f"{self.user.nickname}님의 마음 상태 보고서를 만들었어요! 얼른 확인해 보세요~!",
-                device=f"{self.user.device}",
-                image_url=report.image_url,
-                landing_url=f"/report/{report.id}",
-                token=self.user.push_token
-            )
+        await report_service.generate()
 
     async def create(self, diary_data: CreateDiaryRequest, background_tasks: BackgroundTasks) -> NightDiary:
 

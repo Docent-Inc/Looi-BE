@@ -39,6 +39,8 @@ class Settings(BaseSettings):
     NAVER_CLOUD_SECRET_KEY: str
     FIREBASE_API_KEY: str
     FIREBASE_JSON: str
+    NAVER_API_KEY: str
+    NAVER_GATEWAY_KEY: str
 
     class Config:
         env_file = ".env"

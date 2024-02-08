@@ -16,6 +16,35 @@ from app.db.database import save_db
 from app.db.models import ApiRequestLog, User, Prompt
 import boto3
 
+class ClovaService:
+    def __init__(self):
+        self._host = 'https://clovastudio.apigw.ntruss.com/testapp/v1/chat-completions/HCX-003'
+        self.headers = {
+            'X-NCP-CLOVASTUDIO-API-KEY': settings.NAVER_API_KEY,
+            "X-NCP-APIGW-API-KEY": settings.NAVER_GATEWAY_KEY,
+            'Content-Type': 'application/json; charset=utf-8',
+        }
+        self.completion_request = {
+            'topP': 0.8,
+            'topK': 0,
+            'maxTokens': 2500,
+            'temperature': 0.5,
+            'repeatPenalty': 5.0,
+            'stopBefore': [],
+            'includeAiFilters': False,
+            'seed': 0
+        }
+
+    def execute(self, prompt):
+        headers = self.headers
+        completion_request = self.completion_request
+        completion_request['messages'] = prompt
+        result = requests.post(self._host, headers=headers, json=completion_request).text
+        result = json.loads(result)
+        message_content = result["result"]["message"]["content"]
+        return message_content
+
+
 service_name = 's3'
 endpoint_url = 'https://kr.object.ncloudstorage.com'
 region_name = 'kr-standard'
@@ -192,13 +221,14 @@ prompt6 = [
 ]
 
 prompt7 = [
-    {"role": "system", "content": "Analyze the user's dreams, diary, and schedule to create a about 4000-character Concrete 'Mental State Report'. Please write korean but each title is Engilsh."},
-    {"role": "system", "content": "1. mental_state 2. positives  3. negatives  4. extroverted_activities 5. introverted_activities  6. recommendations 7. statistics 8. keywords"},
-    {"role": "system", "content": "Provide detailed analysis for 'Mental State'. For items 1, total summary about report and include user nickname. about 400-character" },
-    {"role": "system", "content": "For item 2-3, provide some comments about the user's extroverted and introverted activities. about 300-character. main_keyword in 2-3 is phrase or word that you choose."},
-    {"role": "system", "content": "For item 7, provide a list 1 detail ratio dictionary for Extroversion, Introversion and for item 8 provide 5 keywords"},
-    {"role": "system", "content": "공손한 말투로 만들어주세요. follow my example json format. must fill all items."},
-    {"role": "system", "content": "ex) if user nickname: 뀨뀨, return = {\"mental_state\":\"뀨뀨님의 최근 꿈과 일기는 복잡한 감정과 생각의 교차점을 보여줍니다. 꿈에서의 경쟁과 화해 시도는 일상 생활에서의 스트레스, 대인 관계의 어려움, 그리고 자신의 업적에 대한 내적인 기준과 기대를 반영하고 있습니다. 이는 뀨뀨님의 열정과 성취에 대한 갈망, 동시에 관계와 업무에서의 불안정성과 불확실성에 대한 고민을 나타냅니다.\", \"positives\": {\"comment\": \"학회 수료와 상 수상은 뀨뀨님의 성취감을 대표하는 중요한 사건입니다. 남자친구와의 즐거운 시간, 동료들과의 식사는 일상 속에서 즐거움과 안정감을 제공합니다. 이러한 순간들은 뀨뀨님의 긍정적인 에너지를 증폭시키며, 성공과 행복을 추구하는 데 동기를 부여합니다. \", \"main_keyword\": \"성취감과 행복\"}, \"negatives\": {\"comment\": \"일상에서 느끼는 지루함과 스트레스, 내적 갈등이 뀨뀨님의 정신적 부담을 가중시키고 있습니다. 특히, 싫어하는 사람과의 관계에서 느끼는 스트레스와 업무에서의 난감함이 부각됩니다. 이러한 부담감은 뀨뀨님의 삶에서 균형을 찾는 데 방해가 될 수 있습니다.\", \"main_keyword\": \"스트레스와 불안정성\"}, \"extroverted_activities\": [\"동료들과의 저녁식사\", \"남자친구와의 데이트\", \"가족, 친구들과의 저녁 약속\"], \"introverted_activities\": [\"독서실에서의 개별 작업\", \"일기 쓰기\", \"학회에서의 성취\"], \"recommendations\": [\"스트레스 관리를 위한 취미 활동 찾기\", \"자기계발 및 경력 계획 세우기\", \"대인 관계에서의 긴장 완화를 위한 커뮤니케이션 기술 향상\", \"규칙적인 수면 스케줄 유지\", \"필요시 전문가의 상담 고려\"], \"statistics\": {\"extrovert\": 60, \"introvert\": 40}, \"keywords\": [\"성취감\", \"행복\", \"스트레스\", \"불안정성\", \"자기 성찰\"]}"},
+    {"role": "system", "content": "Analyze the user's diary and schedule to create '마음 상태 보고서'. Please write korean but each title is Engilsh. json format, must follow my example(format and length), 모든 문단에 이모지를 포함해줘!"},
+    {"role": "system", "content": "{\"mental_state\": \"태완님의 일기를 통해 새해의 시작과 함께 긍정적인 변화와 성장을 향한 기대감을 느낄 수 있습니다. 🌅 해돋이를 보며 새해를 맞이한 것, 건강을 챙기기 위해 한의원 방문 🏥, 가족과의 소중한 시간, 그리고 새로운 도전으로 영어 공부를 시작한 것까지, 태완님의 삶에서 긍정적인 방향으로의 흐름이 뚜렷하게 나타나고 있어요. 이러한 활동들은 태완님에게 🔋새로운 에너지를 주며, 자신감과 함께 앞으로 나아가는 데 필요한 동기부여를 제공하고 있습니다.😊\", \"positives\": {\"comment\": \"2024년의 밝은 시작, 가족과 보낸 시간, 그리고 새로운 학습 목표에 대한 열정은 태완님에게 큰 행복과 만족감을 안겨주고 있습니다.🚀 이러한 순간들이 태완님의 삶을 더욱 풍요롭게 하며, 매일을 의미 있고 긍정적으로 만들어가는 데 기여하고 있어요. 태완님, 매 순간을 소중히 여기며 성장해 나가는 여정이 정말로 감동적입니다. 계속해서 이 길을 걸으며 더 많은 성취를 이루시길 응원합니다!🌟\", \"main_keyword\": \"긍정적 성장과 도전\"}, \"negatives\": {\"comment\": \"일상의 분주함과 새로운 시작의 부담감이 태완님을 압박할 수 있습니다. 이 중 상담 약속, 건강 관리, 그리고 새로운 목표에 대한 노력은 때로는 많은 에너지를 요구하죠. ⚡️이러한 도전들이 가끔은 벅찰 수 있음에도, 태완님은 이를 긍정적인 방향으로 이끌고자 하는 강한 의지를 보여주고 있어요. 태완님, 어려움을 마주할 때마다 여러분의 노력과 헌신이 결국에는 큰 성장으로 이어질 것임을 믿습니다. 언제나 태완님의 편에서 응원할게요.📣\", \"main_keyword\": \"도전의 부담과 극복\"}, \"keywords\": [\"새해 목표\", \"가족과 시간\", \"자기 관리\", \"긍정적 도전\", \"스트레스 관리\"], \"personal_questions\": [\"새로 시작한 영어 공부를 재밌게 하고 계신가요? 📚\", \"가족과 보낸 시간이 여러분에게 어떤 긍정적인 영향을 주었나요? 👨‍👩‍👧‍👦\", \"바쁜 일상 속에서도 어떻게 자기 관리에 시간을 할애하고 계신가요? 🧘‍♂️\", \"새해의 목표를 세우며 가진 기대감과 그 목표를 향한 계획은 무엇인가요? 🎯\", \"도전을 겪으며 느낀 가장 큰 교훈은 무엇이었나요? 🤔\"]}"},
+    {"role": "system", "content": "{\"mental_state\": \"소망님의 일기에서 업무의 압박감과 사업에서의 도전, 그리고 개인적인 성찰 사이의 복잡한 감정을 엿볼 수 있습니다. 특히, 업무와 관련된 스트레스, 사업에서의 첫 도전의 어려움, 그리고 개인적인 관계에서 겪는 갈등이 소망님의 정신적 부담감을 증가시키고 있어요.🥲 하지만, 이 모든 상황 속에서도 긍정적인 변화와 성취를 향한 노력이 뚜렷하게 드러나며, 이는 소망님의 강인함과 회복력을 보여줍니다. 💪\",\"positives\":{\"comment\":\"업무에서의 성공적 해결책 찾기, 가족과의 시간, 그리고 운동을 통한 신체 건강의 개선은 소망님에게 큰 성취감을 가져다주었어요. 이러한 순간들은 소망님에게 새로운 에너지를 주며, 어려움을 극복할 수 있는 힘을 실어주고 있습니다.👏 소망님, 이렇게 스스로를 돌보며 긍정적인 변화를 만들어가는 모습이 매우 인상적입니다. 앞으로도 계속해서 좋은 일들이 일어나길 바랍니다! 🌟\",\"main_keyword\":\"회복력과 성취\"},\"negatives\":{\"comment\":\"업무 스트레스와 사업의 불확실성, 대인 관계에서의 갈등은 소망님을 상당히 힘들게 하고 있어요. 이러한 상황들이 소망님의 마음에 큰 무게를 더하고 있지만, 소망님은 이를 극복하기 위해 끊임없이 노력하고 있습니다.💪 소망님, 이런 어려운 시기를 겪으시는 것을 보며 깊은 위로와 격려의 말씀을 드리고 싶어요. 소망님의 노력과 강인함이 결국 모든 어려움을 이겨낼 것입니다. 🤗\",\"main_keyword\":\"스트레스와 회복\"},\"keywords\":[\"업무 스트레스\",\"사업 도전\",\"대인 관계\",\"회복력\",\"자기 관리\"],\"personal_questions\":[\"업무와 사업에서의 스트레스를 관리하기 위해 어떤 전략을 사용하고 계신가요? 🤔\",\"가족과의 시간이나 운동이 일상에 어떤 긍정적인 영향을 주었나요? 👨‍👩‍👧‍👦\",\"사업에서의 불확실성을 어떻게 극복하려고 하시나요? 💼\",\"대인 관계의 갈등을 해결하기 위한 노력이 있나요? 🤝\",\"정신적으로 힘든 시기를 어떻게 극복하고 계신가요? 🧘‍♂️\"}]"},
+    # {"role": "system",
+    #  "content": "{\"mental_state\": \"태완님의 일기를 통해 새해의 시작과 함께 긍정적인 변화와 성장을 향한 기대감을 느낄 수 있습니다. 🌅 해돋이를 보며 새해를 맞이한 것, 건강을 챙기기 위해 한의원 방문 🏥, 가족과의 소중한 시간, 그리고 새로운 도전으로 영어 공부를 시작한 것까지, 태완님의 삶에서 긍정적인 방향으로의 흐름이 뚜렷하게 나타나고 있어요. 이러한 활동들은 태완님에게 🔋새로운 에너지를 주며, 자신감과 함께 앞으로 나아가는 데 필요한 동기부여를 제공하고 있습니다.😊\", \"positives\": {\"comment\": \"2024년의 밝은 시작, 가족과 보낸 시간, 그리고 새로운 학습 목표에 대한 열정은 태완님에게 큰 행복과 만족감을 안겨주고 있습니다.🚀 이러한 순간들이 태완님의 삶을 더욱 풍요롭게 하며, 매일을 의미 있고 긍정적으로 만들어가는 데 기여하고 있어요. 태완님, 매 순간을 소중히 여기며 성장해 나가는 여정이 정말로 감동적입니다. 계속해서 이 길을 걸으며 더 많은 성취를 이루시길 응원합니다!🌟\", \"main_keyword\": \"긍정적 성장과 도전\"}, \"negatives\": {\"comment\": \"일상의 분주함과 새로운 시작의 부담감이 태완님을 압박할 수 있습니다. 이 중 상담 약속, 건강 관리, 그리고 새로운 목표에 대한 노력은 때로는 많은 에너지를 요구하죠. ⚡️이러한 도전들이 가끔은 벅찰 수 있음에도, 태완님은 이를 긍정적인 방향으로 이끌고자 하는 강한 의지를 보여주고 있어요. 태완님, 어려움을 마주할 때마다 여러분의 노력과 헌신이 결국에는 큰 성장으로 이어질 것임을 믿습니다. 언제나 태완님의 편에서 응원할게요.📣\", \"main_keyword\": \"도전의 부담과 극복\"}, \"recommendations\": [\"새로운 학습 목표를 설정할 때는 현실적이고 달성 가능한 목표를 세우세요. 🎯\", \"가족과의 시간을 소중히 하며, 이를 통해 받은 긍정적인 에너지를 일상에 적극적으로 활용하세요. ❤️\", \"바쁜 일상 속에서도 자기 관리에 시간을 할애하여, 정신적, 신체적 건강을 돌보세요. 🥗\", \"새로운 도전에 직면했을 때는 스트레스 관리 방법을 찾아 실천하며, 필요하다면 친구나 가족, 전문가와 대화를 나누세요. 🗣️\", \"자신이 세운 목표를 위해 꾸준히 노력하되, 과정을 즐기려는 마음가짐을 가지세요. 🌈\"], \"keywords\": [\"새해 목표\", \"가족과 시간\", \"자기 관리\", \"긍정적 도전\", \"스트레스 관리\"], \"personal_questions\": [\"새로 시작한 영어 공부를 재밌게 하고 계신가요? 📚\", \"가족과 보낸 시간이 여러분에게 어떤 긍정적인 영향을 주었나요? 👨‍👩‍👧‍👦\", \"바쁜 일상 속에서도 어떻게 자기 관리에 시간을 할애하고 계신가요? 🧘‍♂️\", \"새해의 목표를 세우며 가진 기대감과 그 목표를 향한 계획은 무엇인가요? 🎯\", \"도전을 겪으며 느낀 가장 큰 교훈은 무엇이었나요? 🤔\"]}"},
+    # {"role": "system",
+    #  "content": "{\"mental_state\": \"소망님의 일기에서 업무의 압박감과 사업에서의 도전, 그리고 개인적인 성찰 사이의 복잡한 감정을 엿볼 수 있습니다. 특히, 업무와 관련된 스트레스, 사업에서의 첫 도전의 어려움, 그리고 개인적인 관계에서 겪는 갈등이 소망님의 정신적 부담감을 증가시키고 있어요.🥲 하지만, 이 모든 상황 속에서도 긍정적인 변화와 성취를 향한 노력이 뚜렷하게 드러나며, 이는 소망님의 강인함과 회복력을 보여줍니다. 💪\",\"positives\":{\"comment\":\"업무에서의 성공적 해결책 찾기, 가족과의 시간, 그리고 운동을 통한 신체 건강의 개선은 소망님에게 큰 성취감을 가져다주었어요. 이러한 순간들은 소망님에게 새로운 에너지를 주며, 어려움을 극복할 수 있는 힘을 실어주고 있습니다.👏 소망님, 이렇게 스스로를 돌보며 긍정적인 변화를 만들어가는 모습이 매우 인상적입니다. 앞으로도 계속해서 좋은 일들이 일어나길 바랍니다! 🌟\",\"main_keyword\":\"회복력과 성취\"},\"negatives\":{\"comment\":\"업무 스트레스와 사업의 불확실성, 대인 관계에서의 갈등은 소망님을 상당히 힘들게 하고 있어요. 이러한 상황들이 소망님의 마음에 큰 무게를 더하고 있지만, 소망님은 이를 극복하기 위해 끊임없이 노력하고 있습니다.💪 소망님, 이런 어려운 시기를 겪으시는 것을 보며 깊은 위로와 격려의 말씀을 드리고 싶어요. 소망님의 노력과 강인함이 결국 모든 어려움을 이겨낼 것입니다. 🤗\",\"main_keyword\":\"스트레스와 회복\"},\"recommendations\":[\"업무 스트레스를 줄이기 위해 업무 시간과 휴식 시간을 명확히 구분하고, 일정 관리를 철저히 하세요. 📅\",\"사업과 관련된 도전에 직면했을 때, 전략적으로 문제를 해결할 수 있는 방안을 모색하세요. 💡\",\"대인 관계에서의 갈등을 해소하기 위해 의사소통 기술을 개선하고, 상호 이해를 도모할 수 있는 기회를 마련하세요. 🤝\",\"정신적, 신체적 건강을 위해 규칙적인 운동과 취미 생활을 유지하세요. 🏋️‍♂️\",\"스트레스가 과도하게 쌓였을 때는 전문가의 도움을 받는 것을 고려하세요. 👩‍⚕️\"],\"keywords\":[\"업무 스트레스\",\"사업 도전\",\"대인 관계\",\"회복력\",\"자기 관리\"],\"personal_questions\":[\"업무와 사업에서의 스트레스를 관리하기 위해 어떤 전략을 사용하고 계신가요? 🤔\",\"가족과의 시간이나 운동이 일상에 어떤 긍정적인 영향을 주었나요? 👨‍👩‍👧‍👦\",\"사업에서의 불확실성을 어떻게 극복하려고 하시나요? 💼\",\"대인 관계의 갈등을 해결하기 위한 노력이 있나요? 🤝\",\"정신적으로 힘든 시기를 어떻게 극복하고 계신가요? 🧘‍♂️\"}]"},
+    # {"role": "system", "content": "{\"mental_state\": \"서준님의 일기를 통해 최근 경험하신 긍정적인 변화와 성취, 그리고 사회적 관계에서의 즐거움이 어떻게 서준님의 기대감을 높이고 있는지 알 수 있어요.🌟 긍정적인 일상이 서준님의 신뢰와 자신감이 어떻게 강화되고 있는지 보여주며, 새로운 목표에 대한 의욕을 드러내고 있어요. 일상의 스트레스를 줄이고, 삶의 질을 향상시키는 데 큰 도움이 되고 있네요. 😊\", \"positives\": {\"comment\": \"최근 금전 문제 해결, 리쿠르팅 면담의 성공, 그리고 친구들과의 만남이 큰 성취감과 행복을 가져다주었어요. 🎉이런 경험들이 긍정적인 영향을 주며, 앞으로의 성공을 위한 기반을 마련했네요. 서준님, 자신에게 좋은 영향을 주기 위한 노력이 정말 멋져요. 👏\", \"main_keyword\": \"성취감과 행복\"}, \"negatives\": {\"comment\": \"현재 서준님의 일기에서는 부정적인 상황이 거의 언급되지 않아요. 😄 이는 긍정적인 사건들에 집중하고 계시다는 뜻이겠죠. 일상에서 마주치는 작은 도전들도 있겠지만, 현재 서준님은 매우 긍정적인 상태로 보여요.🙌\", \"main_keyword\": \"긍정적 변화\"}, \"recommendations\": [\"금전 문제 해결 경험을 바탕으로 재정 계획을 재검토하고, 예산 관리 방법을 개선해 보세요. 💰\", \"탁구 실력을 키울 수 있는 정기 연습 일정을 만들거나, 탁구 클럽에 가입해 보세요. 🏓\", \"하루와 함께 새로운 산책 코스를 탐색하거나, 함께할 수 있는 야외 활동을 찾아보세요. 🚶‍♂️🌳\", \"리쿠르팅 면담의 성공 경험을 분석하여 효율적인 리쿠르팅 전략을 세우세요. 💼\", \"동호회 활동을 통해 얻은 긍정적 에너지로 사회적 관계를 더 발전시켜 보세요. 🤝\"], \"keywords\": [\"성취감\", \"행복\", \"긍정적 에너지\", \"사회적 관계\", \"목표 설정\"], \"personal_questions\": [\"재정 계획을 세우고 난 후, 어떤 변화를 느꼈나요? 🤔\", \"탁구 연습을 통해 어떤 목표를 세우고 싶나요? 🏆\", \"하루와의 산책이나 야외 활동에서 특별한 순간이 있었나요? 🌄\", \"리쿠르팅 전략을 적용해 본 결과 어떤 점이 효과적이었나요? 📊\", \"사회적 관계를 확장하기 위해 시도한 새로운 활동이 있나요? 🤗\"]}"},
 ]
 
 prompt8 = [
@@ -295,7 +325,7 @@ class GPTService:
             4: (prompt4, "오늘의 운세", "gpt-3.5-turbo", None),
             5: (prompt5, "해몽", "gpt-4-1106-preview", {"type": "json_object"}),
             6: (prompt6, "일정", "gpt-3.5-turbo-1106", {"type": "json_object"}),
-            7: (prompt7, "한 주 돌아보기", "gpt-4", None), # -1106-preview", {"type": "json_object"}),
+            7: (prompt7, "한 주 돌아보기", "gpt-4-1106-preview", {"type": "json_object"}),
             8: (prompt8, "메모", "gpt-3.5-turbo-1106", {"type": "json_object"}),
             9: (prompt9, "일정 제목", "gpt-3.5-turbo", None),
             10: (prompt10, "일기 답장", "gpt-4", None), # -1106-preview", {"type": "json_object"}),
@@ -312,12 +342,21 @@ class GPTService:
         for i in range(retries):
             try:
                 start_time = await time_now()
-                chat = await asyncio.to_thread(
-                    openai.ChatCompletion.create,
-                    model=prompt_dict[prompt_num][2],
-                    messages=prompt,
-                    response_format=prompt_dict[prompt_num][3]
-                )
+                if prompt_num == 7:
+                    # 마음 상태 보고서 HCX-003 버전으로 생성
+                    cloava_service = ClovaService()
+                    response = await asyncio.to_thread(
+                        cloava_service.execute,
+                        prompt=prompt,
+                    )
+                    return response
+                else:
+                    chat = await asyncio.to_thread(
+                        openai.ChatCompletion.create,
+                        model=prompt_dict[prompt_num][2],
+                        messages=prompt,
+                        response_format=prompt_dict[prompt_num][3]
+                    )
                 end_time = await time_now()
                 await self.api_log(
                     user_id=self.user.id,
@@ -330,6 +369,7 @@ class GPTService:
                 )
                 return chat.choices[0].message.content
             except Exception as e:
+                return
                 print(f"GPT API Error {e}")
                 if i < retries - 1:
                     print(f"Retrying {i + 1} of {retries}...")
