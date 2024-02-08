@@ -57,13 +57,18 @@ if settings.SERVER_TYPE == "prod":
         )
 
         scheduler.add_job(
+            PushService(db=next(get_db()), redis=next(get_redis_client())).send_afternoon_push,
+            trigger=CronTrigger(hour=14, timezone="Asia/Seoul"),
+        )
+
+        scheduler.add_job(
             PushService(db=next(get_db()), redis=next(get_redis_client())).send_night_push,
-            trigger=CronTrigger(hour=20, timezone="Asia/Seoul"),
+            trigger=CronTrigger(hour=22, timezone="Asia/Seoul"),
         )
 
         scheduler.add_job(
             PushService(db=next(get_db()), redis=next(get_redis_client())).generate_night_push,
-            trigger=CronTrigger(hour=19, timezone="Asia/Seoul"),
+            trigger=CronTrigger(hour=21, timezone="Asia/Seoul"),
         )
 
         scheduler.add_job(

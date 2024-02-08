@@ -110,7 +110,7 @@ class DiaryService(AbstractDiaryService):
             background_tasks.add_task(
                 push_service.send,
                 title="Looi",
-                body=f"{self.user.nickname}님의 일기에 대한 답장이 도착했어요! 얼른 확인해 보세요~!",
+                body=f"{self.user.nickname}님의 일기에 대한 답장이 도착했어요 💌",
                 token=self.user.push_token,
                 device=f"{self.user.device}",
                 image_url=diary.image_url,

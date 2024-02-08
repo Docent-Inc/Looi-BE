@@ -1,4 +1,5 @@
 import asyncio
+import random
 from datetime import datetime
 
 import aioredis
@@ -27,8 +28,34 @@ class PushService(AbstractPushService):
         self.user = user
         self.redis = redis
 
-    async def test(self, title: str, body: str, landing_url: str, image_url: str, token: str, device: str) -> None:
-        await self.send(title=title, body=body, token=token, image_url=image_url, landing_url=landing_url, device=device)
+    async def test(self) -> None:
+        push_question_list = [
+            "오늘 아침에 눈을 떴을 때 기분이 어떠셨나요 🌅?",
+            "오늘 하루 달성하고 싶은 목표가 있나요 🎯?",
+            "오늘 가장 기대되는 일이 있으신가요 💡?",
+            "오늘 새롭게 도전해보고 싶은 것이 있나요 🚀?",
+            "아침을 시작하면서 듣고 싶은 노래가 있다면 무엇인가요 🎧? ",
+        ]
+        lock_key = "morning_push_lock"
+        if await self.redis.set(lock_key, "locked", ex=60, nx=True):
+            try:
+                Users = self.db.query(User).filter(User.push_token != None, User.is_deleted == False,
+                                                   User.push_morning == True).all()
+                nickname_and_token = [(user.nickname, "dqS9j7Th50Rjh4txkuzgKu:APA91bGqAroOgppzD2I6rfvJ_MPLcPgArtad0cZBQQkzVtdrssOchf-HY4uFj9loPrVlSGrBYFxd4DKzuyHlvdZZi37d0rlMlPFU8G-TLQi7SCMvhkyWTfEIKPO4i_iiUXrRTnZuINud", user.device, random.choice(push_question_list))
+                                      for user in Users]
+                batch_size = 50
+                for i in range(0, len(nickname_and_token), batch_size):
+                    batch = nickname_and_token[i:i + batch_size]
+                    tasks = [self.send(title="Looi", body=f"{nickname}님, {question}", token=token,
+                                       landing_url=f"/chat?guide={nickname}님, {question}", device=f"{device}") for
+                             nickname, token, device, question in batch]
+                    await asyncio.gather(*tasks)
+                    break
+
+            finally:
+                self.db.close()
+                await self.redis.delete(lock_key)
+                await self.redis.close()
 
     async def send(self, title: str, body: str, token: str, device: str, image_url: str = "", landing_url: str = "") -> None:
         try:
@@ -81,16 +108,54 @@ class PushService(AbstractPushService):
 
 
     async def send_morning_push(self) -> None:
+        push_question_list = [
+            "오늘 아침에 눈을 떴을 때 기분이 어떠셨나요 🌅?",
+            "오늘 하루 달성하고 싶은 목표가 있나요 🎯?",
+            "오늘 가장 기대되는 일이 있으신가요 💡?",
+            "오늘 새롭게 도전해보고 싶은 것이 있나요 🚀?",
+            "아침을 시작하면서 듣고 싶은 노래가 있다면 무엇인가요 🎧? ",
+        ]
         lock_key = "morning_push_lock"
         if await self.redis.set(lock_key, "locked", ex=60, nx=True):
             try:
                 Users = self.db.query(User).filter(User.push_token != None, User.is_deleted == False, User.push_morning == True).all()
-                nickname_and_token = [(user.nickname, user.push_token, user.device) for user in Users]
-
+                nickname_and_token = [(user.nickname, user.push_token, user.device, random.choice(push_question_list))
+                                      for user in Users]
                 batch_size = 50
                 for i in range(0, len(nickname_and_token), batch_size):
                     batch = nickname_and_token[i:i + batch_size]
-                    tasks = [self.send(title="Looi", body=f"{nickname}님, 오늘은 어떤 꿈을 꾸셨나요?", token=token, landing_url=f"/chat?guide={nickname}님, 오늘은 어떤 꿈을 꾸셨나요?", device=f"{device}") for nickname, token, device in batch]
+                    tasks = [self.send(title="Looi", body=f"{nickname}님, {question}", token=token,
+                                       landing_url=f"/chat?guide={nickname}님, {question}", device=f"{device}") for
+                             nickname, token, device, question in batch]
+                    await asyncio.gather(*tasks)
+
+            finally:
+                self.db.close()
+                await self.redis.delete(lock_key)
+                await self.redis.close()
+
+
+    async def send_afternoon_push(self) -> None:
+        push_question_list = [
+            "오늘 점심에 맛있는 거 드셨나요🍴?",
+            "오전 중 가장 기억에 남는 순간이 있었나요? 저와 함께 그 순간을 되새겨봐요. 🕰️",
+            "오늘 아침에 세운 목표 중 얼마나 달성했나요? 이야기해주세요. ✅",
+            "점심 시간에 잘 쉬었나요? 잠깐의 휴식 동안 무슨 생각을 했는지 궁금해요. 🌿",
+            "점심 시간에는 어떤 작은 행복을 느꼈나요? 간단한 순간이라도 공유해 주세요.🧘‍♂️",
+        ]
+        lock_key = "afternoon_push_lock"
+        if await self.redis.set(lock_key, "locked", ex=60, nx=True):
+            try:
+                Users = self.db.query(User).filter(User.push_token != None, User.is_deleted == False,
+                                                   User.push_morning == True).all()
+                nickname_and_token = [(user.nickname, user.push_token, user.device, random.choice(push_question_list))
+                                      for user in Users]
+                batch_size = 50
+                for i in range(0, len(nickname_and_token), batch_size):
+                    batch = nickname_and_token[i:i + batch_size]
+                    tasks = [self.send(title="Looi", body=f"{nickname}님, {question}", token=token,
+                                       landing_url=f"/chat?guide={nickname}님, {question}", device=f"{device}") for
+                             nickname, token, device, question in batch]
                     await asyncio.gather(*tasks)
 
             finally:
@@ -100,7 +165,15 @@ class PushService(AbstractPushService):
 
     async def send_night_push(self) -> None:
         lock_key = "night_push_lock"
-        default_question = "오늘은 어떤 하루를 보내셨나요?"
+        push_question_list = [
+            "오늘 만난 사람들 중 인상 깊었던 사람이 있나요? 그사람이 어떤 영향을 미쳤는지 궁금해요.🌟",
+            "오늘 있었던 일 중 내일 다시 해보고 싶은 일이 있나요? 🔄",
+            "오늘 하루를 한 단어나 문장으로 표현한다면 어떨까요? ✨",
+            "오늘 느낀 감정 중 가장 강렬했던 것은 무엇이었나요? 🔥",
+            "만약 오늘을 다시 살 수 있다면, 무엇을 달리 하고 싶나요? 📆",
+        ]
+
+        default_question = random.choice(push_question_list)
 
         if await self.redis.set(lock_key, "locked", ex=60, nx=True):
             try:
@@ -193,11 +266,11 @@ class PushService(AbstractPushService):
                     landing_url = f"/mypage?tab=calendar&date={date_str}"
                     # 알림 메시지 생성
                     if user.push_schedule == 0:
-                        body = f"{user.nickname}님, {calendar.title}가 지금 시작합니다. 일정을 위해 준비해 주세요!"
+                        body = f"{user.nickname}님, {calendar.title}가 지금 시작합니다. 일정을 위해 준비해 주세요 ⏰"
                     elif user.push_schedule in [5, 10, 15, 30]:
-                        body = f"{user.nickname}님, {calendar.title}까지 {user.push_schedule}분 남았습니다. 일정을 위해 준비해 주세요!"
+                        body = f"{user.nickname}님, {calendar.title}까지 {user.push_schedule}분 남았습니다. 일정을 위해 준비해 주세요 ⏰"
                     elif user.push_schedule in [60, 120, 180]:
-                        body = f"{user.nickname}님, {calendar.title}까지 {user.push_schedule // 60}시간 남았습니다. 일정을 위해 준비해 주세요!"
+                        body = f"{user.nickname}님, {calendar.title}까지 {user.push_schedule // 60}시간 남았습니다. 일정을 위해 준비해 주세요 ⏰"
                     user_calendar_data.append((user.nickname, user.push_token, body, landing_url, user.device))
 
                 batch_size = 50  # 배치 사이즈 설정
