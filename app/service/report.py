@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 import json
 from app.core.security import time_now
 from app.db.database import get_redis_client, save_db
-from app.db.models import Report, MorningDiary, NightDiary, Calendar
+from app.db.models import Report, MorningDiary, NightDiary, Calendar, PushQuestion
 from app.db.models import User
 from app.core.aiRequset import GPTService
 from app.service.abstract import AbstractReportService
@@ -33,10 +33,10 @@ async def validate_report_structure(report_data):
     except:
         return False
     required_keys = {
-        "mental_state": str,
+        # "mental_state": str,
         "positives": dict,
         "negatives": dict,
-        # "recommendations": list,
+        "recommendations": list,
         "personal_questions": list,
         "keywords": list,
     }
@@ -48,9 +48,9 @@ async def validate_report_structure(report_data):
                 return False
             if "main_keyword" not in report_data[key] or not isinstance(report_data[key]["main_keyword"], str):
                 return False
-        # if key in ["recommendations", "personal_questions"]:
-        #     if not all(isinstance(item, str) for item in report_data[key]):
-        #         return False
+        if key in ["recommendations", "personal_questions"]:
+            if not all(isinstance(item, str) for item in report_data[key]):
+                return False
 
     if not all(isinstance(keyword, str) for keyword in report_data["keywords"]):
         return False
@@ -213,7 +213,7 @@ class ReportService(AbstractReportService):
 
         data = json.loads(report_data)
         text = "다음 내용을 바탕으로 이미지를 생성해주세요(no text, digital art, illustration).\n"
-        text += data["mental_state"]
+        text += data["positives"]
         image_url = await gpt_service.send_dalle_request(messages_prompt=text)
 
         mental_report = Report(
@@ -225,6 +225,8 @@ class ReportService(AbstractReportService):
         )
         report = save_db(mental_report, self.db)
 
+
+
         push_service = PushService(db=self.db, user=self.user)
         await push_service.send(
             title="Looi",
@@ -234,6 +236,19 @@ class ReportService(AbstractReportService):
             landing_url=f"/report/{report.id}",
             token=self.user.push_token
         )
+
+        now = await time_now()
+        for push_question in data["personal_questions"]:
+            push_question = PushQuestion(
+                User_id=self.user.id,
+                question_type="report",
+                calendar_content="",
+                is_pushed=False,
+                question=push_question,
+                create_date=now,
+            )
+            save_db(push_question, self.db)
+
 
         redis_key = f"report:list:{self.user.id}:*"
         await self.redis.delete(redis_key)

@@ -213,7 +213,9 @@ class PushQuestion(Base):
 
     id = Column(Integer, primary_key=True)
     User_id = Column(Integer, ForeignKey('User.id'), nullable=False, index=True)
-    calendar_content = Column(String(255), nullable=False)
+    question_type = Column(String(50), nullable=False)
+    calendar_content = Column(String(255), nullable=True)
+    is_pushed = Column(Boolean, default=False, index=True)
     question = Column(String(255), nullable=False)
     create_date = Column(DateTime, nullable=False)
 

@@ -8,7 +8,7 @@ from fastapi import Depends
 from firebase_admin import credentials
 import json
 
-from sqlalchemy import or_, and_, func
+from sqlalchemy import or_, and_, func, desc
 from sqlalchemy.orm import Session
 
 from app.core.aiRequset import GPTService
@@ -41,7 +41,7 @@ class PushService(AbstractPushService):
             try:
                 Users = self.db.query(User).filter(User.push_token != None, User.is_deleted == False,
                                                    User.push_morning == True).all()
-                nickname_and_token = [(user.nickname, "dqS9j7Th50Rjh4txkuzgKu:APA91bGqAroOgppzD2I6rfvJ_MPLcPgArtad0cZBQQkzVtdrssOchf-HY4uFj9loPrVlSGrBYFxd4DKzuyHlvdZZi37d0rlMlPFU8G-TLQi7SCMvhkyWTfEIKPO4i_iiUXrRTnZuINud", user.device, random.choice(push_question_list))
+                nickname_and_token = [(user.nickname, "cYDJfWL1QUOxphLlJQYn7v:APA91bHqqgym0wBJBF9FJqR_da0TK0X_Q5klyy7eX-7nCJuUG5zb3Jc2t_-ckcgfkee7xelWglqq3QRCRbtxEIZpmwwbPm0MUX5v5Mir5TW5uI-C0cIr6PnTkewE8mAMRtCsumYOhemR", user.device, random.choice(push_question_list))
                                       for user in Users]
                 batch_size = 50
                 for i in range(0, len(nickname_and_token), batch_size):
@@ -189,11 +189,40 @@ class PushService(AbstractPushService):
                         # DB에서 해당 사용자의 오늘 생성된 질문 조회
                         question_record = self.db.query(PushQuestion).filter(
                             PushQuestion.User_id == user_id,
+                            PushQuestion.question_type == "calendar",
+                            PushQuestion.is_pushed == False,
                             func.date(PushQuestion.create_date) == now.date()
                         ).first()
 
-                        question = question_record.question if question_record else default_question
-                        tasks.append(self.send(title="Looi", body=f"{nickname}님, {question}", token=token, landing_url=f"/chat?guide={nickname}님, {question}", device=f"{device}"))
+                        if question_record:
+                            question_record.is_pushed = True
+                            self.db.commit()
+                            question = question_record.question
+                            tasks.append(self.send(title="Looi", body=f"{nickname}님, {question}", token=token,
+                                                   landing_url=f"/chat?guide={nickname}님, {question}",
+                                                   device=f"{device}"))
+                            continue
+
+                        question_record = self.db.query(PushQuestion).filter(
+                            PushQuestion.User_id == user_id,
+                            PushQuestion.question_type == "report",
+                            PushQuestion.is_pushed == False,
+                        ).order_by(desc(PushQuestion.id)).first()
+
+
+                        if question_record:
+                            question_record.is_pushed = True
+                            self.db.commit()
+                            question = question_record.question
+                            tasks.append(self.send(title="Looi", body=f"{nickname}님, {question}", token=token,
+                                                   landing_url=f"/chat?guide={nickname}님, {question}",
+                                                   device=f"{device}"))
+                            continue
+
+                        question = default_question
+                        tasks.append(self.send(title="Looi", body=f"{nickname}님, {question}", token=token,
+                                               landing_url=f"/chat?guide={nickname}님, {question}",
+                                               device=f"{device}"))
 
                     await asyncio.gather(*tasks)
             finally:
@@ -238,7 +267,9 @@ class PushService(AbstractPushService):
                     for user_id, result in zip(batch.keys(), results):
                         push_question = PushQuestion(
                             User_id=user_id,
+                            question_type="calendar",
                             calendar_content=batch[user_id][:255],
+                            is_pushed=False,
                             question=result[:255],
                             create_date=now,
                         )
