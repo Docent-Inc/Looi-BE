@@ -82,12 +82,14 @@ class ReportService(AbstractReportService):
 
         data = json.loads(report.content)
 
+        redis_key = f"report:list:{self.user.id}:*"
+        await self.redis.delete(redis_key)
+
         return {
             "id": report.id,
             "content": data,
             "image_url": report.image_url,
             "create_date": report.create_date.strftime("%Y년 %m월 %d일"),
-            "period": await calculate_period(report.create_date)
         }
 
     async def list(self, page: int) -> list:
