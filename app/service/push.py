@@ -178,7 +178,7 @@ class PushService(AbstractPushService):
         if await self.redis.set(lock_key, "locked", ex=60, nx=True):
             try:
                 now = await time_now()
-                Users = self.db.query(User).filter(User.push_token != None, User.is_deleted == False, User.push_night == True).all()
+                Users = self.db.query(User).filter(User.push_token != None, User.is_deleted == False, User.push_morning == True).all()
                 nickname_and_token = [(user.nickname, user.push_token, user.id, user.device) for user in Users]
 
                 batch_size = 50
@@ -238,7 +238,7 @@ class PushService(AbstractPushService):
                 start_of_day = datetime(now.year, now.month, now.day, tzinfo=now.tzinfo)
                 eight_pm = start_of_day.replace(hour=20)
 
-                Users = self.db.query(User).filter(User.push_token != None, User.is_deleted == False, User.push_night == True).all()
+                Users = self.db.query(User).filter(User.push_token != None, User.is_deleted == False, User.push_morning == True).all()
 
                 user_calendar_data = {}
                 for user in Users:

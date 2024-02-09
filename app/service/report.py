@@ -28,6 +28,7 @@ async def calculate_period(start_date):
 
 
 async def validate_report_structure(report_data):
+    print(report_data)
     try:
         report_data = json.loads(report_data)
     except:
@@ -217,7 +218,7 @@ class ReportService(AbstractReportService):
 
         data = json.loads(report_data)
         text = "다음 내용을 바탕으로 이미지를 생성해주세요(no text, digital art, illustration).\n"
-        text += data["positives"]
+        text += data["positives"]["comment"]
         image_url = await gpt_service.send_dalle_request(messages_prompt=text)
 
         mental_report = Report(
