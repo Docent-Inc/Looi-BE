@@ -50,6 +50,7 @@ class AdminService(AbstractAdminService):
                 MorningDiary.main_keyword,
                 User.nickname
             ).join(User, MorningDiary.User_id == User.id)
+            .where(MorningDiary.id > 1311)
         ).fetchall()
 
         data = []
@@ -80,6 +81,7 @@ class AdminService(AbstractAdminService):
                 NightDiary.main_keyword,
                 User.nickname,
             ).join(User, NightDiary.User_id == User.id)
+            .where(NightDiary.id > 1455)
         ).fetchall()
 
         data = []

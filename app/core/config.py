@@ -6,7 +6,6 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int
     REFRESH_TOKEN_EXPIRE_DAYS: int
     GPT_API_KEY: str
-    GOOGLE_APPLICATION_CREDENTIALS_JSON: str
     LINE_CHANNEL_ID: str
     LINE_SECRET: str
     TEST_TOKEN: str
