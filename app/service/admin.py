@@ -40,6 +40,118 @@ class AdminService(AbstractAdminService):
         dashboard = self.db.query(Dashboard).all()
         return dashboard
 
+    async def dream_data(self) -> list:
+        results = self.db.execute(
+            select(
+                MorningDiary.content,
+                User.nickname,
+                User.birth,
+                User.mbti,
+                User.create_date,
+                MorningDiary.create_date,
+            ).join(User, MorningDiary.User_id == User.id)
+            .where(User.id != 1)
+        ).fetchall()
+
+        data = []
+
+        for user_id, content, nickname, birth, mbti, create_date, diary_create_date in results:
+            dream_info = {
+                "Nickname": nickname,
+                "Birth": birth,
+                "Mbti": mbti,
+                "Create_date": create_date,
+                "Diary_create_date": diary_create_date,
+                "Content": content
+            }
+            data.append(dream_info)
+
+        return data
+
+    async def diary_data(self) -> list:
+        results = self.db.execute(
+            select(
+                NightDiary.content,
+                User.nickname,
+                User.birth,
+                User.mbti,
+                User.create_date,
+                NightDiary.create_date,
+            ).join(User, NightDiary.User_id == User.id)
+            .where(~NightDiary.content.ilike("%오늘은 인상깊은 날이다.%"), User.id != 1)
+        ).fetchall()
+
+        data = []
+
+        for content, nickname, birth, mbti, create_date, diary_create_date in results:
+            diary_info = {
+                "Nickname": nickname,
+                "Birth": birth,
+                "Mbti": mbti,
+                "Create_date": create_date,
+                "Diary_create_date": diary_create_date,
+                "Content": content
+            }
+            data.append(diary_info)
+
+        return data
+
+    async def memo_data(self) -> list:
+        results = self.db.execute(
+            select(
+                Memo.content,
+                User.nickname,
+                User.birth,
+                User.mbti,
+                User.create_date,
+                Memo.create_date,
+            ).join(User, Memo.User_id == User.id)
+            .where(User.id != 1)
+        ).fetchall()
+
+        data = []
+
+        for content, nickname, birth, mbti, create_date, memo_create_date in results:
+            memo_info = {
+                "Nickname": nickname,
+                "Birth": birth,
+                "Mbti": mbti,
+                "Create_date": create_date,
+                "Memo_create_date": memo_create_date,
+                "Content": content
+            }
+            data.append(memo_info)
+
+        return data
+
+    async def calendar_data(self) -> list:
+        results = self.db.execute(
+            select(
+                Calendar.content,
+                User.nickname,
+                User.birth,
+                User.mbti,
+                User.create_date,
+                Calendar.create_date,
+            ).join(User, Calendar.User_id == User.id)
+            .where(User.id != 1)
+        ).fetchall()
+
+        data = []
+
+        for content, nickname, birth, mbti, create_date, calendar_create_date in results:
+            calendar_info = {
+                "Nickname": nickname,
+                "Birth": birth,
+                "Mbti": mbti,
+                "Create_date": create_date,
+                "Calendar_create_date": calendar_create_date,
+                "Content": content
+            }
+            data.append(calendar_info)
+
+        return data
+
     async def user_dream_data(self) -> list:
         results = self.db.execute(
             select(
