@@ -55,7 +55,7 @@ class AdminService(AbstractAdminService):
 
         data = []
 
-        for user_id, content, nickname, birth, mbti, create_date, diary_create_date in results:
+        for content, nickname, birth, mbti, create_date, diary_create_date in results:
             dream_info = {
                 "Nickname": nickname,
                 "Birth": birth,
