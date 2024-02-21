@@ -562,11 +562,11 @@ class AdminService(AbstractAdminService):
                         ]
                     },
                 ]
-                # 슬랙에 메세지 보내기
-                await client.chat_postMessage(
-                    channel=settings.SLACK_ID,
-                    blocks=blocks
-                )
+                # # 슬랙에 메세지 보내기
+                # await client.chat_postMessage(
+                #     channel=settings.SLACK_ID,
+                #     blocks=blocks
+                # )
 
                 # 이미 대쉬보드에 데이터가 있는지 확인
                 if dashboards:

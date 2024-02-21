@@ -15,37 +15,37 @@ def register_exception_handlers(app):
     async def custom_http_exception_handler(request: Request, exc: HTTPException):
         if exc.detail not in CUSTOM_EXCEPTIONS:
             exc.detail = 4000
-        if exc.detail == 4220:
-            pass
-        elif exc.detail == 4998:
-            pass
-        elif exc.detail == 4004:
-            pass
-        elif exc.detail == 4506:
-            pass
-        elif exc.detail == 4005:
-            pass
-        elif exc.detail == 4010:
-            pass
-        elif exc.detail == 4221:
-            pass
-        else:
-            if settings.SERVER_TYPE == "prod":
-                try:
-                    db = next(get_db())
-                    error = ErrorLog(error_code=exc.detail, error_message=CUSTOM_EXCEPTIONS[exc.detail], create_date=await time_now())
-                    save_db(error, db)
-                    client = AsyncWebClient(token=settings.SLACK_BOT_TOKEN)
-                    await client.chat_postMessage(
-                        channel="C064ZCNDVU1",
-                        text=f"Error Code: {exc.detail}\nError Message: {CUSTOM_EXCEPTIONS[exc.detail]}"
-                    )
-                except:
-                    pass
-                finally:
-                    db.close()
-            else:
-                pass
+        # if exc.detail == 4220:
+        #     pass
+        # elif exc.detail == 4998:
+        #     pass
+        # elif exc.detail == 4004:
+        #     pass
+        # elif exc.detail == 4506:
+        #     pass
+        # elif exc.detail == 4005:
+        #     pass
+        # elif exc.detail == 4010:
+        #     pass
+        # elif exc.detail == 4221:
+        #     pass
+        # else:
+        #     if settings.SERVER_TYPE == "prod":
+        #         try:
+        #             db = next(get_db())
+        #             error = ErrorLog(error_code=exc.detail, error_message=CUSTOM_EXCEPTIONS[exc.detail], create_date=await time_now())
+        #             save_db(error, db)
+        #             client = AsyncWebClient(token=settings.SLACK_BOT_TOKEN)
+        #             await client.chat_postMessage(
+        #                 channel="C064ZCNDVU1",
+        #                 text=f"Error Code: {exc.detail}\nError Message: {CUSTOM_EXCEPTIONS[exc.detail]}"
+        #             )
+        #         except:
+        #             pass
+        #         finally:
+        #             db.close()
+        #     else:
+        #         pass
         return JSONResponse(
             content=ApiResponse(
                 success=False,
