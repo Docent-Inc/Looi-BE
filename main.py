@@ -47,34 +47,34 @@ if settings.SERVER_TYPE == "prod":
     async def start_scheduler():
         # 한 주 돌아보기 보고서 생성
         scheduler.add_job(
-            ReportService(db=next(get_db()), redis=await get_redis_client()).generate,
+            ReportService(db=next(get_db()), redis=next(get_redis_client())).generate,
             trigger=CronTrigger(day_of_week='sun', hour=19, timezone="Asia/Seoul"),
         )
 
         # AdminService 작업 스케줄링
         scheduler.add_job(
-            AdminService(db=next(get_db()), redis=await get_redis_client()).slack_bot,
+            AdminService(db=next(get_db()), redis=next(get_redis_client())).slack_bot,
             trigger=CronTrigger(minute=59, second=55, timezone="Asia/Seoul"),
         )
 
         # PushService 작업 스케줄링
         scheduler.add_job(
-            PushService(db=next(get_db()), redis=await get_redis_client()).send_morning_push,
+            PushService(db=next(get_db()), redis=next(get_redis_client())).send_morning_push,
             trigger=CronTrigger(hour=8, timezone="Asia/Seoul"),
         )
 
         scheduler.add_job(
-            PushService(db=next(get_db()), redis=await get_redis_client()).send_night_push,
+            PushService(db=next(get_db()), redis=next(get_redis_client())).send_night_push,
             trigger=CronTrigger(hour=20, timezone="Asia/Seoul"),
         )
 
         scheduler.add_job(
-            PushService(db=next(get_db()), redis=await get_redis_client()).generate_night_push,
+            PushService(db=next(get_db()), redis=next(get_redis_client())).generate_night_push,
             trigger=CronTrigger(hour=19, timezone="Asia/Seoul"),
         )
 
         scheduler.add_job(
-            PushService(db=next(get_db()), redis=await get_redis_client()).push_schedule,
+            PushService(db=next(get_db()), redis=next(get_redis_client())).push_schedule,
             trigger=CronTrigger(second=0, timezone="Asia/Seoul"),
         )
 

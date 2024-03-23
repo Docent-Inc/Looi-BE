@@ -503,3 +503,4 @@ class AdminService(AbstractAdminService):
             finally:
                 self.db.close()
                 await self.redis.delete(lock_key)
+                await self.redis.close()

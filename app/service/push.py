@@ -96,6 +96,7 @@ class PushService(AbstractPushService):
             finally:
                 self.db.close()
                 await self.redis.delete(lock_key)
+                await self.redis.close()
 
     async def send_night_push(self) -> None:
         lock_key = "night_push_lock"
@@ -125,6 +126,7 @@ class PushService(AbstractPushService):
             finally:
                 self.db.close()
                 await self.redis.delete(lock_key)
+                await self.redis.close()
 
     async def generate_night_push(self) -> None:
         lock_key = "generate_night_push_lock"
@@ -171,6 +173,7 @@ class PushService(AbstractPushService):
             finally:
                 self.db.close()
                 await self.redis.delete(lock_key)
+                await self.redis.close()
 
     async def push_schedule(self) -> None:
         lock_key = "push_schedule_lock"
@@ -208,3 +211,4 @@ class PushService(AbstractPushService):
             finally:
                 self.db.close()
                 await self.redis.delete(lock_key)
+                await self.redis.close()
