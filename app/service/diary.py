@@ -184,7 +184,6 @@ class DiaryService(AbstractDiaryService):
         return diary
 
     async def delete(self, diary_id: int) -> None:
-        redis = await get_redis_client()
         # 다이어리 조회
         diary = self.db.query(NightDiary).filter(NightDiary.id == diary_id, NightDiary.User_id == self.user.id, NightDiary.is_deleted == False).first()
 
@@ -198,7 +197,7 @@ class DiaryService(AbstractDiaryService):
         # history cache 삭제
         now = await time_now()
         redis_key = f"history:{self.user.id}:{now.day}"
-        cached_data = await redis.get(redis_key)
+        cached_data = await self.redis.get(redis_key)
         if cached_data:
             datas = json.loads(cached_data)
             is_exist = False
@@ -209,7 +208,7 @@ class DiaryService(AbstractDiaryService):
                 if data == diary.id:
                     is_exist = True
             if is_exist:
-                await redis.delete(redis_key)
+                await self.redis.delete(redis_key)
 
         # list cache 삭제
         keys = await self.redis.keys(f"diary:list:{self.user.id}:*")
@@ -217,7 +216,7 @@ class DiaryService(AbstractDiaryService):
             await self.redis.delete(key)
 
         # diary cache 삭제
-        await redis.delete(f"diary:{self.user.id}:{diary.id}")
+        await self.redis.delete(f"diary:{self.user.id}:{diary.id}")
 
         # ratio cache 삭제
         redis_key = f"statistics:ratio:{self.user.id}"

@@ -20,8 +20,12 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 def get_SessionLocal():
     return SessionLocal
 
-async def get_redis_client():
-    return aioredis.from_url(f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}/{settings.REDIS_DB}", encoding="utf-8", decode_responses=True)
+async def get_redis_client() -> aioredis.Redis:
+    redis = aioredis.from_url(f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}/{settings.REDIS_DB}", encoding="utf-8", decode_responses=True)
+    try:
+        yield redis
+    finally:
+        await redis.close()
 
 def get_db() -> Session:
     db = SessionLocal()
