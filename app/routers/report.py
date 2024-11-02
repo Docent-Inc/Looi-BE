@@ -22,3 +22,11 @@ async def get_report_list(
     return ApiResponse(
         data=await report_service.list(page)
     )
+
+@router.post("/create", tags=["Report"])
+async def post_report_create(
+    report_service: Annotated[ReportService, Depends()],
+) -> ApiResponse:
+    return ApiResponse(
+        data=await report_service.generate()
+    )
